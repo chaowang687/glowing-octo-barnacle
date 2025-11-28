@@ -1624,3 +1624,239 @@ Memory consumption went from 302.7 MB to 296.6 MB.
 Total: 8.750792 ms (FindLiveObjects: 0.351667 ms CreateObjectMapping: 0.234000 ms MarkObjects: 3.313459 ms  DeleteObjects: 4.850916 ms)
 
 Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 0.99 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 29 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6084 unused Assets / (5.7 MB). Loaded Objects now: 6763.
+Memory consumption went from 302.9 MB to 297.3 MB.
+Total: 37.974084 ms (FindLiveObjects: 0.934042 ms CreateObjectMapping: 0.165791 ms MarkObjects: 33.136709 ms  DeleteObjects: 3.737250 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 3324.049669 seconds.
+  path: Assets/Other/_gitignore.cs
+  artifactKey: Guid(c7fca7a0e8c824d9cbbf770d0ca0e05b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Other/_gitignore.cs using Guid(c7fca7a0e8c824d9cbbf770d0ca0e05b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '46e79604395df1d05ce5c1573bd85ce8') in 0.022562375 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Prepare
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Begin MonoManager ReloadAssembly
+Thread 0x16fee3000 may have been prematurely finalized
+- Loaded All Assemblies, in  0.657 seconds
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Refreshing native plugins compatible for Editor in 0.25 ms, found 2 plugins.
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.801 seconds
+Domain Reload Profiling: 1461ms
+	BeginReloadAssembly (191ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (10ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (82ms)
+	RebuildCommonClasses (33ms)
+	RebuildNativeTypeToScriptingClass (12ms)
+	initialDomainReloadingComplete (21ms)
+	LoadAllAssembliesAndSetupDomain (402ms)
+		LoadAssemblies (284ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (173ms)
+			TypeCache.Refresh (25ms)
+				TypeCache.ScanAssembly (3ms)
+			BuildScriptInfoCaches (136ms)
+			ResolveRequiredComponents (8ms)
+	FinalizeReload (801ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (638ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			SetLoadedEditorAssemblies (3ms)
+			BeforeProcessingInitializeOnLoad (76ms)
+			ProcessInitializeOnLoadAttributes (513ms)
+			ProcessInitializeOnLoadMethodAttributes (40ms)
+			AfterProcessingInitializeOnLoad (3ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (6ms)
+Refreshing native plugins compatible for Editor in 0.30 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 29 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6091 unused Assets / (7.0 MB). Loaded Objects now: 6766.
+Memory consumption went from 300.3 MB to 293.3 MB.
+Total: 7.172750 ms (FindLiveObjects: 0.318750 ms CreateObjectMapping: 0.153042 ms MarkObjects: 3.450041 ms  DeleteObjects: 3.250250 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 44.674444 seconds.
+  path: Assets/Other/Settings/DefaultVolumeProfile.asset
+  artifactKey: Guid(ab09877e2e707104187f6f83e2f62510) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Other/Settings/DefaultVolumeProfile.asset using Guid(ab09877e2e707104187f6f83e2f62510) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '10528149371aefc32227726816d72a59') in 0.054196083 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000101 seconds.
+  path: Assets/Other/Settings/PC_RPAsset.asset
+  artifactKey: Guid(4b83569d67af61e458304325a23e5dfd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Other/Settings/PC_RPAsset.asset using Guid(4b83569d67af61e458304325a23e5dfd) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'db197cde3899097fb35a5e04db69c105') in 0.000867958 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000036 seconds.
+  path: Assets/Other/Settings/Mobile_RPAsset.asset
+  artifactKey: Guid(5e6cbd92db86f4b18aec3ed561671858) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Other/Settings/Mobile_RPAsset.asset using Guid(5e6cbd92db86f4b18aec3ed561671858) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '8aef1b5780e7730518d46eb0d392eb05') in 0.002084375 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 2
+
+========================================================================
+Received Import Request.
+  Time since last request: 9.840121 seconds.
+  path: Assets/Plugins
+  artifactKey: Guid(5aff64266399e4867911975d1bffd649) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Plugins using Guid(5aff64266399e4867911975d1bffd649) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '21c986a0afa164792126cf691aae1d5c') in 0.00039625 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Import Request.
+  Time since last request: 1.016958 seconds.
+  path: Assets/Plugins/Demigiant
+  artifactKey: Guid(74d8958fad613461db6f96f31ca52c8d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Plugins/Demigiant using Guid(74d8958fad613461db6f96f31ca52c8d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '3c12d6ca58d2d23b801fbc0ede0f0c2f') in 0.000365375 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 0.97 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 29 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6084 unused Assets / (5.1 MB). Loaded Objects now: 6766.
+Memory consumption went from 300.8 MB to 295.7 MB.
+Total: 25.889708 ms (FindLiveObjects: 0.427250 ms CreateObjectMapping: 0.190875 ms MarkObjects: 21.732833 ms  DeleteObjects: 3.538208 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 87.066918 seconds.
+  path: Assets/Other/_gitignore.cs
+  artifactKey: Guid(c7fca7a0e8c824d9cbbf770d0ca0e05b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Other/_gitignore.cs using Guid(c7fca7a0e8c824d9cbbf770d0ca0e05b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '01d9d5c5084f065852255429a3589166') in 0.000497167 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 0.65 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 29 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6083 unused Assets / (7.5 MB). Loaded Objects now: 6765.
+Memory consumption went from 300.8 MB to 293.3 MB.
+Total: 37.623208 ms (FindLiveObjects: 0.432875 ms CreateObjectMapping: 0.221208 ms MarkObjects: 32.469083 ms  DeleteObjects: 4.499291 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Begin MonoManager ReloadAssembly
+Thread 0x16fee3000 may have been prematurely finalized
+- Loaded All Assemblies, in  0.779 seconds
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Refreshing native plugins compatible for Editor in 0.24 ms, found 2 plugins.
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Assertion failed on expression: 'pred(*previous, *i)'
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.PlasticSCM.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Unity.PlasticSCM.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Assembly with name 'Unity.CollabProxy.Editor' already exists (Packages/com.unity.collab-proxy/Editor/Toolbar/Unity.CollabProxy.Editor.asmdef)
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.704 seconds
+Domain Reload Profiling: 1486ms
+	BeginReloadAssembly (305ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (15ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (182ms)
+	RebuildCommonClasses (31ms)
+	RebuildNativeTypeToScriptingClass (11ms)
+	initialDomainReloadingComplete (21ms)
+	LoadAllAssembliesAndSetupDomain (414ms)
+		LoadAssemblies (300ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (154ms)
+			TypeCache.Refresh (12ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (132ms)
+			ResolveRequiredComponents (8ms)
+	FinalizeReload (705ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (555ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (5ms)
+			SetLoadedEditorAssemblies (3ms)
+			BeforeProcessingInitializeOnLoad (64ms)
+			ProcessInitializeOnLoadAttributes (442ms)
+			ProcessInitializeOnLoadMethodAttributes (39ms)
+			AfterProcessingInitializeOnLoad (2ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (5ms)
+Refreshing native plugins compatible for Editor in 0.32 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 29 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6090 unused Assets / (6.5 MB). Loaded Objects now: 6768.
+Memory consumption went from 300.6 MB to 294.1 MB.
+Total: 8.174833 ms (FindLiveObjects: 0.302875 ms CreateObjectMapping: 0.167166 ms MarkObjects: 3.349334 ms  DeleteObjects: 4.354875 ms)
+
+Prepare: number of updated asset objects reloaded= 0
