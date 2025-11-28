@@ -1,0 +1,26 @@
+# Unity generated files
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/Assets/AssetStoreTools/
+/Assets/StreamingAssets/
+
+# Visual Studio / Rider generated files
+# (These can cause issues if shared across different OS/IDE versions)
+/[Pp]rojectSettings/UserSettings/
+/*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.meta
+*.opendb
+*.vs/
+/ExportedObj/
