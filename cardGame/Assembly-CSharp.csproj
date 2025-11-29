@@ -68,19 +68,20 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.29f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets/CS/CharacterManager.cs" />
-    <Compile Include="Assets/CS/Enums.cs" />
-    <Compile Include="Assets/CS/敌人AI/EnemyData.cs" />
-    <Compile Include="Assets/CS/BattleManager.cs 04-43-27-654.cs" />
-    <Compile Include="Assets/CS/CharacterBase.cs" />
-    <Compile Include="Assets/CS/EnemyAI.cs" />
-    <Compile Include="Assets/CS/CardData.cs" />
-    <Compile Include="Assets/CS/CardDisplay.cs" />
+    <Compile Include="Assets/CS/Scripts/EnemyAI.cs" />
+    <Compile Include="Assets/CS/Scripts/Data/CardData.cs" />
+    <Compile Include="Assets/CS/Scripts/CardSystem..cs" />
+    <Compile Include="Assets/CS/Scripts/CardDisplay.cs" />
+    <Compile Include="Assets/CS/Scripts/Managers/BattleManager.cs 04-43-27-654.cs" />
+    <Compile Include="Assets/CS/Scripts/CharacterBase.cs" />
+    <Compile Include="Assets/CS/Scripts/Enums.cs" />
     <Compile Include="Assets/CS/敌人AI/EnemyIntentStrategy.cs" />
     <Compile Include="Assets/CS/敌人AI/RoundBasedStrategy.cs" />
+    <Compile Include="Assets/CS/Scripts/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS/敌人AI/EnemyAction.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
-    <Compile Include="Assets/CS/CardSystem..cs" />
+    <Compile Include="Assets/CS/CardEnums.cs" />
+    <Compile Include="Assets/CS/敌人AI/Data/EnemyData.cs" />
     <Compile Include="Assets/CS/CardAction.cs" />
   </ItemGroup>
   <ItemGroup>
