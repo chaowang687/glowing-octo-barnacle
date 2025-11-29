@@ -444,6 +444,8 @@
 -analyzer:"Library/PackageCache/com.unity.collab-proxy/Lib/Editor/log4netPlastic.dll"
 -analyzer:"Library/PackageCache/com.unity.collab-proxy/Lib/Editor/Unity.Plastic.Antlr3.Runtime.dll"
 -analyzer:"Library/PackageCache/com.unity.collab-proxy/Lib/Editor/Unity.Plastic.Newtonsoft.Json.dll"
+"Assets/Editor/CardDataImporter.cs"
+"Assets/Editor/CSVReader.cs"
 "Assets/Other/TutorialInfo/Scripts/Editor/ReadmeEditor.cs"
 -langversion:9.0
 /deterministic
