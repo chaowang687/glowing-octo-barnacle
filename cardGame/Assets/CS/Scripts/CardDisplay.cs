@@ -1,14 +1,19 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening; 
-using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro; // 使用 TextMeshPro
+using UnityEngine.UI; // 用于 Image 组件
 
-// 继承 UI 事件接口，用于处理鼠标交互
+/// <summary>
+/// 卡牌的 UI 显示和交互控制组件。
+/// 负责处理拖拽瞄准、打出判断和动画反馈。
+/// 悬停/高亮逻辑已转移至 BattleManager 统一处理。
+/// </summary>
 public class CardDisplay : MonoBehaviour, 
-    IPointerEnterHandler, 
-    IPointerExitHandler, 
+    // IPointerEnterHandler, <-- 移除，悬停判定由 BattleManager 接管
+    // IPointerExitHandler, <-- 移除，悬停判定由 BattleManager 接管
     IBeginDragHandler, 
     IDragHandler, 
     IEndDragHandler,
@@ -19,9 +24,13 @@ public class CardDisplay : MonoBehaviour,
     private CharacterBase owner;
     
     [Header("UI References")]
-    public Text nameText;
-    public Text costText;
-    public Text descriptionText;
+    // ⭐ 使用 TextMeshProUGUI 来显示文本 ⭐
+    public TextMeshProUGUI nameText;
+    public TextMeshProUGUI costText;
+    public TextMeshProUGUI descriptionText;
+    public TextMeshProUGUI typeText; // 新增：显示卡牌类型
+    public Image artworkImage;        // ⭐ 新增：显示卡牌插画 ⭐
+    
     private RectTransform rectTransform;
 
     [Header("Targeting")]
@@ -35,6 +44,9 @@ public class CardDisplay : MonoBehaviour,
     private Quaternion originalLocalRotation;
     
     // --- 初始化 ---
+    /// <summary>
+    /// 将卡牌数据绑定到 UI 元素。
+    /// </summary>
     public void Initialize(CardData data, CharacterBase characterOwner)
     {
         cardData = data;
@@ -46,15 +58,26 @@ public class CardDisplay : MonoBehaviour,
             return;
         }
 
-        // 尝试更新 UI 文本
+        // 绑定文本信息
         if (nameText != null) nameText.text = data.cardName;
         if (costText != null) costText.text = data.energyCost.ToString();
-        
-        // 假设卡牌描述是基于第一个 Action 的值
-        if (descriptionText != null && data.actions.Count > 0)
+        // 使用 CardData 中新的 description 字段
+        if (descriptionText != null) descriptionText.text = data.description; 
+        if (typeText != null) typeText.text = data.type.ToString();
+
+        // ⭐ 绑定卡牌插画 ⭐
+        if (artworkImage != null)
         {
-            var action = data.actions[0];
-            descriptionText.text = $"{action.effectType.ToString()} {action.value} to {action.targetType.ToString()}";
+            if (data.artwork != null)
+            {
+                artworkImage.sprite = data.artwork;
+                artworkImage.enabled = true;
+            }
+            else
+            {
+                // 如果没有配置图片，可以隐藏 Image 组件或使用默认图
+                artworkImage.enabled = false;
+            }
         }
     }
     
@@ -67,18 +90,8 @@ public class CardDisplay : MonoBehaviour,
         }
     }
 
-    // --- 1. 悬停/高亮逻辑 ---
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (isDragging) return;
-        BattleManager.Instance?.HighlightCard(this);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (isDragging) return;
-        BattleManager.Instance?.UnhighlightCard(this);
-    }
+    // --- 1. 悬停/高亮逻辑 (已移除 OnPointerEnter/Exit，由 BattleManager 接管) ---
+    // 卡牌自身不再处理悬停事件，避免抖动。
     
     // --- 2. 拖拽开始逻辑 (IBeginDragHandler) ---
     public void OnBeginDrag(PointerEventData eventData)
@@ -93,14 +106,15 @@ public class CardDisplay : MonoBehaviour,
         // 检查卡牌是否需要目标
         if (!BattleManager.Instance.cardSystem.CardNeedsSelectedTarget(cardData))
         {
-            return; // 不需要明确目标，不启动拖拽瞄准
+            // 自动打出的卡牌不应被拖拽瞄准，除非需要拖拽到打出区域
+            return; 
         }
 
         isDragging = true;
         originalLocalPosition = rectTransform.localPosition;
         originalLocalRotation = rectTransform.localRotation;
         
-        // 1. 立即取消 BattleManager 中的高亮状态，将卡牌强制放回布局位置
+        // 1. 立即通知 BattleManager 取消高亮状态 (避免卡牌在拖拽时仍被高亮布局影响)
         BattleManager.Instance.UnhighlightCard(this); 
         
         // 2. 提升卡牌的渲染层级
@@ -109,7 +123,7 @@ public class CardDisplay : MonoBehaviour,
         // 3. 停止 DOTween 动画
         DOTween.Kill(transform); 
         
-        Debug.Log("--- Dragging started: Targeting activated (No arrow visual) ---");
+        Debug.Log("--- Dragging started: Targeting activated ---");
     }
 
     // --- 3. 拖拽进行中逻辑 (IDragHandler) ---
@@ -118,9 +132,22 @@ public class CardDisplay : MonoBehaviour,
         if (!isDragging) return;
         if (BattleManager.Instance == null) return;
 
-        // 保持卡牌在手牌布局位置，但执行放大和去旋转
+        // 核心修正：将卡牌移动到鼠标位置，实现真正的拖拽
+        Vector2 localPoint;
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            transform.parent.GetComponent<RectTransform>(), 
+            eventData.position, 
+            eventData.pressEventCamera, 
+            out localPoint
+        ))
+        {
+            rectTransform.localPosition = localPoint;
+        }
+
+        // 保持卡牌正对屏幕且放大
         rectTransform.localRotation = Quaternion.identity;
-        rectTransform.localScale = Vector3.one * BattleManager.Instance.hoverScale;
+        float scale = (BattleManager.Instance.hoverScale > 0) ? BattleManager.Instance.hoverScale : 1.2f;
+        rectTransform.localScale = Vector3.one * scale;
         
         // 检查鼠标悬停在哪个 CharacterBase 目标上
         currentTargetObject = eventData.pointerCurrentRaycast.gameObject;
@@ -128,20 +155,22 @@ public class CardDisplay : MonoBehaviour,
         
         if (currentTargetObject != null)
         {
-            // 尝试在鼠标射线击中的对象及其父级中查找 CharacterBase
             hitCharacter = currentTargetObject.GetComponentInParent<CharacterBase>();
         }
 
         // 仅当目标发生变化时才更新状态
         if (hitCharacter != currentTargetCharacter)
         {
+            // 取消旧目标的高亮 (假设 CharacterBase 有 Unhighlight 方法)
+            // if (currentTargetCharacter != null) currentTargetCharacter.Unhighlight(); 
+            
             currentTargetCharacter = hitCharacter;
             
             // 检查新目标是否有效
             bool isValid = currentTargetCharacter != null && BattleManager.Instance.IsValidTarget(cardData, currentTargetCharacter);
             
-            // ⭐ 可选：根据 isValid 状态高亮或取消高亮目标角色 ⭐
-            // 此时需要依赖 CharacterBase 上的高亮/取消高亮方法
+            // 高亮新目标 (假设 CharacterBase 有 Highlight 方法)
+            // if (isValid) currentTargetCharacter.Highlight(isValid); 
         }
     }
 
@@ -153,15 +182,13 @@ public class CardDisplay : MonoBehaviour,
 
         isDragging = false;
         
-        // 1. 使用 OnDrag 中追踪的最终目标
         CharacterBase finalTarget = currentTargetCharacter;
         
-        // 2. 尝试打出卡牌
+        // 尝试打出卡牌
         if (finalTarget != null && BattleManager.Instance.TryPlayCard(cardData, finalTarget, gameObject))
         {
             // TryPlayCard 成功：BattleManager 接管卡牌的动画和销毁
             DOTween.Kill(transform);
-            
             Debug.Log($"Successfully played card: {cardData.cardName}, target: {finalTarget.characterName}");
         }
         else
@@ -173,6 +200,9 @@ public class CardDisplay : MonoBehaviour,
             ReturnToHand(originalLocalPosition, originalLocalRotation);
         }
 
+        // 无论成功与否，都要取消当前目标的高亮
+        // if (currentTargetCharacter != null) currentTargetCharacter.Unhighlight(); 
+        
         currentTargetCharacter = null;
         currentTargetObject = null;
     }
@@ -183,13 +213,15 @@ public class CardDisplay : MonoBehaviour,
         if (BattleManager.Instance == null) return;
         float returnDuration = BattleManager.Instance.repositionDuration; 
 
+        DOTween.Kill(transform);
+        
         transform.DOLocalMove(targetLocalPosition, returnDuration).SetEase(Ease.OutBack);
         transform.DOLocalRotateQuaternion(targetLocalRotation, returnDuration);
         
         transform.DOScale(Vector3.one, returnDuration)
             .OnComplete(() =>
             {
-                // 动画完成后，通知 BattleManager 重新布局
+                // 动画完成后，通知 BattleManager 重新布局，恢复所有卡牌的正确状态
                 BattleManager.Instance.UpdateHandLayout(true); 
             });
     }
@@ -197,21 +229,32 @@ public class CardDisplay : MonoBehaviour,
     // --- 6. IPointerClickHandler: 自动打出 (无目标卡牌) ---
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (isDragging) return; 
+        
         if (cardData == null || BattleManager.Instance == null || BattleManager.Instance.cardSystem == null || CharacterManager.Instance == null) return;
+
+        // ⭐ 只有当当前卡牌是 BattleManager 确定的高亮卡牌时，点击才有效 ⭐
+        if (BattleManager.Instance.GetHighlightedCard() != this)
+        {
+            return;
+        }
 
         // 检查卡牌是否需要明确的 Selected 目标
         bool needsExplicitTarget = BattleManager.Instance.cardSystem.CardNeedsSelectedTarget(cardData);
 
         if (!needsExplicitTarget)
         {
-            // ⭐ 修正: 对于无目标卡牌，我们使用主角作为默认目标 (即便 effect 可能不作用于主角) ⭐
-            // BattleManager.Instance.activeHero 已经被移除，应使用 CharacterManager.Instance.GetActiveHero()
+            // 对于无目标卡牌，使用主角作为默认目标
             CharacterBase player = CharacterManager.Instance.GetActiveHero();
             
             if (player != null && BattleManager.Instance.TryPlayCard(cardData, player, gameObject))
             {
                 // 自动播放成功
                 Debug.Log($"Automatically playing card (No target required): {cardData.cardName}");
+            }
+            else
+            {
+                 Debug.Log($"Automatic play failed for card: {cardData.cardName}. Energy or other requirements not met.");
             }
         }
     }

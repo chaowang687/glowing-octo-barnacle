@@ -5,22 +5,10 @@
 /[Bb]uild/
 /[Bb]uilds/
 /Assets/AssetStoreTools/
-/Assets/StreamingAssets/
 
-# Visual Studio / Rider generated files
-# (These can cause issues if shared across different OS/IDE versions)
-/[Pp]rojectSettings/UserSettings/
-/*.csproj
+# Visual Scripting database (the one we just removed from history)
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+
+# Optional: Logs and other user settings
+*.log
 *.unityproj
-*.sln
-*.suo
-*.user
-*.userprefs
-*.pidb
-*.booproj
-*.svd
-*.pdb
-*.meta
-*.opendb
-*.vs/
-/ExportedObj/

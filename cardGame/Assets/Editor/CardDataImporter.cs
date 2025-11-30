@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
+using CardDataEnums;
 
 /// <summary>
 /// 编辑器工具：用于从 CSV 文件导入卡牌数据，并生成 CardData ScriptableObject 资产。
@@ -131,10 +132,10 @@ public class CardDataImporter : EditorWindow
         cardData.isUpgraded = GetBoolValue(entry, "IsUpgraded", false);
 
         // 枚举属性
-        cardData.rarity = GetEnumValue<CardEnums.Rarity>(entry, "Rarity", CardEnums.Rarity.Common);
+        cardData.rarity = GetEnumValue<Rarity>(entry, "Rarity", Rarity.Common);
         // 注意：这里使用 RequiredClass 字段，而不是 Class
-        cardData.requiredClass = GetEnumValue<CardEnums.CardClass>(entry, "RequiredClass", CardEnums.CardClass.Any); 
-        cardData.type = GetEnumValue<CardEnums.CardType>(entry, "Type", CardEnums.CardType.Attack);
+        cardData.requiredClass = GetEnumValue<CardClass>(entry, "RequiredClass", CardClass.Any); 
+        cardData.type = GetEnumValue<CardType>(entry, "Type", CardType.Attack);
 
         // 清空旧的 Actions 列表，准备填充新的
         cardData.actions.Clear();
@@ -149,12 +150,12 @@ public class CardDataImporter : EditorWindow
                 CardAction action = new CardAction();
                 
                 // 1. 解析 EffectType (必须存在)
-                action.effectType = GetEnumValue<CardEnums.EffectType>(entry, effectTypeKey, CardEnums.EffectType.None);
-                if (action.effectType == CardEnums.EffectType.None) continue; // 无效效果类型则跳过
+                action.effectType = GetEnumValue<EffectType>(entry, effectTypeKey, EffectType.None);
+                if (action.effectType == EffectType.None) continue; // 无效效果类型则跳过
 
                 // 2. 解析 TargetType (采用用户表格中的 EffectN_Target 格式)
                 string targetTypeKey = $"Effect{i}_Target";
-                action.targetType = GetEnumValue<CardEnums.TargetType>(entry, targetTypeKey, CardEnums.TargetType.SelectedEnemy);
+                action.targetType = GetEnumValue<TargetType>(entry, targetTypeKey, TargetType.SelectedEnemy);
                 
                 // 3. 解析 Value (采用用户表格中的 EffectN_Value 格式)
                 string valueKey = $"Effect{i}_Value";
@@ -167,7 +168,7 @@ public class CardDataImporter : EditorWindow
 
                 // StatusEffect (默认为 None)
                 string statusEffectKey = $"StatusEffect{i}";
-                action.statusEffect = GetEnumValue<CardEnums.StatusEffect>(entry, statusEffectKey, CardEnums.StatusEffect.None);
+                action.statusEffect = GetEnumValue<StatusEffect>(entry, statusEffectKey, StatusEffect.None);
                 
                 // Duration (默认为 Value)
                 string durationKey = $"Duration{i}";

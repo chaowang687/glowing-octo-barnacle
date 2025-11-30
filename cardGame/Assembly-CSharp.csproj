@@ -68,21 +68,50 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.29f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets/CS/Scripts/EnemyAI.cs" />
+    <Compile Include="Assets/CS/对战AI/AI蓝图接口/EnemyIntentStrategy.cs" />
+    <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
+    <Compile Include="Assets/CS/对战AI/结果/CharacterBase.cs" />
     <Compile Include="Assets/CS/Scripts/Data/CardData.cs" />
-    <Compile Include="Assets/CS/Scripts/CardSystem..cs" />
+    <Compile Include="Assets/CS/Enums.cs" />
+    <Compile Include="Assets/CS/对战AI/行为/RoundBasedStrategy.cs" />
     <Compile Include="Assets/CS/Scripts/CardDisplay.cs" />
-    <Compile Include="Assets/CS/Scripts/Managers/BattleManager.cs 04-43-27-654.cs" />
-    <Compile Include="Assets/CS/Scripts/CharacterBase.cs" />
-    <Compile Include="Assets/CS/Scripts/Enums.cs" />
-    <Compile Include="Assets/CS/敌人AI/EnemyIntentStrategy.cs" />
-    <Compile Include="Assets/CS/敌人AI/RoundBasedStrategy.cs" />
+    <Compile Include="Assets/CS/对战AI/结果/Hero.cs" />
+    <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
+    <Compile Include="Assets/CS/对战AI/结果/Enemy.cs" />
+    <Compile Include="Assets/CS/对战AI/执行/EnemyAI.cs" />
+    <Compile Include="Assets/CS/Scripts/Data/CardDataEnums.cs" />
+    <Compile Include="Assets/CS/对战AI/使用说明.cs" />
     <Compile Include="Assets/CS/Scripts/Managers/CharacterManager.cs" />
-    <Compile Include="Assets/CS/敌人AI/EnemyAction.cs" />
+    <Compile Include="Assets/CS/玩家敌人显示/CharacterDisplay.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
-    <Compile Include="Assets/CS/CardEnums.cs" />
-    <Compile Include="Assets/CS/敌人AI/Data/EnemyData.cs" />
+    <Compile Include="Assets/CS/Scripts/Deck/CardSystem.cs" />
     <Compile Include="Assets/CS/CardAction.cs" />
+    <Compile Include="Assets/CS/Scripts/Managers/BattleManager.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader" />
+    <None Include="Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader" />
+    <None Include="Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc" />
+    <None Include="Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader" />
+    <None Include="Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader" />
+    <None Include="Assets/TextMesh Pro/Shaders/TMP_Sprite.shader" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1215,6 +1244,10 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.State">
       <HintPath>Library/ScriptAssemblies/Unity.VisualScripting.State.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.2D.Sprite.Editor">
+      <HintPath>Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">

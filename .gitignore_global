@@ -1,0 +1,18 @@
+# Unity Generated Folders
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/UserSettings/
+
+# Visual Scripting database file (MUST BE IGNORED)
+Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+
+# Standard Unity Files
+*.pidb
+*.unityhost
+*.csproj
+*.unityproj
+*.sln

@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CardDataEnums;
 
-// 确保所有的枚举引用都使用 CardEnums.前缀。
+
 
 /// <summary>
 /// 卡牌行动结构体，定义了卡牌的单个效果。
@@ -12,10 +13,10 @@ using System.Collections.Generic;
 public struct CardAction
 {
     [Tooltip("效果类型: 伤害, 格挡, 治疗, 施加增益/减益等.")]
-    public CardEnums.EffectType effectType;
+    public EffectType effectType;
 
     [Tooltip("目标类型: 自身, 所有敌人, 选定敌人等.")]
-    public CardEnums.TargetType targetType;
+    public TargetType targetType;
 
     [Tooltip("效果的基础值 (例如: 伤害量, 格挡量, 抽卡数)")]
     public int value;
@@ -27,7 +28,7 @@ public struct CardAction
     // --- Fields specific to Buff/Debuff ---
     
     [Tooltip("If the effect is Buff/Debuff, specifies the status type")]
-    public CardEnums.StatusEffect statusEffect;
+    public StatusEffect statusEffect;
 
     [Tooltip("Duration of the Buff/Debuff in turns, or stack layers (often imported from Value)")]
     public int duration;
