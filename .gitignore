@@ -8,6 +8,11 @@
 
 # Visual Scripting database (the one we just removed from history)
 /Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/Assets/Unity.VisualScripting.Generated/
+/ProjectSettings/ProjectSettings.asset.bak
+/Assets/AssetStoreTools/
+/Assets/StreamingAssets/
+
 
 # Optional: Logs and other user settings
 *.log
