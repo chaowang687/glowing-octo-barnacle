@@ -14,14 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roundActions:
   - intentType: 1
-    value: 6
+    value: 2
     statusEffectName: 
     duration: 3
-    weight: 0
-    description: 
-  - intentType: 2
-    value: 7
-    statusEffectName: 
-    duration: 1
     weight: 0
     description: 

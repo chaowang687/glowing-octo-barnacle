@@ -359,6 +359,7 @@ public class BattleManager : MonoBehaviour
 
     private void CalculateAllEnemyIntents()
     {
+       
         CharacterBase activeHero = characterManager.GetActiveHero();
         if (activeHero == null) return;
 

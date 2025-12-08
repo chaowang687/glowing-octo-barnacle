@@ -14,6 +14,11 @@ public class CharacterUIDisplay : MonoBehaviour
     /// <summary>
     /// 绑定 UI 视图到角色数据，并订阅生命值变化事件。
     /// </summary>
+    // UI 组件引用
+ 
+    // ⭐ 增补点 1：增加血量数值 Text 组件引用 ⭐
+    public Text hpValueText; // 新增！
+    
     public void Initialize(CharacterBase character)
     {
         // 第一次检查已确保 character 不为 null
@@ -27,6 +32,12 @@ public class CharacterUIDisplay : MonoBehaviour
         {
             hpSlider.maxValue = character.maxHp;
             hpSlider.value = character.currentHp;
+        }
+
+        // ⭐ 增补点 2：首次设置血量数值 Text ⭐
+        if (hpValueText != null)
+        {
+            hpValueText.text = $"{character.currentHp}/{character.maxHp}";
         }
         
         // 2. 订阅事件 (View 绑定到 Model)
@@ -53,6 +64,11 @@ public class CharacterUIDisplay : MonoBehaviour
         {
             // 更新血条的当前值
             hpSlider.value = currentHp; 
+        }
+        // ⭐ 增补点 3：更新血量数值 Text ⭐
+        if (hpValueText != null)
+        {
+            hpValueText.text = $"{currentHp}/{maxHp}";
         }
     }
     

@@ -27,11 +27,22 @@ private CharacterBase self;
 private IEnemyIntentStrategy strategy;
 
 public void Initialize(EnemyData enemyData, object intentStrategy)
+{
+    Debug.Log($"Enemy AI for {enemyData.enemyName} initialized with a strategy.");
+    this.enemyData = enemyData; 
+    
+    // ⭐ 核心修正：直接尝试将传入的 object 转换为接口 IEnemyIntentStrategy ⭐
+    // 如果 RoundBasedStrategy 确实实现了接口，这一步就会成功。
+    if (intentStrategy is IEnemyIntentStrategy strategyImpl)
     {
-        Debug.Log($"Enemy AI for {enemyData.enemyName} initialized with a strategy.");
-        // 在这里存储敌人的数据和策略，以便在战斗中使用
+        this.strategy = strategyImpl;
     }
-
+    else
+    {
+        Debug.LogError($"Enemy {enemyData.enemyName} 的 intentStrategy 无法转换为 IEnemyIntentStrategy。请检查：1. 资产是否正确。 2. RoundBasedStrategy 是否实现 IEnemyIntentStrategy。");
+        this.strategy = null; // 确保在失败时策略为空
+    }
+}
 void Awake()
 
 {
@@ -46,15 +57,6 @@ void Start()
 
 {
 
-if (enemyData != null && enemyData.intentStrategy != null)
-
-{
-
-// 尝试将 ScriptableObject 转换为 IEnemyIntentStrategy 接口
-
-strategy = enemyData.intentStrategy as IEnemyIntentStrategy;
-
-}
 
 
 

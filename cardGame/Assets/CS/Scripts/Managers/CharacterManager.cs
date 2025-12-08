@@ -12,6 +12,8 @@ public class CharacterManager : MonoBehaviour
 
     [Header("Enemies")]
     public List<CharacterBase> allEnemies = new List<CharacterBase>();
+    // ⭐ 修复 CS1061：添加 ActiveEnemies 属性 ⭐
+    public List<CharacterBase> ActiveEnemies { get; private set; } = new List<CharacterBase>();
 
     private void Awake()
     {

@@ -59,8 +59,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a152e81498c3a460b91d3923cee9e4df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyData: {fileID: 11400000, guid: 3c2d3be3878464f69a251c30426a0348, type: 2}
-  nextIntent: 1
+  enemyData: {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
+  nextIntent: 0
   intentValue: 0
 --- !u!114 &1909562342051364970
 MonoBehaviour:

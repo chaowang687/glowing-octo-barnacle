@@ -1572,7 +1572,7 @@ MonoBehaviour:
   extraSpacingOnHover: 50
   hoverToleranceFactor: 0.4
   hoverToleranceY: 150
-  defaultEnemyDataAsset: {fileID: 11400000, guid: 9af2730967d924ab9801e551e5bd4fa7, type: 2}
+  defaultEnemyDataAsset: {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
   defaultEnemyStrategyAsset: {fileID: 11400000, guid: 9f82ee2b83b0b4dcfa99727ebd76606c, type: 2}
 --- !u!114 &1933791714
 MonoBehaviour:
