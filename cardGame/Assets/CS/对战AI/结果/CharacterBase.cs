@@ -176,6 +176,8 @@ public class CharacterBase : MonoBehaviour
         finalDamage = Mathf.Max(0, finalDamage);
 
         target.TakeDamage(finalDamage); // 调用 TakeDamage(int)
+        // ⭐ 临时调试日志：检查修正后的伤害 ⭐
+        Debug.Log($"Attacker: {this.characterName}. Base Damage: {baseDamage}. Final Damage to Target: {finalDamage}.");
     }
 
     // ⭐ 修正：保留的 TakeDamage(int) 方法，委托给带参数的版本 ⭐

@@ -82,7 +82,11 @@ public class CardData : ScriptableObject
         {
             // 1. 计算受状态效果修正后的最终值
             int finalValue = CalculateFinalValue(source, action);
-
+            // ⭐ 临时调试日志：检查计算结果 ⭐
+            if (action.effectType == EffectType.Attack)
+            {
+                Debug.Log($"Action Type: Attack. Calculated Final Value: {finalValue}.");
+            }
             // 2. 确定实际目标列表
             // 注意：action.targetType 已经在 CardAction 结构体中明确为 CardEnums.TargetType
             List<CharacterBase> actualTargets = GetActualTargets(source, target, cardSystem, action.targetType);

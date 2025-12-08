@@ -80,7 +80,15 @@ public class CardDisplay : MonoBehaviour,
             }
         }
     }
-    
+    public void OnClickOrRelease()
+{
+    // ...
+    BattleManager.Instance.TryPlayCard(
+        this.cardData, 
+        null, // ⭐ 传入 null，让 BattleManager 自动查找目标 ⭐
+        this.gameObject
+    );
+}
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();

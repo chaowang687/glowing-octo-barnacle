@@ -433,19 +433,52 @@ public class BattleManager : MonoBehaviour
         highlightedCard = null;      // 清空高亮卡牌
     }
     
+    // BattleManager.cs
+
     public bool TryPlayCard(CardData card, CharacterBase target, GameObject cardDisplayObject)
     {
         if (cardSystem == null || characterManager == null || card == null) return false;
         
         if (!cardSystem.CanPlayCard(card)) return false;
         
-        if (cardSystem.CardNeedsSelectedTarget(card) && target == null) return false; 
+        // --- ⭐ 关键修改区域：自动目标锁定 ⭐
+        CharacterBase actualTarget = target;
         
-        if (cardSystem.CardNeedsSelectedTarget(card) && !IsValidTarget(card, target)) return false;
+        // 1. 检查卡牌是否需要目标
+        if (cardSystem.CardNeedsSelectedTarget(card))
+        {
+            // 2. 尝试从传入的 target 中获取（如果您还保留了拖拽功能）
+            if (actualTarget == null)
+            {
+                // 3. 如果传入目标为空 (点击打出)，则自动查找第一个存活的敌人
+                CharacterBase firstEnemy = characterManager.GetAllEnemies().FirstOrDefault(e => e != null && e.currentHp > 0);
+                
+                if (firstEnemy != null)
+                {
+                    actualTarget = firstEnemy; // 锁定第一个敌人
+                    Debug.Log($"自动锁定目标: {actualTarget.characterName}");
+                }
+            }
+            
+            // 4. 再次检查：如果没有找到任何目标，则无法打出
+            if (actualTarget == null)
+            {
+                
+                Debug.LogWarning($"卡牌 {card.cardName} 需要目标但场上没有存活的敌人。");
+                return false;
+            }
+        }
+        // --- ⭐ 关键修改区域结束 ⭐
+        
+        // 5. 目标合法性检查 (使用 actualTarget)
+        if (cardSystem.CardNeedsSelectedTarget(card) && !IsValidTarget(card, actualTarget)) return false;
 
+        // 6. 执行消耗和动画
         cardSystem.SpendEnergy(card.energyCost);
         Debug.Log($"成功打出 {card.cardName}，剩余能量: {cardSystem.CurrentEnergy}");
 
+        // ... (卡牌移除逻辑不变) ...
+        
         CardDisplay displayToRemove = cardDisplayObject.GetComponent<CardDisplay>();
         if (displayToRemove != null)
         {
@@ -453,7 +486,8 @@ public class BattleManager : MonoBehaviour
             if (highlightedCard == displayToRemove) highlightedCard = null;
         }
         
-        Transform targetTransform = target != null ? target.transform : handContainer; 
+        // ⭐ targetTransform 传入实际目标 ⭐
+        Transform targetTransform = actualTarget != null ? actualTarget.transform : handContainer; 
 
         AnimatePlayCard(
             card, 
@@ -492,7 +526,7 @@ public class BattleManager : MonoBehaviour
                 CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
                 
                 CharacterBase source = characterManager.GetActiveHero();
-                // card.ExecuteEffects(source, targetCharacter, cardSystem); // 假设 CardData.ExecuteEffects 存在
+                card.ExecuteEffects(source, targetCharacter, cardSystem); // 假设 CardData.ExecuteEffects 存在
                 
                 cardSystem.PlayCard(card); 
                 UpdateHandLayout(true); 
