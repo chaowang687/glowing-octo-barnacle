@@ -14,12 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: W_SHIELD
   cardName: New Card
-  description: No description.
+  description: Add 3 points of defense
   artwork: {fileID: 0}
   rarity: 3
   requiredClass: 1
   energyCost: 1
-  type: 0
+  type: 1
   isUpgraded: 0
   upgradedCardData: {fileID: 0}
-  actions: []
+  actions:
+  - effectType: 6
+    targetType: 1
+    value: 0
+    scalesWithStatus: 0
+    statusEffect: 0
+    duration: 0

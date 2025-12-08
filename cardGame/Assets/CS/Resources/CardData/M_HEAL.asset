@@ -13,13 +13,19 @@ MonoBehaviour:
   m_Name: M_HEAL
   m_EditorClassIdentifier: 
   cardID: M_HEAL
-  cardName: New Card
-  description: No description.
+  cardName: Health
+  description: Restore 10 health points
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 1
   requiredClass: 2
-  energyCost: 1
-  type: 0
+  energyCost: 3
+  type: 1
   isUpgraded: 0
   upgradedCardData: {fileID: 0}
-  actions: []
+  actions:
+  - effectType: 3
+    targetType: 1
+    value: 10
+    scalesWithStatus: 0
+    statusEffect: 0
+    duration: 0

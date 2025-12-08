@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: M_FIRE
   cardName: New Card
-  description: No description.
+  description: Reduce 3 health points per round
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 3
   requiredClass: 2
@@ -22,4 +22,10 @@ MonoBehaviour:
   type: 0
   isUpgraded: 0
   upgradedCardData: {fileID: 0}
-  actions: []
+  actions:
+  - effectType: 7
+    targetType: 5
+    value: 2
+    scalesWithStatus: 0
+    statusEffect: 5
+    duration: 3

@@ -8,6 +8,8 @@ using CardDataEnums;
 /// </summary>
 public class CardSystem : MonoBehaviour
 {
+    // CardSystem.cs (顶部)
+    public event System.Action OnEnergyChanged;
     [Header("Energy")]
     public int maxEnergy = 3;
     // CardDisplay.cs 和 BattleManager.cs 依赖的属性
@@ -66,6 +68,8 @@ public class CardSystem : MonoBehaviour
     {
         CurrentEnergy = Mathf.Min(maxEnergy, CurrentEnergy + amount);
         Debug.Log($"DEBUG: Gained {amount} Energy. Current: {CurrentEnergy}");
+        // ⭐ 触发事件 ⭐
+        OnEnergyChanged?.Invoke();
     }
 
     /// <summary>
@@ -76,6 +80,8 @@ public class CardSystem : MonoBehaviour
         CurrentEnergy -= amount;
         CurrentEnergy = Mathf.Max(0, CurrentEnergy);
         Debug.Log($"DEBUG: Spent {amount} Energy. Remaining: {CurrentEnergy}");
+        // ⭐ 触发事件 ⭐
+        OnEnergyChanged?.Invoke();
     }
 
     /// <summary>
@@ -85,6 +91,8 @@ public class CardSystem : MonoBehaviour
     {
         CurrentEnergy = maxEnergy;
         Debug.Log($"DEBUG: Energy reset to Max Energy: {maxEnergy}");
+        // ⭐ 触发事件 ⭐
+        OnEnergyChanged?.Invoke();
     }
 
     /// <summary>

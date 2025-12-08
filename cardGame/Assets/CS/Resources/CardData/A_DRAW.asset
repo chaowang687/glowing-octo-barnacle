@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: A_DRAW
   m_EditorClassIdentifier: 
   cardID: A_DRAW
-  cardName: New Card
-  description: Attack 10
+  cardName: Strike
+  description: Dealing 6 points of damage
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 1
   requiredClass: 0
@@ -24,8 +24,8 @@ MonoBehaviour:
   upgradedCardData: {fileID: 0}
   actions:
   - effectType: 1
-    targetType: 2
-    value: 10
+    targetType: 5
+    value: 6
     scalesWithStatus: 0
     statusEffect: 0
     duration: 0

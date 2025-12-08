@@ -30,10 +30,10 @@ public class UIManager : MonoBehaviour
         UpdateEnergyDisplay();
 
         // 假设 CardSystem 暴露了一个用于订阅能量变化的事件
-        // if (battleManager.cardSystem != null)
-        // {
-        //     battleManager.cardSystem.OnEnergyChanged += UpdateEnergyDisplay;
-        // }
+        if (battleManager.cardSystem != null)
+        {
+            battleManager.cardSystem.OnEnergyChanged += UpdateEnergyDisplay;
+        }
     }
 
     // 优化: 删除 Update()，改用事件驱动或外部调用
