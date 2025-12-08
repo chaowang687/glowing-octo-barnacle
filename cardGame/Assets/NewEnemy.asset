@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e2879677ad1074c90ae88f64507393a1, type: 3}
-  m_Name: Slime
+  m_Name: NewEnemy
   m_EditorClassIdentifier: 
   enemyName: Slime
   maxHp: 50
-  artwork: {fileID: 2119910955, guid: 6738490f3c686471ca04344d71e01aee, type: 3}
+  artwork: {fileID: -1075089703, guid: 3f0bc0b6f8283434a97ed15c7a363832, type: 3}

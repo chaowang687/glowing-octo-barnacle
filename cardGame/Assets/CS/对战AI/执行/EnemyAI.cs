@@ -26,7 +26,11 @@ private CharacterBase self;
 
 private IEnemyIntentStrategy strategy;
 
-
+public void Initialize(EnemyData enemyData, object intentStrategy)
+    {
+        Debug.Log($"Enemy AI for {enemyData.enemyName} initialized with a strategy.");
+        // 在这里存储敌人的数据和策略，以便在战斗中使用
+    }
 
 void Awake()
 

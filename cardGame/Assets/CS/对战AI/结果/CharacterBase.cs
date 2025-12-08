@@ -1,31 +1,52 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq; 
-using CardDataEnums; // 导入卡牌枚举所在的命名空间
+using CardDataEnums; // 假设您已定义 StatusEffect 枚举
+using System; // 引入 System 命名空间
 
 /// <summary>
 /// 角色基类 (英雄或敌人)。包含核心属性和战斗方法，并全面支持状态效果。
 /// </summary>
 public class CharacterBase : MonoBehaviour
 {
-    // 将这些字段设置为 public 或 protected，以便子类访问
+    // ⭐ 核心：定义事件，用于通知 UI 更新 (血条变化) ⭐
+    public event Action<int, int> OnHealthChanged;
+    
     [Header("Base Stats")]
     public string characterName = "Character";
-    public int maxHp = 100; // 暴露给子类访问
-    public int currentHp;    // 暴露给子类访问
-    public int block;
-    public bool isDead = false; // 暴露给子类访问
+    
+    // ⭐ 修正：统一使用字段 (解决 CS1061/CS0103) ⭐
+    public int maxHp = 100; // 最大生命值
+    public int currentHp; // 当前生命值
+    
+    public int block; // 格挡值
+    public bool isDead = false; 
     
     // 状态效果列表：存储当前生效的状态效果及其层数
     protected Dictionary<StatusEffect, int> statusEffects = new Dictionary<StatusEffect, int>();
 
     protected virtual void Awake()
     {
-        currentHp = maxHp;
+        // 字段初始化
+        currentHp = maxHp; 
         isDead = false;
         block = 0;
     }
 
+    /// <summary>
+    /// GameFlowManager 依赖的初始化方法。
+    /// </summary>
+    public virtual void Initialize(string name, int maxHp, Sprite artwork)
+    {
+        // ⭐ 修正：使用字段进行赋值 ⭐
+        this.maxHp = maxHp;
+        this.currentHp = maxHp;
+        this.characterName = name;
+        
+        // 首次初始化时通知 UI
+        OnHealthChanged?.Invoke(currentHp, this.maxHp);
+    }
+    
     // --- 状态效果处理 ---
 
     /// <summary>
@@ -39,9 +60,7 @@ public class CharacterBase : MonoBehaviour
     /// <summary>
     /// 应用状态效果 (Buff/Debuff)。
     /// </summary>
-    /// <param name="effect">状态效果枚举类型。</param>
-    /// <param name="duration">持续回合数或层数。</param>
-    public virtual void ApplyStatusEffect(StatusEffect effect, int duration) // 方法名修正为 ApplyStatusEffect
+    public virtual void ApplyStatusEffect(StatusEffect effect, int duration) 
     {
         if (duration <= 0) return;
         
@@ -61,12 +80,11 @@ public class CharacterBase : MonoBehaviour
     /// </summary>
     protected void DecreaseStatusDurations()
     {
-        // 需要复制键列表，因为迭代时不能修改字典
         var keys = statusEffects.Keys.ToList();
         
         foreach (var effect in keys)
         {
-            // 力量、敏捷、金属化被视为永久或回合后特殊处理的状态，不在此处自动减少
+            // 力量、敏捷、金属化被视为永久或回合后特殊处理的状态
             if (effect == StatusEffect.Strength || effect == StatusEffect.Dexterity || effect == StatusEffect.Metallicize)
             {
                 continue; 
@@ -96,7 +114,7 @@ public class CharacterBase : MonoBehaviour
         int poisonAmount = GetStatusEffectAmount(StatusEffect.Poison);
         if (poisonAmount > 0)
         {
-            // 中毒伤害不是攻击，不触发易伤
+            // 调用 TakeDamage(amount, isAttack: false) 来处理中毒伤害
             TakeDamage(poisonAmount, isAttack: false); 
             
             // 中毒层数减少 1
@@ -115,7 +133,7 @@ public class CharacterBase : MonoBehaviour
     /// <summary>
     /// 回合结束时执行的逻辑 (例如清除格挡, 金属化格挡)。
     /// </summary>
-    public virtual void AtEndOfTurn() // 方法名修正为 AtEndOfTurn
+    public virtual void AtEndOfTurn() 
     {
         if (isDead) return;
 
@@ -157,7 +175,17 @@ public class CharacterBase : MonoBehaviour
         
         finalDamage = Mathf.Max(0, finalDamage);
 
-        target.TakeDamage(finalDamage);
+        target.TakeDamage(finalDamage); // 调用 TakeDamage(int)
+    }
+
+    // ⭐ 修正：保留的 TakeDamage(int) 方法，委托给带参数的版本 ⭐
+    /// <summary>
+    /// 接收伤害逻辑。这是默认的攻击入口。
+    /// </summary>
+    public void TakeDamage(int damageAmount)
+    {
+        // 委托给带参数的版本，标记为攻击
+        TakeDamage(damageAmount, isAttack: true); 
     }
 
     /// <summary>
@@ -171,7 +199,7 @@ public class CharacterBase : MonoBehaviour
         
         int damageTaken = amount;
         
-        // 1. 易伤 (Vulnerable) 修正 (受到的攻击伤害增加 50%)
+        // 1. 易伤 (Vulnerable) 修正
         if (isAttack && GetStatusEffectAmount(StatusEffect.Vulnerable) > 0)
         {
             damageTaken = (int)(damageTaken * 1.5f);
@@ -186,8 +214,14 @@ public class CharacterBase : MonoBehaviour
             damageTaken = damageAfterBlock;
         }
 
+        // ⭐ 修正：使用 currentHp 字段扣血 ⭐
         currentHp -= damageTaken;
+        currentHp = Mathf.Max(0, currentHp); 
+        
         Debug.Log($"{characterName} 受到 {damageTaken} 最终伤害。HP 剩余: {currentHp}。格挡剩余: {block}");
+        
+        // ⭐ 关键：触发事件，通知 UI 更新 ⭐
+        OnHealthChanged?.Invoke(currentHp, maxHp); 
         
         if (currentHp <= 0)
         {
@@ -196,9 +230,8 @@ public class CharacterBase : MonoBehaviour
     }
 
     /// <summary>
-    /// 获得格挡。计算敏捷和虚弱修正。
+    /// 获得格挡。计算敏捷修正。
     /// </summary>
-    /// <param name="amount">格挡值。</param>
     public virtual void AddBlock(int amount)
     {
         if (isDead) return;
@@ -208,12 +241,11 @@ public class CharacterBase : MonoBehaviour
         // 1. 敏捷 (Dexterity) 修正
         finalBlock += GetStatusEffectAmount(StatusEffect.Dexterity);
         
-        // 2. 虚弱 (Weak) 修正 (获得的格挡减少 25%)
-        if (GetStatusEffectAmount(StatusEffect.Weak) > 0)
-        {
-            finalBlock = (int)(finalBlock * 0.75f);
-            Debug.Log($"{characterName} 处于虚弱状态，格挡值减少 25%。");
-        }
+        // 2. 虚弱修正 (通常不影响格挡，这里注释掉，如需要请取消)
+        // if (GetStatusEffectAmount(StatusEffect.Weak) > 0)
+        // {
+        //     finalBlock = (int)(finalBlock * 0.75f);
+        // }
 
         finalBlock = Mathf.Max(0, finalBlock);
         
@@ -227,8 +259,14 @@ public class CharacterBase : MonoBehaviour
     public virtual void Heal(int amount)
     {
         if (isDead) return;
+        
+        // ⭐ 修正：使用 currentHp 和 maxHp 字段进行治疗 ⭐
         currentHp = Mathf.Min(maxHp, currentHp + amount);
+        
         Debug.Log($"{characterName} 治疗 {amount}。当前 HP: {currentHp}");
+        
+        // 触发 UI 更新
+        OnHealthChanged?.Invoke(currentHp, maxHp); 
     }
     
     /// <summary>
