@@ -18,7 +18,8 @@ public class RoundBasedStrategy : ScriptableObject, IEnemyIntentStrategy
             Debug.LogWarning("RoundBasedStrategy has no actions defined. Defaulting to NONE.");
             return new EnemyAction { intentType = IntentType.NONE, value = 0 }; 
         }
-
+        Debug.Log($"LOG FLOW: 策略选择：回合 {currentRound} -> 策略列表长度 {roundActions.Count} -> 最终索引 {(currentRound - 1) % roundActions.Count}");
         return roundActions[(currentRound - 1) % roundActions.Count];
+       // int targetIndex = (currentRound - 1) % roundActions.Count;
     }
 }

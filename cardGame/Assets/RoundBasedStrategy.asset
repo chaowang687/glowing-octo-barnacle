@@ -16,11 +16,23 @@ MonoBehaviour:
   - intentType: 1
     value: 10
     statusEffectName: 
-    duration: 3
+    duration: 0
+    weight: 0
+    description: 
+  - intentType: 1
+    value: 25
+    statusEffectName: 
+    duration: 0
     weight: 0
     description: 
   - intentType: 2
     value: 5
+    statusEffectName: 
+    duration: 2
+    weight: 0
+    description: 
+  - intentType: 2
+    value: 15
     statusEffectName: 
     duration: 2
     weight: 0

@@ -78,7 +78,6 @@ MonoBehaviour:
   characterName: Character
   maxHp: 100
   currentHp: 0
-  block: 0
   isDead: 0
 --- !u!114 &3619975311576030457
 MonoBehaviour:

@@ -1601,12 +1601,12 @@ MonoBehaviour:
   startingDeck:
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
 --- !u!1 &2004134095

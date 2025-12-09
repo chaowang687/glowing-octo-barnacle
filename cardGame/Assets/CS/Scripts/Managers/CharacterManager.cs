@@ -14,7 +14,20 @@ public class CharacterManager : MonoBehaviour
     public List<CharacterBase> allEnemies = new List<CharacterBase>();
     // ⭐ 修复 CS1061：添加 ActiveEnemies 属性 (用于兼容旧代码，但推荐使用 GetAllEnemies()) ⭐
     public List<CharacterBase> ActiveEnemies { get; private set; } = new List<CharacterBase>();
+    // CharacterManager.cs (添加以下新方法)
 
+    /// <summary>
+    /// 递减指定列表中所有角色的格挡持续时间。
+    /// </summary>
+    /// <param name="characters">要处理的角色列表。</param>
+    public void DecrementSpecificGroupBlockDurations(List<CharacterBase> characters)
+    {
+        foreach (var character in characters.Where(c => c != null))
+        {
+            // 假设 CharacterBase 中有 DecrementBlockDuration() 方法
+            character.DecrementBlockDuration(); 
+        }
+    }
     private void Awake()
     {
         if (Instance == null) Instance = this;

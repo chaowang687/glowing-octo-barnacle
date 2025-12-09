@@ -6,6 +6,8 @@ using CardDataEnums; // 假设这是 IntentType 所在的命名空间
 public class EnemyAI : MonoBehaviour
 {
     public EnemyDisplay display;
+    // ⭐ 确保这行存在且是 public 的 ⭐
+    public RoundBasedStrategy roundBasedStrategy;
 
     [Header("AI Data")]
     // 解决 BattleManager.cs 报错 CS1061: EnemyAI does not contain a definition for 'enemyData'
@@ -53,11 +55,15 @@ public class EnemyAI : MonoBehaviour
     /// </summary>
     public Sequence PerformAction(CharacterBase hero, int currentRound)
     {
+        Debug.Log($"LOG FLOW: Enemy {self.characterName} 执行行动，意图: {nextIntent}, 值: {intentValue}");
         // 如果无法执行，返回一个空的 Sequence 而不是直接返回
         if (self == null || hero == null || nextIntent == IntentType.NONE) return DOTween.Sequence();
 
         Sequence actionSequence = DOTween.Sequence();
-        
+        // ⭐ 修正：在序列开始时立即记录执行的意图 ⭐
+            actionSequence.AppendCallback(() => {
+                Debug.Log($"LOG EXECUTION: Enemy {self.characterName} 执行行动，意图: {nextIntent}, 值: {intentValue}");
+            });
         // 根据预先计算的意图执行行动
         switch (nextIntent)
         {
