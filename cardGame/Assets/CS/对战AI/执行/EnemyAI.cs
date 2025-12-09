@@ -1,174 +1,134 @@
 using UnityEngine;
-
-
+using DG.Tweening; // ⭐ 引入 DOTween 命名空间 ⭐
+using CardDataEnums; // 假设这是 IntentType 所在的命名空间
 
 // 继承自 CharacterBase，但处理 AI 逻辑
-
 public class EnemyAI : MonoBehaviour
-
 {
+    public EnemyDisplay display;
 
-[Header("AI Data")]
+    [Header("AI Data")]
+    // 解决 BattleManager.cs 报错 CS1061: EnemyAI does not contain a definition for 'enemyData'
+    public EnemyData enemyData; // 假设 EnemyData 是一个 ScriptableObject 或类
 
-// 解决 BattleManager.cs 报错 CS1061: EnemyAI does not contain a definition for 'enemyData'
+    [Header("Current Intent")]
+    public IntentType nextIntent;
+    public int intentValue;
 
-public EnemyData enemyData;
+    private CharacterBase self;
+    private IEnemyIntentStrategy strategy; // 假设 IEnemyIntentStrategy 接口存在
 
-
-[Header("Current Intent")]
-
-public IntentType nextIntent;
-
-public int intentValue;
-
-
-private CharacterBase self;
-
-private IEnemyIntentStrategy strategy;
-
-public void Initialize(EnemyData enemyData, object intentStrategy)
-{
-    Debug.Log($"Enemy AI for {enemyData.enemyName} initialized with a strategy.");
-    this.enemyData = enemyData; 
-    
-    // ⭐ 核心修正：直接尝试将传入的 object 转换为接口 IEnemyIntentStrategy ⭐
-    // 如果 RoundBasedStrategy 确实实现了接口，这一步就会成功。
-    if (intentStrategy is IEnemyIntentStrategy strategyImpl)
+    public void Initialize(EnemyData enemyData, object intentStrategy)
     {
-        this.strategy = strategyImpl;
+        Debug.Log($"Enemy AI for {enemyData.enemyName} initialized with a strategy.");
+        this.enemyData = enemyData; 
+        
+        // 核心修正：直接尝试将传入的 object 转换为接口 IEnemyIntentStrategy
+        if (intentStrategy is IEnemyIntentStrategy strategyImpl)
+        {
+            this.strategy = strategyImpl;
+        }
+        else
+        {
+            Debug.LogError($"Enemy {enemyData.enemyName} 的 intentStrategy 无法转换为 IEnemyIntentStrategy。");
+            this.strategy = null; 
+        }
     }
-    else
+
+    void Awake()
     {
-        Debug.LogError($"Enemy {enemyData.enemyName} 的 intentStrategy 无法转换为 IEnemyIntentStrategy。请检查：1. 资产是否正确。 2. RoundBasedStrategy 是否实现 IEnemyIntentStrategy。");
-        this.strategy = null; // 确保在失败时策略为空
+        self = GetComponent<CharacterBase>();
+    }
+
+    void Start()
+    {
+        if (self == null)
+        {
+            Debug.LogError("EnemyAI must be attached to a CharacterBase.");
+        }
+    }
+
+    /// <summary>
+    /// 执行预先计算好的行动，并返回一个 DOTween 序列用于 BattleManager 等待。
+    /// </summary>
+    public Sequence PerformAction(CharacterBase hero, int currentRound)
+    {
+        // 如果无法执行，返回一个空的 Sequence 而不是直接返回
+        if (self == null || hero == null || nextIntent == IntentType.NONE) return DOTween.Sequence();
+
+        Sequence actionSequence = DOTween.Sequence();
+        
+        // 根据预先计算的意图执行行动
+        switch (nextIntent)
+        {
+            case IntentType.ATTACK:
+                // 攻击：执行 TakeDamage 并等待其序列完成
+                Sequence damageSequence = hero.TakeDamage(intentValue, isAttack: true);
+                actionSequence.Append(damageSequence);
+                
+                // 打印日志作为序列回调的一部分
+                actionSequence.AppendCallback(() => 
+                {
+                    Debug.Log($"{self.characterName} attacks {hero.characterName} for {intentValue} damage.");
+                });
+                break;
+
+            case IntentType.BLOCK:
+                // ⭐ 核心修正：调用新的 AddBlock 方法，并设置持续时间 ⭐
+                int blockDuration = 1; // 默认格挡持续 1 回合 (下一玩家回合开始时清除)
+                
+                // 瞬时设置格挡值，UI 此时应该刷新
+                self.AddBlock(intentValue, blockDuration);
+
+                // 添加一个视觉动画，但不再依赖它的时间来控制回合流程
+                actionSequence.Append(self.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 1));
+                
+                // 打印日志作为序列回调的一部分
+                actionSequence.AppendCallback(() =>
+                {
+                    Debug.Log($"{self.characterName} gains {intentValue} block. Duration: {blockDuration}");
+                });
+                break;
+
+            default:
+                // 其他意图，添加一个短暂的动画或延时
+                actionSequence.AppendInterval(0.2f);
+                actionSequence.AppendCallback(() => 
+                {
+                    Debug.Log($"{self.characterName} performs {nextIntent} action.");
+                });
+                break;
+        }
+
+        // 行动完成后清空意图 (确保在动画结束后执行)
+        actionSequence.AppendCallback(() => {
+            nextIntent = IntentType.NONE;
+            intentValue = 0;
+            // 刷新意图显示，假设 display.RefreshIntent 存在且可以接受 (NONE, 0)
+            if (display != null)
+            {
+                display.RefreshIntent(IntentType.NONE, 0); 
+            }
+        });
+        
+        return actionSequence; // 返回序列
+    }
+
+    // 解决 BattleManager.cs 报错 CS1501: CalculateIntent overloads
+    public void CalculateIntent(CharacterBase hero, int currentRound)
+    {
+        if (strategy == null)
+        {
+            Debug.LogWarning($"{self.characterName} has no valid intent strategy.");
+            return;
+        }
+
+        EnemyAction nextAction = strategy.GetNextAction(hero, currentRound); // 假设 EnemyAction 结构存在
+
+        // 更新意图显示数据
+        nextIntent = nextAction.intentType;
+        intentValue = nextAction.value;
+
+        Debug.Log($"{self.characterName}'s next intent: {nextIntent} with value {intentValue}");
     }
 }
-void Awake()
-
-{
-
-self = GetComponent<CharacterBase>();
-
-}
-
-
-
-void Start()
-
-{
-
-
-
-
-if (self == null)
-
-{
-
-Debug.LogError("EnemyAI must be attached to a CharacterBase.");
-
-}
-
-}
-
-
-
-// 解决 BattleManager.cs 报错 CS1501: PerformAction overloads
-
-public void PerformAction(CharacterBase hero, int currentRound)
-
-{
-
-if (self == null || hero == null || nextIntent == IntentType.NONE) return;
-
-
-
-// 在执行行动前，清除敌人的上一回合格挡（如果它没有格挡意图，格挡值应该清零）
-
-// 这一步通常在回合开始时由 BattleManager 处理，但在敌人行动前清空确保逻辑正确。
-
-// **注意：我们假定 BattleManager 在回合结束时统一清除所有角色的格挡。
-
-// self.ClearBlock();
-
-
-
-// 根据预先计算的意图执行行动
-
-switch (nextIntent)
-
-{
-
-case IntentType.ATTACK:
-
-hero.TakeDamage(intentValue);
-
-Debug.Log($"{self.characterName} attacks {hero.characterName} for {intentValue} damage.");
-
-break;
-
-case IntentType.BLOCK:
-
-// BLOCK 意图会添加格挡，不会清空
-
-self.AddBlock(intentValue);
-
-Debug.Log($"{self.characterName} gains {intentValue} block.");
-
-break;
-
-// 其他意图如 BUFF, DEBUFF, HEAL 需要更复杂的系统支持
-
-default:
-
-Debug.Log($"{self.characterName} performs {nextIntent} action.");
-
-break;
-
-}
-
-
-
-// 行动完成后清空意图
-
-nextIntent = IntentType.NONE;
-
-intentValue = 0;
-
-}
-
-
-
-// 解决 BattleManager.cs 报错 CS1501: CalculateIntent overloads
-
-public void CalculateIntent(CharacterBase hero, int currentRound)
-
-{
-
-if (strategy == null)
-
-{
-
-Debug.LogWarning($"{self.characterName} has no valid intent strategy.");
-
-return;
-
-}
-
-
-
-EnemyAction nextAction = strategy.GetNextAction(hero, currentRound);
-
-
-// 更新意图显示数据
-
-nextIntent = nextAction.intentType;
-
-intentValue = nextAction.value;
-
-
-Debug.Log($"{self.characterName}'s next intent: {nextIntent} with value {intentValue}");
-
-}
-
-}
-

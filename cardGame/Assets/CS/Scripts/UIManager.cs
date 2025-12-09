@@ -55,7 +55,7 @@ public class UIManager : MonoBehaviour
         {
             int current = battleManager.cardSystem.GetCurrentEnergy();
             int max = battleManager.cardSystem.GetMaxEnergy();
-            energyDisplay.text = $"能量: {current}/{max}";
+            energyDisplay.text = $"Energy: {current}/{max}";
         }
     }
 

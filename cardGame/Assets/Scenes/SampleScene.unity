@@ -1188,7 +1188,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -786, y: -324}
-  m_SizeDelta: {x: 200, y: 80}
+  m_SizeDelta: {x: 297.6091, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &969549191
 MonoBehaviour:
@@ -1586,7 +1586,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4ac97438854b477e9127fb0c5fe01f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxEnergy: 3
+  maxEnergy: 5
   masterDeck:
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 48cadc0e5df50438e86cc10eea1f64b6, type: 2}
@@ -1600,14 +1600,14 @@ MonoBehaviour:
   discardPile: []
   startingDeck:
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 48cadc0e5df50438e86cc10eea1f64b6, type: 2}
-  - {fileID: 11400000, guid: 98a329fd1c5a14984a46353c2a0cba03, type: 2}
-  - {fileID: 11400000, guid: f91d47a6adfd94021a703879189f6ffa, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
-  - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
-  - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
-  - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
-  - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
   - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
 --- !u!1 &2004134095
 GameObject:

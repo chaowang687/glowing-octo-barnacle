@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening; // 导入 DG.Tweening 命名空间
 using UnityEngine.EventSystems; // 用于 RectTransformUtility
+using System.Collections; // ⭐ 新增：支持协程 ⭐
 
 public class BattleManager : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class BattleManager : MonoBehaviour
     
     [Header("系统引用 (必须设置)")]
     public CardSystem cardSystem; 
-    public CharacterManager characterManager;
+    public CharacterManager characterManager; // 假设此组件存在
 
     [Header("UI Config")]
     public GameObject cardPrefab; 
@@ -309,12 +310,20 @@ public class BattleManager : MonoBehaviour
 
     public void StartNewTurn()
     {
+        
+        
+        if (characterManager != null)
+        {
+             // 触发回合开始钩子
+            characterManager.AtStartOfTurn(); 
+        }
+
         if (cardSystem == null) return;
         
         cardSystem.ResetEnergy(); 
         DiscardHandDisplays(); 
         cardSystem.DiscardHand(); 
-
+        
         DrawCards(cardsToDraw); 
         Debug.Log($"--- 玩家回合开始 (回合 {CurrentRound}) ---");
     }
@@ -322,10 +331,18 @@ public class BattleManager : MonoBehaviour
     public void EndPlayerTurn()
     {
         Debug.Log("--- 玩家回合结束 ---");
+
+        if (characterManager != null)
+        {
+            // ⭐ 核心修正 1：在玩家回合结束时递减所有角色的格挡持续时间 ⭐
+            characterManager.DecrementAllBlockDurations();
+            
+            // 触发回合结束钩子 (例如 Metallicize 获得格挡)
+            characterManager.AtEndOfTurn();
+        }
+        
         DiscardHandDisplays();
         cardSystem.DiscardHand(); 
-        
-        characterManager.ClearAllBlocks();
         
         StartEnemyTurn();
     }
@@ -340,21 +357,58 @@ public class BattleManager : MonoBehaviour
             CheckBattleEnd();
             return;
         }
+        Sequence enemyTurnSequence = DOTween.Sequence(); // 创建一个新的序列来管理敌人的所有行动
+        
+        if (characterManager != null)
+        {
+            // 触发回合开始钩子
+            characterManager.AtStartOfTurn();
+        }
 
         foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0)) 
         {
             EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
             
-            if (enemyAI != null) enemyAI.PerformAction(activeHero, CurrentRound);
+            if (enemyAI != null)
+            {
+                // 获取敌人的行动序列，并用 Append 串联起来
+                Sequence actionSequence = enemyAI.PerformAction(activeHero, CurrentRound);
+                enemyTurnSequence.Append(actionSequence);
+            }
         }
         
-        CurrentRound++;
-        
-        characterManager.ClearAllBlocks(); 
+        // ⭐ 核心修正 2：在所有敌人行动动画完成后，使用协程进行延迟回合转换 ⭐
+        enemyTurnSequence.OnComplete(() =>
+        {
+            // 序列完成后，立即启动协程来提供视觉缓冲
+            StartCoroutine(WaitForTurnTransition(0.5f)); 
+        });
+    }
 
+    // ⭐ 核心修正 3：新增协程，用于强制延迟回合转换 ⭐
+    IEnumerator WaitForTurnTransition(float delay)
+    {
+        // 强制等待一段时间，确保用户能看到敌人的行动结果和获得的格挡值
+        yield return new WaitForSeconds(delay); 
+        
+        Debug.Log("DEBUG: 强制等待结束，执行回合转换逻辑。");
+        
+        if (characterManager != null)
+        {
+            // 触发回合结束钩子
+            characterManager.AtEndOfTurn();
+        }
+        
+        // 此时才正式递增回合数
+        CurrentRound++; 
+        
+        // 意图计算和战斗检查可以放在这里
         CalculateAllEnemyIntents(); 
         CheckBattleEnd(); 
-        StartNewTurn();
+        
+        // 调用 StartNewTurn()
+        StartNewTurn(); 
+        Debug.Log("DEBUG: 敌人回合行动序列完成，进入 StartNewTurn。");
     }
 
     private void CalculateAllEnemyIntents()
@@ -367,7 +421,23 @@ public class BattleManager : MonoBehaviour
         {
             EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
             
-            if (enemyAI != null) enemyAI.CalculateIntent(activeHero, CurrentRound); 
+            if (enemyAI != null) 
+            {
+            enemyAI.CalculateIntent(activeHero, CurrentRound); 
+            
+            // ⭐ 核心连接：获取并通知 UI 刷新 ⭐
+            // BattleManager.cs (如果 EnemyDisplay 在子对象上)
+            EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
+            if (display != null)
+            {
+                display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
+                Debug.Log($"DEBUG: 意图刷新通知发送给 {enemy.characterName}。");
+            }
+            else
+            {
+                Debug.LogError($"无法在 {enemy.characterName} 上找到 EnemyDisplay 脚本！");
+            }
+        } 
         }
     }
     
@@ -526,7 +596,9 @@ public class BattleManager : MonoBehaviour
                 CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
                 
                 CharacterBase source = characterManager.GetActiveHero();
-                card.ExecuteEffects(source, targetCharacter, cardSystem); // 假设 CardData.ExecuteEffects 存在
+                // 假设 CardData.ExecuteEffects 存在
+                // 如果您的 ExecuteEffects 接受 CharacterBase，确保它能正确处理目标
+                card.ExecuteEffects(source, targetCharacter, cardSystem); 
                 
                 cardSystem.PlayCard(card); 
                 UpdateHandLayout(true); 

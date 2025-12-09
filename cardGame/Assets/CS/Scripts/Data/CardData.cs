@@ -29,7 +29,7 @@ public class CardData : ScriptableObject
     [Header("分类与稀有度 (设计优化)")]
     public Rarity rarity = Rarity.Common; 
     
-    // ⭐ 修复点：将 CardEnums.CardClass.Any 替换为 CardEnums.CardClass.Any ⭐
+    // ⭐ 修正点：将 CardEnums.CardClass.Any 替换为 CardClass.Any ⭐
     public CardClass requiredClass = CardClass.Any;
     
     [Header("成本与升级 (设计优化)")]
@@ -82,7 +82,7 @@ public class CardData : ScriptableObject
         {
             // 1. 计算受状态效果修正后的最终值
             int finalValue = CalculateFinalValue(source, action);
-            // ⭐ 临时调试日志：检查计算结果 ⭐
+            // 临时调试日志：检查计算结果
             if (action.effectType == EffectType.Attack)
             {
                 Debug.Log($"Action Type: Attack. Calculated Final Value: {finalValue}.");
@@ -100,6 +100,7 @@ public class CardData : ScriptableObject
             else
             {
                 // 确保至少有一个目标，否则跳过
+                // 只有 TargetType.Self 允许 target 为空列表但 source 存在
                 if (actualTargets.Count == 0 && action.targetType != TargetType.Self)
                 {
                     Debug.LogWarning($"Card {cardName}: Expected targets but none found for type {action.targetType}. Skipping action.");
@@ -157,12 +158,15 @@ public class CardData : ScriptableObject
         List<CharacterBase> targets = new List<CharacterBase>();
         
         // 尝试从 CardSystem 获取 CharacterManager
-        // 假设 CardSystem 知道如何获取 CharacterManager
-        CharacterManager manager = cardSystem.GetComponent<CharacterManager>(); 
+        // 假设 CharacterManager 是一个单例，或者 CardSystem 知道如何获取它
+        CharacterManager manager = CharacterManager.Instance; 
+        
+        // 如果 CardSystem 挂载在 BattleManager 上，可以使用 GetComponent
+        // CharacterManager manager = cardSystem.GetComponent<CharacterManager>(); 
 
         if (manager == null)
         {
-            Debug.LogError("CharacterManager component not found on CardSystem. Cannot determine All/Enemy targets.");
+            Debug.LogError("CharacterManager instance not found. Cannot determine All/Enemy targets.");
             return targets;
         }
 
@@ -208,16 +212,22 @@ public class CardData : ScriptableObject
         switch (action.effectType)
         {
             case EffectType.Attack:
-                // 假设 source 有 PerformAttack 方法
-                source.PerformAttack(target, finalValue);
+                // ⭐ 核心修正 1：使用目标 (target) 的 TakeDamage 方法替代 PerformAttack ⭐
+                if (target == null) return;
+                // TakeDamage 负责计算格挡和触发动画
+                target.TakeDamage(finalValue, isAttack: true);
+                
                 Debug.Log($"{sourceName} Attacks {targetName} for {finalValue} damage (Base: {action.value}, via {cardName}).");
                 break;
             case EffectType.Block:
-                // 假设 source 有 AddBlock 方法
-                source.AddBlock(finalValue);
+                // ⭐ 核心修正 2：使用新的 AddBlock 签名，默认 duration = 1 ⭐
+                if (source == null) return;
+                source.AddBlock(finalValue, 1);
+                
                 Debug.Log($"{sourceName} gains {finalValue} Block (Base: {action.value}, via {cardName}).");
                 break;
             case EffectType.Heal:
+                if (target == null) return;
                 target.Heal(finalValue); 
                 Debug.Log($"{sourceName} Heals {targetName} for {finalValue} HP (via {cardName}).");
                 break;
@@ -233,6 +243,7 @@ public class CardData : ScriptableObject
                 break;
             case EffectType.ApplyBuff:
             case EffectType.ApplyDebuff:
+                if (target == null) return;
                 // 假设 target 有 ApplyStatusEffect 方法
                 target.ApplyStatusEffect(action.statusEffect, action.duration); 
                 string effectType = (action.effectType == EffectType.ApplyBuff) ? "Buff" : "Debuff";

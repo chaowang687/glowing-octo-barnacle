@@ -59,7 +59,7 @@ public class CharacterDisplay : MonoBehaviour
 
         if (nameText != null) nameText.text = character.characterName;
         if (hpText != null) hpText.text = $"HP: {character.currentHp}/{character.maxHp}";
-        if (blockText != null) blockText.text = $"格挡: {character.block}";
+        if (blockText != null) blockText.text = $"格挡: {character.CurrentBlock}";
         
         // ⭐ TODO: 根据 CharacterBase 数据设置角色图片 ⭐
         // 这需要你的 CharacterBase 中有一个字段来存储角色图片（例如 Sprite 或 Texture）

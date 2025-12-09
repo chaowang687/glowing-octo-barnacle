@@ -65,6 +65,7 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.29f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS/对战AI/结果/CharacterBase.cs" />
     <Compile Include="Assets/CS/Scripts/Data/CardData.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Assets/CS/玩家敌人显示/CharacterDisplay.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/CS/Scripts/Deck/CardSystem.cs" />
+    <Compile Include="Assets/CS/玩家敌人显示/EnemyDisplay.cs" />
     <Compile Include="Assets/CS/DestroyListener.cs" />
     <Compile Include="Assets/CS/Scripts/Managers/BattleManager.cs" />
   </ItemGroup>
