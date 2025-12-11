@@ -1,5 +1,7 @@
 using UnityEngine;
 using CardDataEnums; // 确保导入命名空间
+using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 敌人的核心脚本，继承自 CharacterBase。
@@ -21,6 +23,7 @@ public class Enemy : CharacterBase
     {
         // 1. 调用基类的初始化
         base.Awake();
+        // ❌ 移除错误的调用：base.Die(); ❌ 
         
         // 2. 获取 AI 组件
         enemyAI = GetComponent<EnemyAI>();
@@ -92,7 +95,11 @@ public class Enemy : CharacterBase
     // 重写基类方法 (可选，仅用于添加自定义逻辑)
     // -------------------------------------------------------------------------
 
-    protected override void Die()
+    /// <summary>
+    /// 当角色生命值归零时调用，触发死亡流程。
+    /// 必须为 public override 以匹配基类。
+    /// </summary>
+    public override void Die() // ⭐ 修复 CS0507: 必须是 public override ⭐
     {
         base.Die(); 
         Debug.Log($"{characterName} 敌人被击败！");

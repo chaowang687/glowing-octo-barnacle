@@ -29,7 +29,6 @@ public class CardData : ScriptableObject
     [Header("分类与稀有度 (设计优化)")]
     public Rarity rarity = Rarity.Common; 
     
-    // ⭐ 修正点：将 CardEnums.CardClass.Any 替换为 CardClass.Any ⭐
     public CardClass requiredClass = CardClass.Any;
     
     [Header("成本与升级 (设计优化)")]
@@ -68,52 +67,52 @@ public class CardData : ScriptableObject
     public void ExecuteEffects(CharacterBase source, CharacterBase target, CardSystem cardSystem)
     {
         if (cardSystem == null)
-        {
-            Debug.LogError("CardSystem is null during card execution.");
-            return;
-        }
-        if (source == null)
-        {
-            Debug.LogError("Source CharacterBase is null during card execution.");
-            return;
-        }
+            {
+                Debug.LogError("CardSystem is null during card execution.");
+                return;
+            }
+            if (source == null)
+            {
+                Debug.LogError("Source CharacterBase is null during card execution.");
+                return;
+            }
 
-        foreach (var action in actions)
-        {
-            // 1. 计算受状态效果修正后的最终值
-            int finalValue = CalculateFinalValue(source, action);
-            // 临时调试日志：检查计算结果
-            if (action.effectType == EffectType.Attack)
+            foreach (var action in actions)
             {
-                Debug.Log($"Action Type: Attack. Calculated Final Value: {finalValue}.");
-            }
-            // 2. 确定实际目标列表
-            // 注意：action.targetType 已经在 CardAction 结构体中明确为 CardEnums.TargetType
-            List<CharacterBase> actualTargets = GetActualTargets(source, target, cardSystem, action.targetType);
-            
-            // 3. 应用效果
-            // Note: 对于无目标效果 (如抽卡/能量)，actualTargets 为空，但效果在 ApplyAction 中处理
-            if (action.targetType == TargetType.None)
-            {
-                ApplyAction(source, null, action, cardSystem, finalValue);
-            }
-            else
-            {
-                // 确保至少有一个目标，否则跳过
-                // 只有 TargetType.Self 允许 target 为空列表但 source 存在
-                if (actualTargets.Count == 0 && action.targetType != TargetType.Self)
+                // 1. 计算受状态效果修正后的最终值
+                int finalValue = CalculateFinalValue(source, action);
+                // 临时调试日志：检查计算结果
+                if (action.effectType == EffectType.Attack)
                 {
-                    Debug.LogWarning($"Card {cardName}: Expected targets but none found for type {action.targetType}. Skipping action.");
-                    continue;
+                    Debug.Log($"Action Type: Attack. Calculated Final Value: {finalValue}.");
                 }
+                // 2. 确定实际目标列表
+                // 注意：action.targetType 已经在 CardAction 结构体中明确为 CardEnums.TargetType
+                List<CharacterBase> actualTargets = GetActualTargets(source, target, cardSystem, action.targetType);
                 
-                foreach (var actualTarget in actualTargets)
+                // 3. 应用效果
+                // Note: 对于无目标效果 (如抽卡/能量)，actualTargets 为空，但效果在 ApplyAction 中处理
+                if (action.targetType == TargetType.None)
                 {
-                    ApplyAction(source, actualTarget, action, cardSystem, finalValue);
+                    ApplyAction(source, null, action, cardSystem, finalValue);
+                }
+                else
+                {
+                    // 确保至少有一个目标，否则跳过
+                    // 只有 TargetType.Self 允许 target 为空列表但 source 存在
+                    if (actualTargets.Count == 0 && action.targetType != TargetType.Self)
+                    {
+                        Debug.LogWarning($"Card {cardName}: Expected targets but none found for type {action.targetType}. Skipping action.");
+                        continue;
+                    }
+                    
+                    foreach (var actualTarget in actualTargets)
+                    {
+                        ApplyAction(source, actualTarget, action, cardSystem, finalValue);
+                    }
                 }
             }
         }
-    }
 
     /// <summary>
     /// 计算行动的最终数值，包括力量/敏捷修正。
@@ -128,13 +127,14 @@ public class CardData : ScriptableObject
             {
                 case EffectType.Attack:
                     // 攻击受力量(Strength)影响
-                    // 假设 CharacterBase 有 GetStatusEffectAmount 方法
-                    int strength = source.GetStatusEffectAmount(StatusEffect.Strength);
+                    // ⭐ 核心修复 1：将 StatusEffect.Strength 转换为 int ⭐
+                    int strength = source.GetStatusEffectAmount((int)StatusEffect.Strength);
                     finalValue += strength;
                     break;
                 case EffectType.Block:
                     // 格挡受敏捷(Dexterity)影响
-                    int dexterity = source.GetStatusEffectAmount(StatusEffect.Dexterity);
+                    // ⭐ 核心修复 2：将 StatusEffect.Dexterity 转换为 int ⭐
+                    int dexterity = source.GetStatusEffectAmount((int)StatusEffect.Dexterity);
                     finalValue += dexterity;
                     break;
                 // 其他效果（如Heal）可以根据游戏规则添加其他状态修正
@@ -212,17 +212,16 @@ public class CardData : ScriptableObject
         switch (action.effectType)
         {
             case EffectType.Attack:
-                // ⭐ 核心修正 1：使用目标 (target) 的 TakeDamage 方法替代 PerformAttack ⭐
+                // 使用目标 (target) 的 TakeDamage 方法
                 if (target == null) return;
-                // TakeDamage 负责计算格挡和触发动画
                 target.TakeDamage(finalValue, isAttack: true);
                 
                 Debug.Log($"{sourceName} Attacks {targetName} for {finalValue} damage (Base: {action.value}, via {cardName}).");
                 break;
             case EffectType.Block:
-                // ⭐ 核心修正 2：使用新的 AddBlock 签名，默认 duration = 1 ⭐
+                // 使用 AddBlock 方法
                 if (source == null) return;
-                source.AddBlock(finalValue, 1);
+                source.AddBlock(finalValue); // 假设 AddBlock 现在只需要 value
                 
                 Debug.Log($"{sourceName} gains {finalValue} Block (Base: {action.value}, via {cardName}).");
                 break;
@@ -244,8 +243,8 @@ public class CardData : ScriptableObject
             case EffectType.ApplyBuff:
             case EffectType.ApplyDebuff:
                 if (target == null) return;
-                // 假设 target 有 ApplyStatusEffect 方法
-                target.ApplyStatusEffect(action.statusEffect, action.duration); 
+                // 核心修复：将 StatusEffect 枚举显式转换为 int 以匹配 CharacterBase.ApplyStatusEffect 签名
+                target.ApplyStatusEffect((int)action.statusEffect, action.duration); 
                 string effectType = (action.effectType == EffectType.ApplyBuff) ? "Buff" : "Debuff";
                 Debug.Log($"{sourceName} applies {effectType}: {action.statusEffect} ({action.duration} turns) to {targetName} (via {cardName}).");
                 break;

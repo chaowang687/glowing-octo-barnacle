@@ -1,5 +1,5 @@
 using UnityEngine;
-using CardDataEnums;
+using CardDataEnums; // 假设这是您定义的枚举命名空间
 
 using System.Collections.Generic;
 
@@ -22,9 +22,9 @@ public class Hero : CharacterBase
     public int baseEnergy = 3;
 
     /// <summary>
-    /// Hero character initialization.
+    /// Hero character initialization. 使用 new 关键字隐藏基类的 Awake 方法。
     /// </summary>
-    protected new void Awake() // <-- 移除 override
+    protected new void Awake() 
     {
         base.Awake(); // Calls CharacterBase's Awake() to set initial HP etc.
         characterName = "Hero"; // Default name for the player character
@@ -68,11 +68,15 @@ public class Hero : CharacterBase
     /// </summary>
     public void ApplyStatusEffectFromCard(StatusEffect effect, int amount, CharacterBase target)
     {
-        target.ApplyStatusEffect(effect, amount);
+        // ⭐ 修正：由于 CharacterBase.ApplyStatusEffect 临时使用 int 作为第一个参数，
+        // 我们需要将 StatusEffect 枚举转换为 int 以匹配签名。
+        target.ApplyStatusEffect((int)effect, amount);
     }
     
-    protected override void Die()
+    public override void Die()
     {
+
+        // 调用基类方法，该方法现在只触发 OnCharacterDied 事件
         base.Die();
         Debug.Log("Hero has been defeated. Game Over.");
         // TODO: Trigger Game Over state

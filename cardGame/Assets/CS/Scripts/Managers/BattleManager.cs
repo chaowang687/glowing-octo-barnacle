@@ -10,8 +10,14 @@ using System;
 
 public class BattleManager : MonoBehaviour
 {
+     [Header("战斗角色清理设置")]
+    [Tooltip("角色死亡后，其游戏对象被销毁前的延迟时间（秒），用于播放死亡动画。")]
+    public float characterDestroyDelay = 1.5f;
     public static BattleManager Instance { get; private set; }
     
+    // 战斗状态：用于追踪战斗是否结束 (Battle State: Used to track if the battle is over)
+    public bool IsBattleOver { get; private set; } = false; // <-- 新增/确保存在
+
     [Header("系统引用 (必须设置)")]
     public CardSystem cardSystem; 
     public CharacterManager characterManager; 
@@ -32,7 +38,7 @@ public class BattleManager : MonoBehaviour
     [Header("回合状态")]
     public int CurrentRound { get; private set; } = 0; 
     public int cardsToDraw = 5; 
-
+    
     [Header("手牌布局: 固定的弧度和间距")]
     [Range(600f, 1500f)]
     public float arcBaseWidth = 1000f; 
@@ -60,7 +66,7 @@ public class BattleManager : MonoBehaviour
     public float centerIdleDuration = 0.12f; 
     
     [Range(0.05f, 0.5f)]
-    public float postExecutionDelay = 0.1f; 
+    public float postExecutionDelay = 0.1f; // 用于回合切换前的固定延迟缓冲
     
     [Range(0f, 50f)]
     public float temporaryDrawOffset = 20f;
@@ -108,6 +114,27 @@ public class BattleManager : MonoBehaviour
             handContainerRect = handContainer.GetComponent<RectTransform>();
         }
     }
+        public void RegisterDyingCharacter(CharacterBase character)
+    {
+        if (character == null)
+        {
+            Debug.LogError("Attempted to register a null character as dying.");
+            return;
+        }
+        // 4. 销毁角色游戏对象，使用公共可调的延迟时间。
+        Destroy(character.gameObject, characterDestroyDelay);
+        // 假设 CharacterBase 有一个用于显示名称的属性
+        Debug.Log($"正在处理角色死亡登记: {character.name}. 将其从战斗列表中移除。");
+
+        // 在此处添加您的具体战斗结束逻辑：
+        // 1. 将角色从任何活跃的角色列表 (如 List<CharacterBase> activeCombatants) 中移除。
+        // 2. 检查战斗状态，例如：如果所有敌人或玩家都死亡，则触发胜利/失败事件。
+        // 3. 触发死亡动画或清理游戏对象。
+        
+        // 示例：
+        // activeCombatants.Remove(character);
+        // CheckBattleEndCondition();
+    }
 
     void Start()
     {
@@ -118,6 +145,7 @@ public class BattleManager : MonoBehaviour
         
         if (cardSystem != null) cardSystem.SetupDeck();
         
+        // 调用下面的 StartBattle() 方法，它设置了 CurrentRound = 1
         StartBattle();
     }
     
@@ -229,7 +257,7 @@ public class BattleManager : MonoBehaviour
             EnemyAI enemyAI = enemyObj.GetComponent<EnemyAI>();
 
             // ⭐ 修复 UI 初始化 ⭐
-            CharacterUIDisplay uiDisplay = enemyObj.AddComponent<CharacterUIDisplay>(); 
+            EnemyDisplay uiDisplay = enemyObj.AddComponent<EnemyDisplay>(); 
             
             if (enemyAI != null) 
             {
@@ -243,6 +271,7 @@ public class BattleManager : MonoBehaviour
                 enemyChar.currentHp = defaultEnemyDataAsset.maxHp;
             }
             
+            // ⭐ 确保 CharacterBase 引用被设置 ⭐
             if (uiDisplay != null)
             {
                 uiDisplay.Initialize(enemyChar); 
@@ -250,7 +279,7 @@ public class BattleManager : MonoBehaviour
             }
             else
             {
-                 Debug.LogError("UI INIT ERROR: Failed to add CharacterUIDisplay on Mock Enemy.");
+                 Debug.LogError("UI INIT ERROR: Failed to add EnemyDisplay on Mock Enemy. Death cleanup will fail.");
             }
             
             characterManager.allEnemies.Add(enemyChar);
@@ -260,6 +289,7 @@ public class BattleManager : MonoBehaviour
     
     public void StartBattle()
     {
+        IsBattleOver = false; // 确保战斗状态重置
         CurrentRound = 1; 
         if (characterManager.GetActiveHero() != null)
         {
@@ -274,6 +304,9 @@ public class BattleManager : MonoBehaviour
 
     public void StartNewTurn()
     {
+        // ⭐ 关键：在回合开始前立即检查战斗是否结束 ⭐
+        if (CheckBattleEnd()) return;
+
         if (characterManager != null)
         {
             characterManager.AtStartOfTurn(); 
@@ -295,21 +328,29 @@ public class BattleManager : MonoBehaviour
 
         if (characterManager != null)
         {
-            // ⭐ 核心修复 1/2: 在玩家回合结束时，清除敌人的格挡！ ⭐
-            Debug.Log("LOG FLOW: 清除敌人回合 N 获得的格挡 (在玩家回合结束时)。");
+            // 玩家回合结束时，仅敌方持续时间递减
+            Debug.Log("LOG FLOW: 递减敌人格挡和状态持续时间。");
             characterManager.DecrementSpecificGroupBlockDurations(characterManager.allEnemies);
             
-            characterManager.AtEndOfTurn();
+            // 玩家回合结束时，仅敌方角色执行 AtEndOfTurn 逻辑
+            foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0))
+            {
+                enemy.AtEndOfTurn(); 
+            }
         }
         
         DiscardHandDisplays();
         cardSystem.DiscardHand(); 
         
-        StartEnemyTurn();
+        // 延迟是为了给动画和 HandleDyingCharacterCleanup 留出执行空间
+        DOVirtual.DelayedCall(postExecutionDelay, StartEnemyTurn);
     }
 
     private void StartEnemyTurn()
     {
+        // ⭐ 关键：在回合开始前立即检查战斗是否结束 ⭐
+        if (CheckBattleEnd()) return;
+
         Debug.Log($"--- 敌人回合开始 (回合 {CurrentRound}) ---");
         
         CharacterBase activeHero = characterManager.GetActiveHero();
@@ -345,26 +386,99 @@ public class BattleManager : MonoBehaviour
 
                 if (characterManager != null)
                 {
-                    // ⭐ 核心修复 2/2: 在敌人回合结束时，清除玩家格挡！ ⭐
-                    Debug.Log("LOG FLOW: 清除玩家回合 N 获得的格挡 (在敌人回合结束时)。");
+                    // 敌人回合结束 -> 玩家持续时间递减
+                    Debug.Log("LOG FLOW: 递减玩家格挡和状态持续时间。");
                     characterManager.DecrementSpecificGroupBlockDurations(characterManager.allHeroes);
                     
-                    characterManager.AtEndOfTurn();
+                    // 敌人回合结束时，仅玩家的持续时间递减
+                    if (characterManager.GetActiveHero() != null)
+                    {
+                        characterManager.GetActiveHero().AtEndOfTurn(); 
+                    }
                 }
-
-                // ⭐ 修复回合数递增翻倍问题，只在这里递增一次 ⭐
-                CurrentRound++; 
-                Debug.Log($"LOG FLOW: 回合数递增完成，新的回合数: {CurrentRound}"); 
                 
-                CalculateAllEnemyIntents(); 
-                
-                CheckBattleEnd(); 
-
-                StartNewTurn(); // 进入玩家新回合
+                DOVirtual.DelayedCall(postExecutionDelay, OnEnemyTurnCleanupComplete);
                 
             }).SetUpdate(true);
         });
     }
+    
+    private void OnEnemyTurnCleanupComplete()
+    {
+        CurrentRound++; 
+        Debug.Log($"LOG FLOW: 回合数递增完成，新的回合数: {CurrentRound}"); 
+        
+        CalculateAllEnemyIntents(); 
+        
+        CheckBattleEnd(); // 在进入新回合前检查战斗是否已结束
+
+        StartNewTurn(); // 进入玩家新回合
+    }
+
+    /// <summary>
+    /// 接收来自 CharacterBase 的同步信号，在死亡动画开始后执行。
+    /// 立即执行移除和流程检查。
+    /// </summary>
+    /// <param name="dyingCharacter">待移除的角色。</param>
+    public void HandleDyingCharacterCleanup(CharacterBase dyingCharacter)
+    {
+        if (dyingCharacter == null) return;
+
+        // 1. 关键：立即从 CharacterManager 的活动列表中移除角色
+        if (characterManager.ActiveEnemies.Contains(dyingCharacter))
+        {
+             characterManager.ActiveEnemies.Remove(dyingCharacter);
+             Debug.Log($"[死亡清理] {dyingCharacter.characterName} 已从 activeEnemies 列表中同步移除。");
+        }
+        else if (characterManager.activeHero == dyingCharacter)
+        {
+            // 虽然英雄死亡通常不从列表中移除，但将其设置为 null 有助于战斗结束判断
+            // 英雄的清理由 CheckBattleEnd 逻辑处理
+             Debug.Log($"[死亡清理] 英雄 {dyingCharacter.characterName} 死亡事件被捕获。");
+        }
+        else
+        {
+             Debug.LogWarning($"[死亡清理] {dyingCharacter.characterName} 未在活动列表中找到。");
+        }
+        
+        // 2. 立即检查战斗是否应该结束
+        CheckBattleEnd();
+    }
+    
+    /// <summary>
+    /// (由 EnemyDisplay 在死亡动画结束后调用)
+    /// 负责执行最终的对象销毁和确保战斗状态更新。
+    /// FIX: 解决 EnemyDisplay.cs 中 CS1061 错误。
+    /// </summary>
+    /// <param name="deadCharacterObject">已完成死亡动画的角色 GameObject。</param>
+    public void HandleDeathAnimationComplete(GameObject deadCharacterObject)
+    {
+        // 游戏状态清理 (从 activeEnemies 列表移除) 已经在 HandleDyingCharacterCleanup 中完成了。
+        // 此方法主要负责销毁角色 GameObject。
+        
+        Debug.Log($"[死亡动画完成] 销毁对象: {deadCharacterObject.name}");
+        if (deadCharacterObject != null)
+        {
+            Destroy(deadCharacterObject);
+        }
+    }
+    
+    /// <summary>
+    /// 战斗结束时的中央清理点。
+    /// </summary>
+    public void EndBattle()
+    {
+        if (IsBattleOver) return; // 防止重复调用
+
+        IsBattleOver = true;
+        // 在这里添加所有结束战斗的逻辑，例如：
+        // 奖励结算、UI 切换、场景加载等。
+        Debug.Log("[战斗状态] 战斗逻辑结束。IsBattleOver = true");
+        
+        // 示例：禁用所有卡牌交互和回合按钮
+        // GetComponent<CanvasGroup>()?.interactable = false;
+    }
+
 
     private void CalculateAllEnemyIntents()
     {
@@ -372,7 +486,8 @@ public class BattleManager : MonoBehaviour
         CharacterBase activeHero = characterManager.GetActiveHero();
         if (activeHero == null) return;
 
-        foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0)) 
+        // 使用 CharacterManager 的 ActiveEnemies 列表确保只对存活的敌人计算意图
+        foreach (var enemy in characterManager.ActiveEnemies.ToList()) 
         {
             EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
             
@@ -456,6 +571,7 @@ public class BattleManager : MonoBehaviour
     {
         if (cardSystem == null || characterManager == null || card == null) return false;
         
+        // 确保能打出卡牌的逻辑判断
         if (!cardSystem.CanPlayCard(card)) return false;
         
         CharacterBase actualTarget = target;
@@ -464,6 +580,7 @@ public class BattleManager : MonoBehaviour
         {
             if (actualTarget == null)
             {
+                // 确保只选择存活的敌人
                 CharacterBase firstEnemy = characterManager.GetAllEnemies().FirstOrDefault(e => e != null && e.currentHp > 0);
                 
                 if (firstEnemy != null)
@@ -483,7 +600,9 @@ public class BattleManager : MonoBehaviour
         
         if (cardSystem.CardNeedsSelectedTarget(card) && !IsValidTarget(card, actualTarget)) return false;
 
-        cardSystem.SpendEnergy(card.energyCost);
+        // 修正: 确保 SpendEnergy 是一个独立的 void 调用。
+        cardSystem.SpendEnergy(card.energyCost); 
+        
         Debug.Log($"成功打出 {card.cardName}，剩余能量: {cardSystem.CurrentEnergy}");
 
         
@@ -533,8 +652,13 @@ public class BattleManager : MonoBehaviour
                 CharacterBase source = characterManager.GetActiveHero();
                 card.ExecuteEffects(source, targetCharacter, cardSystem); 
                 
+                // 修正: 确保 PlayCard 是一个独立的 void 调用。
                 cardSystem.PlayCard(card); 
+                
                 UpdateHandLayout(true); 
+                
+                // ⭐ 关键：卡牌效果执行后，立即检查是否触发了即时死亡 ⭐
+                CheckBattleEnd(); 
             }
             catch (System.Exception ex)
             {
@@ -655,19 +779,39 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void CheckBattleEnd()
+    /// <summary>
+    /// 检查战斗是否结束。如果结束，则调用 EndBattle。
+    /// 【已修复 CS0126】确保所有代码路径都返回 bool。
+    /// </summary>
+    public bool CheckBattleEnd()
     {
-        if (characterManager == null) return;
+        if (IsBattleOver) return true; // 战斗已结束，返回 true
+
+        if (characterManager == null) return false; // 状态未定义，返回 false
         
-        bool allEnemiesDead = characterManager.GetAllEnemies().All(e => e.currentHp <= 0);
+        // 胜利条件：CharacterManager 的 ActiveEnemies 列表为空
+        bool allEnemiesDead = characterManager.ActiveEnemies.Count == 0;
         
+        // 失败条件：主角已死
+        bool heroDead = characterManager.GetActiveHero() == null || characterManager.GetActiveHero().currentHp <= 0;
+
         if (allEnemiesDead)
         {
-            Debug.Log("战斗胜利!");
+            Debug.Log("[战斗结束] 战斗胜利!");
+            EndBattle(); // 调用结束逻辑
+            // TODO: 触发胜利处理逻辑
+            return true;
         }
-        else if (characterManager.GetActiveHero() == null || characterManager.GetActiveHero().currentHp <= 0)
+        else if (heroDead)
         {
-             Debug.Log("战斗失败!");
+             Debug.Log("[战斗结束] 战斗失败!");
+             EndBattle(); // 调用结束逻辑
+             // TODO: 触发失败处理逻辑
+             return true;
         }
+        
+        // 战斗继续，返回 false
+        return false;
     }
+    
 }

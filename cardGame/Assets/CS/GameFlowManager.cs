@@ -260,10 +260,34 @@ public class GameFlowManager : MonoBehaviour
         
         // 初始化 EnemyAI 并设置战斗策略
         EnemyAI enemyAI = enemyInstance.GetComponent<EnemyAI>();
-        if (enemyAI != null)
+        // ⭐ 关键：查找并连接 EnemyDisplay 实例 ⭐
+        EnemyDisplay enemyDisplay = enemyInstance.GetComponentInChildren<EnemyDisplay>(); 
+
+        // >>>>>>>>>>>>>>>> 新增 Debug 检查点 A <<<<<<<<<<<<<<<<
+        if (enemyDisplay == null)
         {
-            // ⭐ 修复 CS1061：依赖 EnemyAI 中正确的 Initialize 签名 ⭐
+            Debug.LogError($"[DEBUG ERROR: INIT] 敌人 {enemyData.enemyName} 初始化失败：未在 {enemyInstance.name} 或其子对象中找到 EnemyDisplay 脚本！请检查预制体结构。");
+        }
+        // >>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        if (enemyAI != null && enemyDisplay != null)
+        {
+            // 1. 设置 EnemyAI 的 Display 引用 (修复动画不触发的问题)
+            enemyAI.display = enemyDisplay;
+
+            // ⭐ 关键修正：将 CharacterBase 绑定到 EnemyDisplay (建立事件订阅) ⭐
+            // 确保 EnemyDisplay 能监听 CharacterBase 的 OnHpChanged 事件
+            enemyDisplay.Initialize(enemyInstance); 
+
+            // 2. 初始化 EnemyAI
             enemyAI.Initialize(enemyData, enemyData.intentStrategy);
+            
+            Debug.Log($"[DEBUG SPAWN] 敌人 {enemyData.enemyName} 初始化完成，Display 已订阅事件。");
+        }
+        else
+        {
+            // 修改了日志，现在应该更少出现，因为上面已经捕获了 enemyDisplay == null 的情况
+            Debug.LogError($"敌人 {enemyData.enemyName} 初始化失败：EnemyAI ({enemyAI != null}) 或 EnemyDisplay ({enemyDisplay != null}) 脚本未找到！");
         }
     }
 
@@ -282,15 +306,4 @@ public class GameFlowManager : MonoBehaviour
             battleManager.StartBattle(); 
         }
     }
-    
-    // 以下流程方法已从 GameFlowManager 移除或被 BattleManager 接管，
-    // 以保证只有一个地方驱动回合流程。
-    
-    /*
-    // 移除 StartPlayerTurn
-    // 移除 StartEnemyTurn
-    // 移除 PerformAllEnemyActions
-    // 移除 EndEnemyTurn
-    // 移除 CalculateAllEnemyIntents
-    */
 }

@@ -1,11 +1,13 @@
 using UnityEngine;
+using System; // ⭐ 确保这行存在 ⭐
 using UnityEngine.UI;
 using System.Linq; 
-using System; 
 using TMPro; // ⭐ 核心修正：导入 TextMeshPro 命名空间 ⭐
 
 public class CharacterUIDisplay : MonoBehaviour
 {
+    private CharacterBase character;
+    
     // UI 组件引用 (例如：血条 Image 或 Slider)
     [Header("UI Components")]
     public Slider hpSlider;
@@ -32,6 +34,8 @@ public class CharacterUIDisplay : MonoBehaviour
     /// </summary>
     public void Initialize(CharacterBase character)
     {
+        this.character = character;
+        this.character.OnCharacterDied += HandleDeath;
         if (character == null) return; 
         
         _targetCharacter = character;
@@ -64,6 +68,11 @@ public class CharacterUIDisplay : MonoBehaviour
         {
             nameText.text = character.characterName;
         }
+    }
+    private void HandleDeath()
+    {
+    // 稍后你可以在这里添加死亡动画和清理代码
+    Debug.Log($"{character.characterName} 正在处理死亡显示..."); 
     }
 
     /// <summary>

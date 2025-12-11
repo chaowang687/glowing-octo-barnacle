@@ -3,11 +3,16 @@ using DG.Tweening; // ⭐ 引入 DOTween 命名空间 ⭐
 using CardDataEnums; // 假设这是 IntentType 所在的命名空间
 
 // 继承自 CharacterBase，但处理 AI 逻辑
+
 public class EnemyAI : MonoBehaviour
 {
     public EnemyDisplay display;
     // ⭐ 确保这行存在且是 public 的 ⭐
     public RoundBasedStrategy roundBasedStrategy;
+
+    [SerializeField] 
+    private EnemyDisplay enemyDisplay;
+    
 
     [Header("AI Data")]
     // 解决 BattleManager.cs 报错 CS1061: EnemyAI does not contain a definition for 'enemyData'
@@ -40,6 +45,10 @@ public class EnemyAI : MonoBehaviour
     void Awake()
     {
         self = GetComponent<CharacterBase>();
+         if (enemyDisplay == null)
+        {
+            Debug.LogError("EnemyAI 找不到 EnemyDisplay 引用! 请在 Inspector 中赋值或确保 BattleManager 在初始化时设置了它。");
+        }
     }
 
     void Start()
@@ -68,6 +77,20 @@ public class EnemyAI : MonoBehaviour
         switch (nextIntent)
         {
             case IntentType.ATTACK:
+                // ⭐ 核心修正：在造成伤害前触发攻击动画 ⭐
+                actionSequence.AppendCallback(() =>
+                {
+                    if (display != null)
+                    {
+                        display.TriggerAttackAnimation();
+                        // 动画播放完成后，Animator 会触发 OnAttackAnimationComplete()
+                        // 实际伤害结算可以在 OnAttackAnimationComplete() 的回调中进行，但为简化流程，我们在此处进行 DOTween 序列操作。
+                    }
+                });
+                
+                // 攻击动画通常需要时间，所以我们添加一个短暂的延时来模拟动画播放时间
+                actionSequence.AppendInterval(0.5f); // 假设攻击动画持续 0.5 秒
+                
                 // 攻击：执行 TakeDamage 并等待其序列完成
                 Sequence damageSequence = hero.TakeDamage(intentValue, isAttack: true);
                 actionSequence.Append(damageSequence);
@@ -81,7 +104,7 @@ public class EnemyAI : MonoBehaviour
 
             case IntentType.BLOCK:
                 // ⭐ 核心修正：调用新的 AddBlock 方法，并设置持续时间 ⭐
-                int blockDuration = 1; // 默认格挡持续 1 回合 (下一玩家回合开始时清除)
+                int blockDuration = 2; // 默认格挡持续 1 回合 (下一玩家回合开始时清除)
                 
                 // 瞬时设置格挡值，UI 此时应该刷新
                 self.AddBlock(intentValue, blockDuration);
