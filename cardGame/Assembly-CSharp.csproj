@@ -77,6 +77,7 @@
     <Compile Include="Assets/CS/Scripts/CardDisplay.cs" />
     <Compile Include="Assets/CS/Scripts/CardAction.cs" />
     <Compile Include="Assets/CS/对战AI/结果/Hero.cs" />
+    <Compile Include="Assets/CS/Scripts/CardVisualManager.cs" />
     <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
     <Compile Include="Assets/CS/CharacterUIDisplay.cs" />
     <Compile Include="Assets/CS/对战AI/结果/Enemy.cs" />
