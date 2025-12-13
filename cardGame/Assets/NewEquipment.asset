@@ -9,10 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6568ecfbe2b8f493fb10ceeeff4c949a, type: 3}
-  m_Name: New Item
-  m_EditorClassIdentifier: 
+  m_Script: {fileID: 0}
+  m_Name: NewEquipment
+  m_EditorClassIdentifier: Assembly-CSharp:ScavengingGame:EquipmentData
   ItemName: Unknown Item
   Description: A generic scavenged item.
-  Icon: {fileID: -723740818, guid: 550bb6f191070449c8c8ae7c10afb2cb, type: 3}
-  StackSize: 4
+  Icon: {fileID: 377200167, guid: 5fd8ac98425d84d4888616f27109490c, type: 3}
+  StackSize: 1
+  Slot: 0
+  AttackBonus: 0
+  DefenseBonus: 4

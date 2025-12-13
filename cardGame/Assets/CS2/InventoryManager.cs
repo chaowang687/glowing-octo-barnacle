@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections; // 添加这行用于协程
 
 namespace ScavengingGame
 {
@@ -43,16 +44,64 @@ namespace ScavengingGame
 
         void Awake()
         {
+            // 清理Items列表中的null元素（重要！）
+            CleanNullItems();
+            
             // 注册到全局状态管理器
             if (GameStateManager.Instance != null)
             {
                 GameStateManager.Instance.PlayerInventory = this;
+                Debug.Log($"[InventoryManager] 已注册到 GameStateManager");
             }
-        
-        
+            else
+            {
+                Debug.LogWarning("[InventoryManager] GameStateManager 实例未找到，将在 Start 中重试");
+                StartCoroutine(RegisterToGameStateManager());
+            }
             
             // 初始化装备槽位
             InitializeEquipmentSlots();
+            
+            // 打印初始状态
+            Debug.Log($"[InventoryManager] 初始化完成，背包槽位: {MaxInventorySlots}");
+        }
+
+        /// <summary>
+        /// 清理Items列表中的null元素
+        /// </summary>
+        private void CleanNullItems()
+        {
+            if (Items == null)
+            {
+                Items = new List<ItemData>();
+                return;
+            }
+            
+            // 移除所有null元素
+            int removedCount = Items.RemoveAll(item => item == null);
+            if (removedCount > 0)
+            {
+                Debug.LogWarning($"[InventoryManager] 清理了 {removedCount} 个null物品");
+            }
+        }
+
+        /// <summary>
+        /// 延迟注册到GameStateManager
+        /// </summary>
+        private System.Collections.IEnumerator RegisterToGameStateManager()
+        {
+            // 等待0.5秒，确保GameStateManager已初始化
+            yield return new WaitForSeconds(0.5f);
+            
+            if (GameStateManager.Instance != null)
+            {
+                GameStateManager.Instance.PlayerInventory = this;
+                Debug.Log("[InventoryManager] 延迟注册成功");
+            }
+            else
+            {
+                Debug.LogError("[InventoryManager] GameStateManager 仍未找到，请检查场景设置");
+            }
         }
 
         private void InitializeEquipmentSlots()
@@ -62,6 +111,7 @@ namespace ScavengingGame
             {
                 _equippedItems[slot] = null;
             }
+            Debug.Log("[InventoryManager] 装备槽位已初始化");
         }
 
         /// <summary>
@@ -71,38 +121,70 @@ namespace ScavengingGame
         {
             if (item == null) 
             {
-                Debug.LogError("尝试添加空物品到背包。");
+                Debug.LogError("[Inventory] 尝试添加空物品到背包。");
                 return false;
             }
 
             string itemName = item.ItemName;
+            
+            // 检查物品名称是否为空
+            if (string.IsNullOrEmpty(itemName))
+            {
+                Debug.LogError("[Inventory] 物品名称为空，无法添加");
+                return false;
+            }
+            
             int stackSize = item.StackSize;
+
+            // 再次清理Items列表（安全措施）
+            CleanNullItems();
 
             if (_itemCounts.ContainsKey(itemName))
             {
+                // 已存在该物品，增加数量
                 _itemCounts[itemName] += stackSize;
+                Debug.Log($"[Inventory] 增加物品: {stackSize} x {itemName}. 总计: {_itemCounts[itemName]}");
+                return true;
             }
             else
             {
                 // 检查背包容量（只检查非堆叠物品）
                 if (item.StackSize <= 1 && Items.Count >= MaxInventorySlots)
                 {
-                    Debug.LogWarning($"背包已满，无法添加 {itemName}");
+                    Debug.LogWarning($"[Inventory] 背包已满，无法添加 {itemName} (当前: {Items.Count}/{MaxInventorySlots})");
                     return false;
                 }
                 
+                // 添加到计数字典和缓存
                 _itemCounts.Add(itemName, stackSize);
                 _itemDataCache.Add(itemName, item);
                 
-                // 仅在首次获取时添加到 Items 列表
-                if (!Items.Any(i => i.ItemName == itemName))
+                // 修复的关键：安全地检查是否已存在同名物品
+                // 避免使用 LINQ 的 Any，因为它可能在 i 为 null 时崩溃
+                bool alreadyInList = false;
+                foreach (var existingItem in Items)
+                {
+                    // 检查 existingItem 是否为 null，然后比较名称
+                    if (existingItem != null && existingItem.ItemName == itemName)
+                    {
+                        alreadyInList = true;
+                        break;
+                    }
+                }
+                
+                // 如果不在列表中，才添加
+                if (!alreadyInList)
                 {
                     Items.Add(item);
+                    Debug.Log($"[Inventory] 添加新物品: {stackSize} x {itemName}");
                 }
+                else
+                {
+                    Debug.Log($"[Inventory] 物品已存在于列表: {itemName}");
+                }
+                
+                return true;
             }
-
-            Debug.Log($"[Inventory] 获得物品: {stackSize} x {itemName}. 总计: {_itemCounts[itemName]}");
-            return true;
         }
 
         /// <summary>
@@ -124,11 +206,21 @@ namespace ScavengingGame
                 _itemCounts.Remove(itemName);
                 _itemDataCache.Remove(itemName);
                 
-                // 从 Items 列表中移除
-                ItemData itemToRemove = Items.FirstOrDefault(i => i.ItemName == itemName);
+                // 从 Items 列表中移除 - 更安全的实现
+                ItemData itemToRemove = null;
+                foreach (var item in Items)
+                {
+                    if (item != null && item.ItemName == itemName)
+                    {
+                        itemToRemove = item;
+                        break;
+                    }
+                }
+                
                 if (itemToRemove != null)
                 {
                     Items.Remove(itemToRemove);
+                    Debug.Log($"[Inventory] 从列表中移除: {itemName}");
                 }
             }
             
@@ -173,7 +265,7 @@ namespace ScavengingGame
             // 检查是否拥有该装备
             if (!_itemCounts.ContainsKey(equipment.ItemName) || _itemCounts[equipment.ItemName] < equipment.StackSize)
             {
-                Debug.LogWarning($"无法装备 {equipment.ItemName}，背包中没有该物品");
+                Debug.LogWarning($"[Inventory] 无法装备 {equipment.ItemName}，背包中没有该物品");
                 return;
             }
 
@@ -192,7 +284,7 @@ namespace ScavengingGame
             // 装备新装备
             _equippedItems[equipment.Slot] = equipment;
             
-            Debug.Log($"装备 {equipment.ItemName} 到 {equipment.Slot}");
+            Debug.Log($"[Inventory] 装备 {equipment.ItemName} 到 {equipment.Slot}");
         }
 
         /// <summary>
@@ -208,7 +300,7 @@ namespace ScavengingGame
                 // 将装备放回背包
                 AddItem(equipment);
                 
-                Debug.Log($"卸下 {equipment.ItemName} 从 {slot}");
+                Debug.Log($"[Inventory] 卸下 {equipment.ItemName} 从 {slot}");
             }
         }
 
@@ -266,6 +358,24 @@ namespace ScavengingGame
                 Debug.Log($"  {kvp.Key}: {kvp.Value}");
             }
             Debug.Log("---------------------------------");
+        }
+        
+        /// <summary>
+        /// 调试：打印详细信息
+        /// </summary>
+        public void DebugPrint()
+        {
+            Debug.Log($"[InventoryManager 调试信息]");
+            Debug.Log($"  背包槽位: {Items.Count}/{MaxInventorySlots}");
+            Debug.Log($"  物品种类: {_itemCounts.Count}");
+            Debug.Log($"  Items列表长度: {Items.Count}");
+            Debug.Log($"  Items列表中null元素: {Items.Count(item => item == null)}");
+            
+            // 打印所有物品
+            foreach (var kvp in _itemCounts)
+            {
+                Debug.Log($"  - {kvp.Key}: {kvp.Value}");
+            }
         }
     }
 }
