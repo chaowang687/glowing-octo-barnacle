@@ -7,9 +7,44 @@ using UnityEngine.EventSystems;
 using System.Collections; 
 using TMPro; 
 using System; 
-
+using ScavengingGame;
 public class BattleManager : MonoBehaviour
 {
+   
+        // 由GameStateManager调用以初始化战斗
+        public void InitializeBattle(EnemyEncounterData encounterData)
+        {
+            if (encounterData != null)
+            {
+                Debug.Log($"开始战斗遭遇: {encounterData.encounterName}");
+                // 1. 根据encounterData生成敌人
+                // 2. 初始化玩家卡组和状态
+                // 3. 开始战斗流程
+            }
+            else
+            {
+                Debug.Log("开始默认战斗");
+                // 使用默认敌人配置
+            }
+            
+            // 开始战斗逻辑...
+        }
+        
+        // 战斗结束时调用（胜利或失败）
+        public void EndBattle(bool isVictory)
+        {
+            List<ItemData> rewards = new List<ItemData>();
+            
+            if (isVictory)
+            {
+                // 生成战利品
+                // rewards = GenerateBattleRewards();
+            }
+            
+            // 通知GameStateManager战斗结束
+            GameStateManager.Instance.EndBattle(isVictory, rewards);
+        }
+    
      [Header("战斗角色清理设置")]
     [Tooltip("角色死亡后，其游戏对象被销毁前的延迟时间（秒），用于播放死亡动画。")]
     public float characterDestroyDelay = 1.5f;
