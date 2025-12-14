@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,7 +75,16 @@ public class MapGridManager : MonoBehaviour
         // 确保所有节点都已添加到列表中
         if (AllNodes.Count == 0)
         {
-            AllNodes = FindObjectsOfType<IsometricMapNode>().ToList();
+            // 修复：使用新的 FindObjectsByType API 替代已过时的 FindObjectsOfType
+            #if UNITY_2021_3_OR_NEWER
+            // Unity 2021.3 及以上版本使用新 API
+            IsometricMapNode[] nodes = FindObjectsByType<IsometricMapNode>(FindObjectsSortMode.None);
+            #else
+            // 旧版本使用兼容的 API
+            IsometricMapNode[] nodes = FindObjectsOfType<IsometricMapNode>();
+            #endif
+            
+            AllNodes = nodes.ToList();
             if (AllNodes.Count == 0)
             {
                 Debug.LogError("MapGridManager: Scene contains no IsometricMapNode components!");

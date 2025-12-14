@@ -1,0 +1,507 @@
+using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ScavengingGame
+{
+    public class InventoryManager : MonoBehaviour, IInventoryService
+    {
+        // 使用新的堆叠数据结构
+        private Dictionary<string, ItemStack> _itemStacks = new Dictionary<string, ItemStack>();
+        private Dictionary<int, string> _slotItemMap = new Dictionary<int, string>();
+        private Dictionary<EquipmentData.SlotType, EquipmentData> _equippedItems = 
+            new Dictionary<EquipmentData.SlotType, EquipmentData>();
+        
+        // 最大堆叠数配置
+        [SerializeField] private int _defaultMaxStack = 99;
+        private Dictionary<string, int> _maxStackConfig = new Dictionary<string, int>();
+        
+        // 事件
+        public event Action<ItemData> OnItemAdded;
+        public event Action<ItemData, int> OnItemRemoved;
+        public event Action<EquipmentData.SlotType, EquipmentData> OnEquipmentChanged;
+        public event Action OnInventoryChanged;
+        
+        // ==================== 物品基本操作实现 ====================
+        
+        public bool AddItem(ItemData item, int amount = 1)
+        {
+            if (item == null || amount <= 0) return false;
+            
+            if (IsFull())
+            {
+                Debug.LogWarning("库存已满");
+                return false;
+            }
+            
+            bool canStack = CanItemStack(item);
+            string itemId = GetItemId(item);
+            
+            if (canStack && _itemStacks.ContainsKey(itemId))
+            {
+                var stack = _itemStacks[itemId];
+                int maxStack = GetMaxStackCount(item);
+                int availableSpace = maxStack - stack.Count;
+                
+                if (availableSpace >= amount)
+                {
+                    stack.Count += amount;
+                    Debug.Log($"堆叠物品: {item.ItemName} +{amount}, 总数: {stack.Count}");
+                    
+                    OnItemAdded?.Invoke(item);
+                    OnInventoryChanged?.Invoke();
+                    return true;
+                }
+                else
+                {
+                    stack.Count = maxStack;
+                    Debug.Log($"物品堆叠已满: {item.ItemName}, 剩余 {amount - availableSpace} 个无法添加");
+                    
+                    OnItemAdded?.Invoke(item);
+                    OnInventoryChanged?.Invoke();
+                    
+                    if (amount - availableSpace > 0 && !IsFull())
+                    {
+                        return AddItem(item, amount - availableSpace);
+                    }
+                    return false;
+                }
+            }
+            else
+            {
+                if (GetCurrentCapacity() + 1 > GetMaxCapacity())
+                {
+                    Debug.LogWarning("库存已满，无法添加新物品");
+                    return false;
+                }
+                
+                int emptySlot = FindEmptySlot();
+                if (emptySlot == -1)
+                {
+                    Debug.LogWarning("没有可用槽位");
+                    return false;
+                }
+                
+                int actualAmount = canStack ? Math.Min(amount, GetMaxStackCount(item)) : 1;
+                var newStack = new ItemStack(item, actualAmount, emptySlot);
+                _itemStacks[itemId] = newStack;
+                _slotItemMap[emptySlot] = itemId;
+                
+                Debug.Log($"添加新物品: {item.ItemName} x{actualAmount} 到槽位 {emptySlot}");
+                
+                OnItemAdded?.Invoke(item);
+                OnInventoryChanged?.Invoke();
+                
+                if (canStack && amount > actualAmount)
+                {
+                    return AddItem(item, amount - actualAmount);
+                }
+                
+                return true;
+            }
+        }
+        
+        public bool RemoveItem(string itemId, int amount = 1)
+        {
+            if (string.IsNullOrEmpty(itemId) || amount <= 0) return false;
+            
+            if (!_itemStacks.ContainsKey(itemId))
+            {
+                Debug.LogWarning($"物品不存在: {itemId}");
+                return false;
+            }
+            
+            var stack = _itemStacks[itemId];
+            
+            if (stack.Count < amount)
+            {
+                Debug.LogWarning($"尝试移除 {amount} 个 {stack.Item.ItemName}，但只有 {stack.Count} 个");
+                return false;
+            }
+            
+            stack.Count -= amount;
+            
+            if (stack.Count <= 0)
+            {
+                _itemStacks.Remove(itemId);
+                _slotItemMap.Remove(stack.SlotIndex);
+                Debug.Log($"移除物品: {stack.Item.ItemName} (全部)");
+            }
+            else
+            {
+                Debug.Log($"移除物品: {stack.Item.ItemName} x{amount}, 剩余: {stack.Count}");
+            }
+            
+            OnItemRemoved?.Invoke(stack.Item, amount);
+            OnInventoryChanged?.Invoke();
+            return true;
+        }
+        
+        public bool RemoveItemAt(int index, int amount = 1)
+        {
+            if (!_slotItemMap.ContainsKey(index) || amount <= 0) return false;
+            
+            string itemId = _slotItemMap[index];
+            return RemoveItem(itemId, amount);
+        }
+        
+        public void UseItem(ItemData item)
+        {
+            if (item == null) return;
+            
+            string itemId = GetItemId(item);
+            
+            if (_itemStacks.ContainsKey(itemId))
+            {
+                var stack = _itemStacks[itemId];
+                
+                if (!(item is EquipmentData))
+                {
+                    if (stack.Count > 0)
+                    {
+                        stack.Count--;
+                        Debug.Log($"使用物品: {item.ItemName}, 剩余: {stack.Count}");
+                        
+                        if (stack.Count <= 0)
+                        {
+                            _itemStacks.Remove(itemId);
+                            _slotItemMap.Remove(stack.SlotIndex);
+                        }
+                        
+                        OnItemRemoved?.Invoke(item, 1);
+                        OnInventoryChanged?.Invoke();
+                    }
+                }
+                else
+                {
+                    Debug.Log($"尝试使用装备: {item.ItemName}");
+                }
+            }
+        }
+        
+        public int GetItemCount(ItemData item)
+        {
+            if (item == null) return 0;
+            return GetItemCountById(GetItemId(item));
+        }
+        
+        public int GetItemCountById(string itemId)
+        {
+            if (_itemStacks.ContainsKey(itemId))
+            {
+                return _itemStacks[itemId].Count;
+            }
+            return 0;
+        }
+        
+        public List<ItemStack> GetAllItems()
+        {
+            return _itemStacks.Values.ToList();
+        }
+        
+        public bool IsFull()
+        {
+            return GetCurrentCapacity() >= GetMaxCapacity();
+        }
+        
+        public int GetCurrentCapacity()
+        {
+            return _itemStacks.Count;
+        }
+        
+        public int GetMaxCapacity()
+        {
+            return 30;
+        }
+        
+        public bool SwapItems(int sourceIndex, int targetIndex)
+        {
+            if (sourceIndex == targetIndex) return false;
+            
+            bool sourceHasItem = _slotItemMap.ContainsKey(sourceIndex);
+            bool targetHasItem = _slotItemMap.ContainsKey(targetIndex);
+            
+            if (!sourceHasItem && !targetHasItem) return false;
+            
+            if (sourceHasItem && targetHasItem)
+            {
+                string sourceItemId = _slotItemMap[sourceIndex];
+                string targetItemId = _slotItemMap[targetIndex];
+                
+                var sourceStack = _itemStacks[sourceItemId];
+                var targetStack = _itemStacks[targetItemId];
+                
+                sourceStack.SlotIndex = targetIndex;
+                targetStack.SlotIndex = sourceIndex;
+                
+                _slotItemMap[sourceIndex] = targetItemId;
+                _slotItemMap[targetIndex] = sourceItemId;
+                
+                Debug.Log($"交换物品: 槽位{sourceIndex}和槽位{targetIndex}");
+            }
+            else if (sourceHasItem && !targetHasItem)
+            {
+                string sourceItemId = _slotItemMap[sourceIndex];
+                var stack = _itemStacks[sourceItemId];
+                
+                stack.SlotIndex = targetIndex;
+                _slotItemMap.Remove(sourceIndex);
+                _slotItemMap[targetIndex] = sourceItemId;
+                
+                Debug.Log($"移动物品到空槽位: 从{sourceIndex}到{targetIndex}");
+            }
+            else if (!sourceHasItem && targetHasItem)
+            {
+                return SwapItems(targetIndex, sourceIndex);
+            }
+            
+            OnInventoryChanged?.Invoke();
+            return true;
+        }
+        
+        public bool MergeItemStacks(int sourceIndex, int targetIndex)
+        {
+            if (sourceIndex == targetIndex) return false;
+            
+            if (!_slotItemMap.ContainsKey(sourceIndex) || !_slotItemMap.ContainsKey(targetIndex))
+                return false;
+            
+            string sourceItemId = _slotItemMap[sourceIndex];
+            string targetItemId = _slotItemMap[targetIndex];
+            
+            if (sourceItemId != targetItemId) return false;
+            
+            var sourceStack = _itemStacks[sourceItemId];
+            var targetStack = _itemStacks[targetItemId];
+            
+            int maxStack = GetMaxStackCount(sourceStack.Item);
+            int availableSpace = maxStack - targetStack.Count;
+            
+            if (availableSpace <= 0) return false;
+            
+            int transferAmount = Math.Min(sourceStack.Count, availableSpace);
+            targetStack.Count += transferAmount;
+            sourceStack.Count -= transferAmount;
+            
+            if (sourceStack.Count <= 0)
+            {
+                _itemStacks.Remove(sourceItemId);
+                _slotItemMap.Remove(sourceIndex);
+            }
+            
+            OnInventoryChanged?.Invoke();
+            return true;
+        }
+        
+        private string GetItemId(ItemData item)
+        {
+            return item.ItemName;
+        }
+        
+        private bool CanItemStack(ItemData item)
+        {
+            return !(item is EquipmentData);
+        }
+        
+        private int GetMaxStackCount(ItemData item)
+        {
+            if (_maxStackConfig.ContainsKey(item.ItemName))
+            {
+                return _maxStackConfig[item.ItemName];
+            }
+            
+            if (item is EquipmentData) return 1;
+            return _defaultMaxStack;
+        }
+        
+        private int FindEmptySlot()
+        {
+            for (int i = 0; i < GetMaxCapacity(); i++)
+            {
+                if (!_slotItemMap.ContainsKey(i))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
+        // ==================== 装备操作实现 ====================
+        
+        public bool EquipItem(EquipmentData equipment)
+        {
+            if (equipment == null) return false;
+            
+            string itemId = GetItemId(equipment);
+            
+            if (!_itemStacks.ContainsKey(itemId))
+            {
+                Debug.LogWarning($"背包中没有装备: {equipment.ItemName}");
+                return false;
+            }
+            
+            if (_equippedItems.ContainsKey(equipment.Slot))
+            {
+                UnequipItem(equipment.Slot);
+            }
+            
+            var stack = _itemStacks[itemId];
+            stack.Count--;
+            
+            if (stack.Count <= 0)
+            {
+                _itemStacks.Remove(itemId);
+                _slotItemMap.Remove(stack.SlotIndex);
+            }
+            
+            _equippedItems[equipment.Slot] = equipment;
+            
+            Debug.Log($"装备: {equipment.ItemName}");
+            
+            OnEquipmentChanged?.Invoke(equipment.Slot, equipment);
+            OnInventoryChanged?.Invoke();
+            
+            return true;
+        }
+        
+        public bool UnequipItem(EquipmentData.SlotType slotType)
+        {
+            if (!_equippedItems.ContainsKey(slotType))
+            {
+                Debug.LogWarning($"槽位 {slotType} 没有装备物品");
+                return false;
+            }
+            
+            if (IsFull())
+            {
+                Debug.LogWarning("背包已满，无法卸下装备");
+                return false;
+            }
+            
+            var equipment = _equippedItems[slotType];
+            _equippedItems.Remove(slotType);
+            AddItem(equipment);
+            
+            Debug.Log($"卸下: {equipment.ItemName}");
+            
+            OnEquipmentChanged?.Invoke(slotType, null);
+            OnInventoryChanged?.Invoke();
+            
+            return true;
+        }
+        
+        public EquipmentData GetEquippedItem(EquipmentData.SlotType slotType)
+        {
+            _equippedItems.TryGetValue(slotType, out EquipmentData equipment);
+            return equipment;
+        }
+        
+        public Dictionary<EquipmentData.SlotType, EquipmentData> GetAllEquippedItems()
+        {
+            return new Dictionary<EquipmentData.SlotType, EquipmentData>(_equippedItems);
+        }
+        
+        public bool IsItemEquipped(EquipmentData equipment)
+        {
+            if (equipment == null) return false;
+            
+            _equippedItems.TryGetValue(equipment.Slot, out EquipmentData equipped);
+            return equipped != null && equipped.ItemName == equipment.ItemName;
+        }
+        
+        public (int attack, int defense) CalculateEquipmentBonuses()
+        {
+            int attackBonus = 0;
+            int defenseBonus = 0;
+            
+            foreach (var equipment in _equippedItems.Values)
+            {
+                if (equipment != null)
+                {
+                    attackBonus += equipment.AttackBonus;
+                    defenseBonus += equipment.DefenseBonus;
+                }
+            }
+            
+            return (attackBonus, defenseBonus);
+        }
+        
+        /// <summary>
+        /// 打印库存信息到控制台（用于调试）
+        /// </summary>
+        public void LogInventory()
+        {
+            Debug.Log("=== 库存信息 ===");
+            Debug.Log($"总容量: {GetCurrentCapacity()}/{GetMaxCapacity()}");
+            
+            var allItems = GetAllItems();
+            if (allItems.Count == 0)
+            {
+                Debug.Log("背包为空");
+            }
+            else
+            {
+                Debug.Log($"物品堆叠数: {allItems.Count}");
+                
+                foreach (var stack in allItems)
+                {
+                    Debug.Log($"  槽位{stack.SlotIndex}: {stack.Item.ItemName} x{stack.Count}");
+                }
+            }
+            
+            Debug.Log("=== 装备信息 ===");
+            var equippedItems = GetAllEquippedItems();
+            bool hasEquipped = false;
+            
+            foreach (var kvp in equippedItems)
+            {
+                if (kvp.Value != null)
+                {
+                    hasEquipped = true;
+                    Debug.Log($"  {GetSlotName(kvp.Key)}: {kvp.Value.ItemName}");
+                }
+            }
+            
+            if (!hasEquipped)
+            {
+                Debug.Log("没有装备任何物品");
+            }
+            
+            var bonuses = CalculateEquipmentBonuses();
+            Debug.Log($"攻击加成: +{bonuses.attack}");
+            Debug.Log($"防御加成: +{bonuses.defense}");
+        }
+        
+        private string GetSlotName(EquipmentData.SlotType slotType)
+        {
+            switch (slotType)
+            {
+                case EquipmentData.SlotType.Weapon: return "武器";
+                case EquipmentData.SlotType.Armor: return "护甲";
+                case EquipmentData.SlotType.Helmet: return "头盔";
+                case EquipmentData.SlotType.Gloves: return "手套";
+                case EquipmentData.SlotType.Boots: return "靴子";
+                case EquipmentData.SlotType.Shield: return "盾牌";
+                case EquipmentData.SlotType.Ring1: return "戒指1";
+                case EquipmentData.SlotType.Ring2: return "戒指2";
+                case EquipmentData.SlotType.Amulet1: return "护符1";
+                case EquipmentData.SlotType.Amulet2: return "护符2";
+                default: return "未知";
+            }
+        }
+        
+        void Start()
+        {
+            foreach (EquipmentData.SlotType slotType in Enum.GetValues(typeof(EquipmentData.SlotType)))
+            {
+                if (!_equippedItems.ContainsKey(slotType))
+                {
+                    _equippedItems[slotType] = null;
+                }
+            }
+            
+            Debug.Log("InventoryManager 初始化完成");
+        }
+    }
+}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using ScavengingGame; // 【修复 1】：添加 GameStateManager 所在的命名空间
 
+
 /// <summary>
 /// 地图格子类型
 /// </summary>
