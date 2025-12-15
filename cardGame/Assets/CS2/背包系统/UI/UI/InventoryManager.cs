@@ -1,3 +1,4 @@
+// InventoryManager.cs
 using UnityEngine;
 using System;
 using System.Collections.Generic;
@@ -7,23 +8,95 @@ namespace ScavengingGame
 {
     public class InventoryManager : MonoBehaviour, IInventoryService
     {
-        // 使用新的堆叠数据结构
         private Dictionary<string, ItemStack> _itemStacks = new Dictionary<string, ItemStack>();
         private Dictionary<int, string> _slotItemMap = new Dictionary<int, string>();
-        private Dictionary<EquipmentData.SlotType, EquipmentData> _equippedItems = 
-            new Dictionary<EquipmentData.SlotType, EquipmentData>();
+        private Dictionary<EquipmentData.SlotType, EquipmentData> _equippedItems = new Dictionary<EquipmentData.SlotType, EquipmentData>();
         
-        // 最大堆叠数配置
         [SerializeField] private int _defaultMaxStack = 99;
         private Dictionary<string, int> _maxStackConfig = new Dictionary<string, int>();
         
-        // 事件
         public event Action<ItemData> OnItemAdded;
         public event Action<ItemData, int> OnItemRemoved;
         public event Action<EquipmentData.SlotType, EquipmentData> OnEquipmentChanged;
         public event Action OnInventoryChanged;
         
-        // ==================== 物品基本操作实现 ====================
+        private void Start()
+        {
+            foreach (EquipmentData.SlotType slotType in Enum.GetValues(typeof(EquipmentData.SlotType)))
+            {
+                if (!_equippedItems.ContainsKey(slotType))
+                {
+                    _equippedItems[slotType] = null;
+                }
+            }
+        }
+        
+        // ==================== 宝箱系统专用方法 ====================
+        
+        public bool HasSpaceForItem(string itemId, int amount = 1)
+        {
+            ItemData itemData = GetItemDataById(itemId);
+            if (itemData == null)
+            {
+                Debug.LogWarning($"物品 {itemId} 不存在");
+                return false;
+            }
+            
+            if (itemData.maxStackSize > 1)
+            {
+                int existingSpace = 0;
+                foreach (var stack in _itemStacks.Values)
+                {
+                    if (stack.Item.itemId == itemId && stack.Count < itemData.maxStackSize)
+                    {
+                        existingSpace += itemData.maxStackSize - stack.Count;
+                    }
+                }
+                
+                if (existingSpace >= amount)
+                {
+                    return true;
+                }
+                else if (existingSpace > 0)
+                {
+                    amount -= existingSpace;
+                }
+            }
+            
+            int slotsNeeded = Mathf.CeilToInt((float)amount / itemData.maxStackSize);
+            int availableSlots = GetMaxCapacity() - GetCurrentCapacity();
+            
+            return availableSlots >= slotsNeeded;
+        }
+        
+        public bool AddItemsBatch(List<ItemStack> itemsToAdd)
+        {
+            bool allSuccess = true;
+            List<ItemStack> failedItems = new List<ItemStack>();
+            
+            foreach (var itemStack in itemsToAdd)
+            {
+                if (!AddItem(itemStack.Item, itemStack.Count))
+                {
+                    allSuccess = false;
+                    failedItems.Add(itemStack);
+                }
+            }
+            
+            if (!allSuccess && failedItems.Count > 0)
+            {
+                Debug.LogWarning($"以下物品添加失败: {string.Join(", ", failedItems.Select(i => $"{i.Item.itemName} x{i.Count}"))}");
+            }
+            
+            return allSuccess;
+        }
+        
+        public int GetRemainingSpace()
+        {
+            return GetMaxCapacity() - GetCurrentCapacity();
+        }
+        
+        // ==================== 物品基本操作 ====================
         
         public bool AddItem(ItemData item, int amount = 1)
         {
@@ -47,7 +120,7 @@ namespace ScavengingGame
                 if (availableSpace >= amount)
                 {
                     stack.Count += amount;
-                    Debug.Log($"堆叠物品: {item.ItemName} +{amount}, 总数: {stack.Count}");
+                    Debug.Log($"堆叠物品: {item.itemName} +{amount}, 总数: {stack.Count}");
                     
                     OnItemAdded?.Invoke(item);
                     OnInventoryChanged?.Invoke();
@@ -56,7 +129,7 @@ namespace ScavengingGame
                 else
                 {
                     stack.Count = maxStack;
-                    Debug.Log($"物品堆叠已满: {item.ItemName}, 剩余 {amount - availableSpace} 个无法添加");
+                    Debug.Log($"物品堆叠已满: {item.itemName}, 剩余 {amount - availableSpace} 个无法添加");
                     
                     OnItemAdded?.Invoke(item);
                     OnInventoryChanged?.Invoke();
@@ -88,7 +161,7 @@ namespace ScavengingGame
                 _itemStacks[itemId] = newStack;
                 _slotItemMap[emptySlot] = itemId;
                 
-                Debug.Log($"添加新物品: {item.ItemName} x{actualAmount} 到槽位 {emptySlot}");
+                Debug.Log($"添加新物品: {item.itemName} x{actualAmount} 到槽位 {emptySlot}");
                 
                 OnItemAdded?.Invoke(item);
                 OnInventoryChanged?.Invoke();
@@ -116,7 +189,7 @@ namespace ScavengingGame
             
             if (stack.Count < amount)
             {
-                Debug.LogWarning($"尝试移除 {amount} 个 {stack.Item.ItemName}，但只有 {stack.Count} 个");
+                Debug.LogWarning($"尝试移除 {amount} 个 {stack.Item.itemName}，但只有 {stack.Count} 个");
                 return false;
             }
             
@@ -126,11 +199,11 @@ namespace ScavengingGame
             {
                 _itemStacks.Remove(itemId);
                 _slotItemMap.Remove(stack.SlotIndex);
-                Debug.Log($"移除物品: {stack.Item.ItemName} (全部)");
+                Debug.Log($"移除物品: {stack.Item.itemName} (全部)");
             }
             else
             {
-                Debug.Log($"移除物品: {stack.Item.ItemName} x{amount}, 剩余: {stack.Count}");
+                Debug.Log($"移除物品: {stack.Item.itemName} x{amount}, 剩余: {stack.Count}");
             }
             
             OnItemRemoved?.Invoke(stack.Item, amount);
@@ -161,7 +234,7 @@ namespace ScavengingGame
                     if (stack.Count > 0)
                     {
                         stack.Count--;
-                        Debug.Log($"使用物品: {item.ItemName}, 剩余: {stack.Count}");
+                        Debug.Log($"使用物品: {item.itemName}, 剩余: {stack.Count}");
                         
                         if (stack.Count <= 0)
                         {
@@ -175,7 +248,7 @@ namespace ScavengingGame
                 }
                 else
                 {
-                    Debug.Log($"尝试使用装备: {item.ItemName}");
+                    Debug.Log($"尝试使用装备: {item.itemName}");
                 }
             }
         }
@@ -294,40 +367,7 @@ namespace ScavengingGame
             return true;
         }
         
-        private string GetItemId(ItemData item)
-        {
-            return item.ItemName;
-        }
-        
-        private bool CanItemStack(ItemData item)
-        {
-            return !(item is EquipmentData);
-        }
-        
-        private int GetMaxStackCount(ItemData item)
-        {
-            if (_maxStackConfig.ContainsKey(item.ItemName))
-            {
-                return _maxStackConfig[item.ItemName];
-            }
-            
-            if (item is EquipmentData) return 1;
-            return _defaultMaxStack;
-        }
-        
-        private int FindEmptySlot()
-        {
-            for (int i = 0; i < GetMaxCapacity(); i++)
-            {
-                if (!_slotItemMap.ContainsKey(i))
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        
-        // ==================== 装备操作实现 ====================
+        // ==================== 装备操作 ====================
         
         public bool EquipItem(EquipmentData equipment)
         {
@@ -337,13 +377,13 @@ namespace ScavengingGame
             
             if (!_itemStacks.ContainsKey(itemId))
             {
-                Debug.LogWarning($"背包中没有装备: {equipment.ItemName}");
+                Debug.LogWarning($"背包中没有装备: {equipment.itemName}");
                 return false;
             }
             
-            if (_equippedItems.ContainsKey(equipment.Slot))
+            if (_equippedItems.ContainsKey(equipment.slotType))
             {
-                UnequipItem(equipment.Slot);
+                UnequipItem(equipment.slotType);
             }
             
             var stack = _itemStacks[itemId];
@@ -355,11 +395,11 @@ namespace ScavengingGame
                 _slotItemMap.Remove(stack.SlotIndex);
             }
             
-            _equippedItems[equipment.Slot] = equipment;
+            _equippedItems[equipment.slotType] = equipment;
             
-            Debug.Log($"装备: {equipment.ItemName}");
+            Debug.Log($"装备: {equipment.itemName}");
             
-            OnEquipmentChanged?.Invoke(equipment.Slot, equipment);
+            OnEquipmentChanged?.Invoke(equipment.slotType, equipment);
             OnInventoryChanged?.Invoke();
             
             return true;
@@ -383,7 +423,7 @@ namespace ScavengingGame
             _equippedItems.Remove(slotType);
             AddItem(equipment);
             
-            Debug.Log($"卸下: {equipment.ItemName}");
+            Debug.Log($"卸下: {equipment.itemName}");
             
             OnEquipmentChanged?.Invoke(slotType, null);
             OnInventoryChanged?.Invoke();
@@ -406,8 +446,8 @@ namespace ScavengingGame
         {
             if (equipment == null) return false;
             
-            _equippedItems.TryGetValue(equipment.Slot, out EquipmentData equipped);
-            return equipped != null && equipped.ItemName == equipment.ItemName;
+            _equippedItems.TryGetValue(equipment.slotType, out EquipmentData equipped);
+            return equipped != null && equipped.itemName == equipment.itemName;
         }
         
         public (int attack, int defense) CalculateEquipmentBonuses()
@@ -419,17 +459,67 @@ namespace ScavengingGame
             {
                 if (equipment != null)
                 {
-                    attackBonus += equipment.AttackBonus;
-                    defenseBonus += equipment.DefenseBonus;
+                    attackBonus += equipment.attackBonus;
+                    defenseBonus += equipment.defenseBonus;
                 }
             }
             
             return (attackBonus, defenseBonus);
         }
         
-        /// <summary>
-        /// 打印库存信息到控制台（用于调试）
-        /// </summary>
+        // ==================== 辅助方法 ====================
+        
+        private string GetItemId(ItemData item)
+        {
+            return item.itemId ?? item.itemName;
+        }
+        
+        private bool CanItemStack(ItemData item)
+        {
+            return !(item is EquipmentData);
+        }
+        
+        private int GetMaxStackCount(ItemData item)
+        {
+            if (_maxStackConfig.ContainsKey(item.itemName))
+            {
+                return _maxStackConfig[item.itemName];
+            }
+            
+            if (item is EquipmentData) return 1;
+            return _defaultMaxStack;
+        }
+        
+        private int FindEmptySlot()
+        {
+            for (int i = 0; i < GetMaxCapacity(); i++)
+            {
+                if (!_slotItemMap.ContainsKey(i))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
+        private ItemData GetItemDataById(string itemId)
+        {
+            Debug.LogWarning($"ItemDatabase 未找到，创建临时物品: {itemId}");
+            return CreateTempItemData(itemId);
+        }
+        
+        private ItemData CreateTempItemData(string itemId)
+        {
+            ItemData itemData = ScriptableObject.CreateInstance<ItemData>();
+            itemData.itemId = itemId;
+            itemData.itemName = itemId;
+            itemData.maxStackSize = 99;
+
+            // 添加默认图标（重要！）
+            itemData.icon = Resources.Load<Sprite>("DefaultIcons/DefaultItem");
+            return itemData;
+        }
+        
         public void LogInventory()
         {
             Debug.Log("=== 库存信息 ===");
@@ -446,7 +536,7 @@ namespace ScavengingGame
                 
                 foreach (var stack in allItems)
                 {
-                    Debug.Log($"  槽位{stack.SlotIndex}: {stack.Item.ItemName} x{stack.Count}");
+                    Debug.Log($"  槽位{stack.SlotIndex}: {stack.Item.itemName} x{stack.Count}");
                 }
             }
             
@@ -459,7 +549,7 @@ namespace ScavengingGame
                 if (kvp.Value != null)
                 {
                     hasEquipped = true;
-                    Debug.Log($"  {GetSlotName(kvp.Key)}: {kvp.Value.ItemName}");
+                    Debug.Log($"  {GetSlotName(kvp.Key)}: {kvp.Value.itemName}");
                 }
             }
             
@@ -489,19 +579,6 @@ namespace ScavengingGame
                 case EquipmentData.SlotType.Amulet2: return "护符2";
                 default: return "未知";
             }
-        }
-        
-        void Start()
-        {
-            foreach (EquipmentData.SlotType slotType in Enum.GetValues(typeof(EquipmentData.SlotType)))
-            {
-                if (!_equippedItems.ContainsKey(slotType))
-                {
-                    _equippedItems[slotType] = null;
-                }
-            }
-            
-            Debug.Log("InventoryManager 初始化完成");
         }
     }
 }

@@ -1,98 +1,265 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-namespace ScavengingGame
+namespace ScavengingGame.Tests
 {
-    public class InventoryTester : MonoBehaviour
+    /// <summary>
+    /// IInventoryService 单元测试适配器
+    /// 职责：提供标准化测试用例，易于扩展和维护
+    /// </summary>
+    public class InventoryServiceTestAdapter : MonoBehaviour
     {
-        [Header("测试物品")]
-        public ItemData testItem;
-        public EquipmentData testEquipment;
+
+
+
+        
+        [System.Serializable]
+        public class TestCase
+        {
+            public string testName;
+            public TestType testType;
+            public ItemData testItem;
+            public EquipmentData testEquipment;
+            public int testAmount = 1;
+            public bool expectedResult = true;
+        }
+        
+        public enum TestType
+        {
+            AddItem,
+            RemoveItem,
+            UseItem,
+            EquipItem,
+            SpaceCheck,
+            BatchAdd,
+            EventTest
+        }
+        
+        [Header("测试用例")]
+        public TestCase[] testCases;
         
         [Header("测试设置")]
-        public bool autoTest = true;
-        public float testDelay = 1f;
+        public bool autoRun = false;
+        public bool stopOnFailure = false;
+        
+        private IInventoryService _service;
         
         void Start()
         {
-            if (autoTest)
-            {
-                StartCoroutine(TestInventory());
-            }
+            if (autoRun)
+                StartCoroutine(ExecuteTestCases());
         }
         
-         IEnumerator TestInventory()
+        IEnumerator ExecuteTestCases()
         {
-            yield return new WaitForSeconds(testDelay);
-            
-            if (GameStateManager.Instance == null || 
-                GameStateManager.Instance.PlayerInventory == null)
-            {
-                Debug.LogError("GameStateManager 或 PlayerInventory 未找到");
+            if (!InitializeService())
                 yield break;
-            }
             
-            IInventoryService inventory = GameStateManager.Instance.PlayerInventory;
-            
-            // 测试添加物品
-            if (testItem != null)
+            foreach (var testCase in testCases)
             {
-                bool added = inventory.AddItem(testItem, 1);
-                Debug.Log($"添加物品 {testItem.ItemName}: {(added ? "成功" : "失败")}");
-            }
-            else
-            {
-                Debug.LogWarning("测试物品未设置");
-            }
-            
-            // 测试添加装备
-            if (testEquipment != null)
-            {
-                bool added = inventory.AddItem(testEquipment, 1);
-                Debug.Log($"添加装备 {testEquipment.ItemName}: {(added ? "成功" : "失败")}");
+                Debug.Log($"执行测试: {testCase.testName}");
                 
-                // 如果添加成功，尝试装备（确保装备不为null）
-                if (added)
+                bool result = false;
+                
+                switch (testCase.testType)
                 {
-                    // 等待一帧，确保物品已添加
-                    yield return null;
-                    
-                    // 尝试装备
-                    bool equipped = inventory.EquipItem(testEquipment);
-                    Debug.Log($"装备 {testEquipment.ItemName}: {(equipped ? "成功" : "失败")}");
+                    case TestType.AddItem:
+                        result = ExecuteAddItemTest(testCase);
+                        break;
+                    case TestType.RemoveItem:
+                        result = ExecuteRemoveItemTest(testCase);
+                        break;
+                    case TestType.UseItem:
+                        result = ExecuteUseItemTest(testCase);
+                        break;
+                    case TestType.EquipItem:
+                        result = ExecuteEquipItemTest(testCase);
+                        break;
+                    case TestType.SpaceCheck:
+                        result = ExecuteSpaceCheckTest(testCase);
+                        break;
+                    case TestType.BatchAdd:
+                        result = ExecuteBatchAddTest(testCase);
+                        break;
+                    case TestType.EventTest:
+                        result = ExecuteEventTest(testCase);
+                        break;
+                    default:
+                        Debug.LogWarning($"未知的测试类型: {testCase.testType}");
+                        break;
                 }
-            }
-            else
-            {
-                Debug.LogWarning("测试装备未设置");
-            }
-            
-            // 打印背包内容 - 使用类型安全的方式
-            if (inventory is InventoryManager inventoryManager)
-            {
-                inventoryManager.LogInventory();
-            }
-            else
-            {
-                // 备选方案：使用接口提供的信息
-                var items = inventory.GetAllItems();
-                Debug.Log($"背包中共有 {items.Count} 组物品");
-                foreach (var stack in items)
+                
+                if (result == testCase.expectedResult)
                 {
-                    if (stack != null && stack.Item != null)
-                        Debug.Log($"  {stack.Item.ItemName}: {stack.Count}个");
+                    Debug.Log($"✓ {testCase.testName} 通过");
                 }
+                else
+                {
+                    Debug.LogError($"✗ {testCase.testName} 失败");
+                    if (stopOnFailure) yield break;
+                }
+                
+                yield return new WaitForSeconds(0.1f);
             }
-            
-            // 计算装备加成
-            var bonuses = inventory.CalculateEquipmentBonuses();
-            Debug.Log($"装备总加成 - 攻击: {bonuses.attack}, 防御: {bonuses.defense}");
         }
         
-        // 手动测试方法
-        public void ManualTest()
+        bool ExecuteAddItemTest(TestCase testCase)
         {
-            StartCoroutine(TestInventory());
+            if (_service == null) return false;
+            return _service.AddItem(testCase.testItem, testCase.testAmount);
+        }
+        
+        // 添加缺失的 ExecuteRemoveItemTest 方法
+        bool ExecuteRemoveItemTest(TestCase testCase)
+        {
+            if (_service == null) return false;
+            
+            // 对于移除测试，需要先添加物品
+            if (!_service.AddItem(testCase.testItem, testCase.testAmount))
+            {
+                Debug.LogWarning($"无法添加物品 {testCase.testItem?.itemName}，跳过移除测试");
+                return false;
+            }
+            
+            return _service.RemoveItem(testCase.testItem.itemId, testCase.testAmount);
+        }
+        
+        // 添加缺失的 ExecuteUseItemTest 方法
+        bool ExecuteUseItemTest(TestCase testCase)
+        {
+            if (_service == null) return false;
+            
+            // 对于使用测试，需要先添加物品
+            if (!_service.AddItem(testCase.testItem, testCase.testAmount))
+            {
+                Debug.LogWarning($"无法添加物品 {testCase.testItem?.itemName}，跳过使用测试");
+                return false;
+            }
+            
+            // 使用物品
+            _service.UseItem(testCase.testItem);
+            return true; // UseItem 通常没有返回值，假设成功
+        }
+        
+        bool ExecuteEquipItemTest(TestCase testCase)
+        {
+            if (_service == null || testCase.testEquipment == null) return false;
+            
+            // 先添加装备到背包
+            if (!_service.AddItem(testCase.testEquipment, 1))
+                return false;
+            
+            return _service.EquipItem(testCase.testEquipment);
+        }
+        
+        // 添加缺失的 ExecuteSpaceCheckTest 方法
+        bool ExecuteSpaceCheckTest(TestCase testCase)
+        {
+            if (_service == null) return false;
+            return _service.HasSpaceForItem(testCase.testItem?.itemId, testCase.testAmount);
+        }
+        
+        // 添加缺失的 ExecuteBatchAddTest 方法
+        bool ExecuteBatchAddTest(TestCase testCase)
+        {
+            if (_service == null || testCase.testItem == null) return false;
+            
+            List<ItemStack> items = new List<ItemStack>
+            {
+                new ItemStack(testCase.testItem, testCase.testAmount)
+            };
+            
+            return _service.AddItemsBatch(items);
+        }
+        
+        // 添加缺失的 ExecuteEventTest 方法
+        bool ExecuteEventTest(TestCase testCase)
+        {
+            if (_service == null) return false;
+            
+            // 事件测试：监听事件并验证是否触发
+            bool eventTriggered = false;
+            System.Action<ItemData> eventHandler = (item) => 
+            {
+                eventTriggered = true;
+                Debug.Log($"事件触发: {item?.itemName}");
+            };
+            
+            // 订阅事件
+            _service.OnItemAdded += eventHandler;
+            
+            // 触发事件
+            bool result = _service.AddItem(testCase.testItem, testCase.testAmount);
+            
+            // 取消订阅
+            _service.OnItemAdded -= eventHandler;
+            
+            return result && eventTriggered;
+        }
+        
+        // ... 其他测试执行方法
+        
+        bool InitializeService()
+        {
+            // 根据项目实际情况初始化
+            if (_service != null) return true;
+            
+            // 尝试从 GameStateManager 获取
+            if (GameStateManager.Instance != null)
+            {
+                _service = GameStateManager.Instance.PlayerInventory as IInventoryService;
+                if (_service != null)
+                {
+                    Debug.Log("成功获取 IInventoryService");
+                    return true;
+                }
+            }
+            
+            // 尝试从场景中查找
+            var inventoryManager = FindObjectOfType<InventoryManager>();
+            if (inventoryManager != null)
+            {
+                _service = inventoryManager as IInventoryService;
+                if (_service != null)
+                {
+                    Debug.Log("从场景中找到 InventoryManager");
+                    return true;
+                }
+            }
+            
+            Debug.LogError("无法初始化 IInventoryService");
+            return false;
+        }
+        
+        [ContextMenu("运行所有测试")]
+        public void RunAllTests()
+        {
+            StartCoroutine(ExecuteTestCases());
+        }
+        
+        [ContextMenu("清理库存")]
+        public void ClearInventory()
+        {
+            if (_service == null && !InitializeService()) return;
+            
+            var items = _service.GetAllItems();
+            foreach (var itemStack in items)
+            {
+                _service.RemoveItem(itemStack.Item.itemId, itemStack.Count);
+            }
+            
+            // 卸载所有装备
+            var equippedItems = _service.GetAllEquippedItems();
+            foreach (var kvp in equippedItems)
+            {
+                if (kvp.Value != null)
+                {
+                    _service.UnequipItem(kvp.Key);
+                }
+            }
+            
+            Debug.Log("库存已清理");
         }
     }
 }

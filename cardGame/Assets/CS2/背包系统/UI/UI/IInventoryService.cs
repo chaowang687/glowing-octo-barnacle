@@ -10,6 +10,22 @@ namespace ScavengingGame
     /// </summary>
     public interface IInventoryService
     {
+        // ==================== 宝箱系统专用方法 ====================
+        
+        /// <summary>
+        /// 检查背包是否有空间放置物品
+        /// </summary>
+        bool HasSpaceForItem(string itemId, int amount = 1);
+        
+        /// <summary>
+        /// 批量添加物品（用于宝箱一键收集）
+        /// </summary>
+        bool AddItemsBatch(List<ItemStack> items);
+        
+        /// <summary>
+        /// 获取剩余空间数量
+        /// </summary>
+        int GetRemainingSpace();
        
         // ==================== 物品基本操作 ====================
         

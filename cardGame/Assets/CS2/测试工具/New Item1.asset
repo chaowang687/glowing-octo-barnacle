@@ -12,14 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56ca6d2c8e9b84be49f8dec296e6bd33, type: 3}
   m_Name: New Item1
   m_EditorClassIdentifier: 
-  ItemName: Unknown Item
-  Description: A generic scavenged item.
-  Icon: {fileID: -723740818, guid: 550bb6f191070449c8c8ae7c10afb2cb, type: 3}
-  StackSize: 1
+  itemId: 
+  itemName: Unknown Item
+  description: A generic scavenged item.
+  icon: {fileID: -723740818, guid: 550bb6f191070449c8c8ae7c10afb2cb, type: 3}
+  maxStackSize: 1
   category: 0
-  Value: 1
-  Weight: 0.1
-  IsStackable: 1
-  IsConsumable: 0
-  UseSound: {fileID: 0}
-  PickupSound: {fileID: 0}
+  value: 1
+  weight: 0.1
+  rarity: 0
+  isStackable: 1
+  isEquippable: 0
+  isConsumable: 0
+  useSound: {fileID: 0}
+  pickupSound: {fileID: 0}

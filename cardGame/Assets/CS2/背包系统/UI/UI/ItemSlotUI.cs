@@ -63,6 +63,7 @@ namespace ScavengingGame
             
             UpdateVisualState();
         }
+        
         public void StartDrag()
         {
             if (iconImage != null)
@@ -95,6 +96,7 @@ namespace ScavengingGame
                 }
             }
         }
+        
         /// <summary>
         /// 设置物品
         /// </summary>
@@ -107,7 +109,8 @@ namespace ScavengingGame
             {
                 if (iconImage != null)
                 {
-                    iconImage.sprite = item.Icon;
+                    // 修复：使用 item.icon 而不是 item.Icon
+                    iconImage.sprite = item.icon;
                     iconImage.color = Color.white;
                     iconImage.enabled = true;
                 }
@@ -209,14 +212,18 @@ namespace ScavengingGame
         {
             if (_currentItem == null) return "空";
             
-            string info = $"<b>{_currentItem.ItemName}</b>\n";
-            info += $"{_currentItem.Description}\n";
+            // 使用 itemName 而不是 ItemName
+            string info = $"<b>{_currentItem.itemName}</b>\n";
+            info += $"{_currentItem.description}\n";
             
             if (_currentItem is EquipmentData equipment)
             {
-                info += $"\n<color=#FF9900>装备部位: {GetEquipmentSlotName(equipment.Slot)}</color>\n";
-                info += $"攻击: +{equipment.AttackBonus}\n";
-                info += $"防御: +{equipment.DefenseBonus}\n";
+                // 修复：使用正确的字段名 - slotType 或 slot（我们提供了兼容性）
+                EquipmentData.SlotType slotType = equipment.slotType;
+                
+                info += $"\n<color=#FF9900>装备部位: {EquipmentData.GetSlotDisplayName(slotType)}</color>\n";
+                info += $"攻击: +{equipment.attackBonus}\n";
+                info += $"防御: +{equipment.defenseBonus}\n";
                 
                 if (_isEquipped)
                 {
@@ -230,18 +237,6 @@ namespace ScavengingGame
             }
             
             return info;
-        }
-        
-        private string GetEquipmentSlotName(EquipmentData.SlotType slotType)
-        {
-            switch (slotType)
-            {
-                case EquipmentData.SlotType.Weapon: return "武器";
-                case EquipmentData.SlotType.Armor: return "护甲";
-                case EquipmentData.SlotType.Amulet1: return "护符1";
-                case EquipmentData.SlotType.Amulet2: return "护符2";
-                default: return "未知";
-            }
         }
         
         /// <summary>

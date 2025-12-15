@@ -56,3 +56,21 @@ public enum IntentType
     HEAL,           // 治疗自己或盟友
     SPECIAL         // 特殊行动 (通常是独特的或难以归类的)
 }
+
+public enum ItemRarity
+    {
+        Common = 0,
+        Uncommon = 1,
+        Rare = 2,
+        Epic = 3,
+        Legendary = 4
+    }
+
+    public enum ChestType
+    {
+        Wooden = 0,
+        Iron = 1,
+        Gold = 2,
+        Magic = 3,
+        Boss = 4
+    }
