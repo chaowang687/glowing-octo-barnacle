@@ -44,8 +44,9 @@ public class UI_ChestLootWindow : MonoBehaviour
         }
         lootSlots.Clear();
         
-        // 创建5个物品槽
-        for (int i = 0; i < 5; i++)
+           // 创建4-10个物品槽（根据需求调整）
+        int slotCount = Random.Range(4, 11);  // 随机4-10个槽位
+        for (int i = 0; i < slotCount; i++)
         {
             GameObject slotObj = Instantiate(lootSlotPrefab, lootSlotsContainer);
             LootSlot slot = slotObj.GetComponent<LootSlot>();

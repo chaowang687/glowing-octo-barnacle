@@ -117,9 +117,14 @@ namespace ScavengingGame
                 
                 if (countText != null)
                 {
-                    bool showCount = count > 1;
-                    countText.gameObject.SetActive(showCount);
-                    if (showCount) countText.text = count.ToString();
+                   // === 核心逻辑：数字显隐只由数据决定 ===
+                    bool shouldShow = count > 1;
+                    countText.gameObject.SetActive(shouldShow); // 控制GameObject激活
+                    if (shouldShow)
+                    {
+                        countText.text = count.ToString();
+                        countText.alpha = 1f; // 确保完全显示
+                    }
                 }
             }
             else

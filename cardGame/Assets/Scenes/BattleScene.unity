@@ -1594,13 +1594,14 @@ MonoBehaviour:
   arcHeight: 50
   cardSpacing: 224
   repositionDuration: 0.3
-  drawDuration: 0.456
-  drawCardDelay: 0.02
+  postPlayRepositionDuration: 0.2
+  drawDuration: 0.183
+  drawCardDelay: 0.089
   playCardDuration: 0.1
   centerIdleDuration: 0.12
   postExecutionDelay: 0.1
-  temporaryDrawOffset: 20
-  drawZSeparation: 0.1
+  layoutCardDelay: 0.01
+  centralPileOffset: {x: 0, y: 0, z: -0.1}
   drawEaseType: 6
   playToCenterEaseType: 6
   playToDiscardEaseType: 5
@@ -1659,8 +1660,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a7a81662f8f45d5af93230be57fcfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 1803165658914132338, guid: c22ee2f55ec1c4e9194e0a5d4850fc65, type: 3}
-  defaultPoolSize: 20
 --- !u!1 &2004134095
 GameObject:
   m_ObjectHideFlags: 0

@@ -115,6 +115,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryScrollRect.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryUIDebugger.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ServiceLocator.cs" />
+    <Compile Include="Assets/CS2/测试工具/LootDataDebugger.cs" />
     <Compile Include="Assets/CS/对战AI/使用说明.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryEquipmentManager.cs" />
     <Compile Include="Assets/CS/Scripts/Managers/CharacterManager.cs" />

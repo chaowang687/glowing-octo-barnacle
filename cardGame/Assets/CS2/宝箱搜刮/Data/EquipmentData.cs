@@ -137,7 +137,7 @@ namespace ScavengingGame
         {
             switch (slotType)
             {
-                case SlotType.Weapon: return "武器";
+                case SlotType.Weapon: return "Weapon";
                 case SlotType.Armor: return "护甲";
                 case SlotType.Helmet: return "头盔";
                 case SlotType.Gloves: return "手套";
@@ -156,7 +156,7 @@ namespace ScavengingGame
         {
             switch (slotType)
             {
-                case SlotType.Weapon: return "武器";
+                case SlotType.Weapon: return "Weapon";
                 case SlotType.Armor: return "护甲";
                 case SlotType.Helmet: return "头盔";
                 case SlotType.Gloves: return "手套";

@@ -11,6 +11,36 @@ namespace ScavengingGame.Tests
     public class InventoryServiceTestAdapter : MonoBehaviour
     {
 
+        // 在调试脚本中调用
+        ChestData testData = new ChestData 
+        { 
+            chestLevel = 3, 
+            chestType = ChestType.Iron 
+        };
+     
+        [ContextMenu("测试添加装备到背包")]
+    public void TestAddEquipment()
+    {
+    if (!InitializeService())
+    {
+        Debug.LogError("初始化服务失败");
+        return;
+    }
+
+    // 创建一个测试装备
+    EquipmentData testEquipment = ScriptableObject.CreateInstance<EquipmentData>();
+    testEquipment.itemId = "test_weapon_001";
+    testEquipment.itemName = "测试武器";
+    testEquipment.maxStackSize = 1;
+    testEquipment.slotType = EquipmentData.SlotType.Weapon;
+    testEquipment.attackBonus = 10;
+    testEquipment.defenseBonus = 0;
+
+    // 尝试添加
+    bool result = _service.AddItem(testEquipment, 1);
+    Debug.Log($"添加装备结果: {result}, 当前库存容量: {_service.GetCurrentCapacity()}/{_service.GetMaxCapacity()}");
+}
+
 
 
         

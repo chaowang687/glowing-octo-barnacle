@@ -69,15 +69,44 @@ public class LootSlot : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, I
     
     public void Initialize(LootItemData itemData)
     {
+        Debug.Log($"LootSlot.Initialize() 被调用 - 物品: {(itemData != null ? itemData.itemName : "NULL")}");
         CurrentItemData = itemData;
         IsRevealed = false;
+        if (itemData == null)
+        {
+            Debug.LogError("❌ 传入的itemData为null！");
+            ResetSlot();
+            return;
+        }
         
         if (slotBackground != null && rarityColors.Length > (int)itemData.rarity)
         {
             slotBackground.color = rarityColors[(int)itemData.rarity];
+            Debug.Log($"  设置背景色为: {rarityColors[(int)itemData.rarity]}");
         }
         
-        itemIcon.gameObject.SetActive(false);
+
+
+        if (itemIcon != null)
+        {
+            itemIcon.gameObject.SetActive(false);
+            itemIcon.sprite = itemData.icon; // 这里已经设置sprite，但未激活
+            
+            // 检查图标是否设置成功
+            if (itemData.icon == null)
+            {
+                Debug.LogError($"  物品 {itemData.itemName} 的icon为null");
+            }
+            else
+            {
+                Debug.Log($"  图标已设置: {itemData.icon.name}");
+            }
+        }
+        else
+        {
+            Debug.LogError("  ❌ itemIcon引用为空！");
+        }
+      //  itemIcon.gameObject.SetActive(false);
         if (quantityText != null) quantityText.gameObject.SetActive(false);
         if (searchingOverlay != null) searchingOverlay.SetActive(true);
     }

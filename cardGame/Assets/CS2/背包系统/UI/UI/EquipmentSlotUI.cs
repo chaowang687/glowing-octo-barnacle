@@ -122,7 +122,7 @@ namespace ScavengingGame
         {
             switch (slotType)
             {
-                case EquipmentData.SlotType.Weapon: return "武器";
+                case EquipmentData.SlotType.Weapon: return "Weapon";
                 case EquipmentData.SlotType.Armor: return "护甲";
                 case EquipmentData.SlotType.Amulet1: return "护符1";
                 case EquipmentData.SlotType.Amulet2: return "护符2";

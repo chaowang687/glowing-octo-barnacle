@@ -1,6 +1,7 @@
 // ServiceLocator.cs
 using System;
 using System.Collections.Generic;
+using System.Linq; // 添加这个命名空间
 using UnityEngine;
 
 public class ServiceLocator : MonoBehaviour
@@ -14,7 +15,6 @@ public class ServiceLocator : MonoBehaviour
         {
             if (_instance == null)
             {
-                // 修复：使用 FindFirstObjectByType 替代 FindObjectOfType
                 _instance = FindFirstObjectByType<ServiceLocator>();
                 
                 if (_instance == null)
@@ -57,12 +57,23 @@ public class ServiceLocator : MonoBehaviour
         //     RegisterService<UIManager>(uiManager);
         // }
         
-        // 注册 InventoryManager
-        ScavengingGame.InventoryManager inventoryManager = FindFirstObjectByType<ScavengingGame.InventoryManager>();
-        if (inventoryManager != null)
+        // 注册 InventoryManager - 修复接口查找
+        RegisterServiceByInterface<ScavengingGame.IInventoryService, ScavengingGame.InventoryManager>();
+    }
+    
+    // 新增方法：通过接口类型查找实现类
+    private void RegisterServiceByInterface<TInterface, TImplementation>()
+        where TImplementation : MonoBehaviour, TInterface
+    {
+        TImplementation implementation = FindFirstObjectByType<TImplementation>();
+        if (implementation != null)
         {
-            RegisterService<ScavengingGame.IInventoryService>(inventoryManager);
-            Debug.Log("InventoryService 已注册到 ServiceLocator");
+            RegisterService<TInterface>(implementation);
+            Debug.Log($"{typeof(TInterface).Name} 已注册（通过 {typeof(TImplementation).Name}）");
+        }
+        else
+        {
+            Debug.LogWarning($"未找到 {typeof(TImplementation).Name} 的实例");
         }
     }
     
@@ -91,12 +102,28 @@ public class ServiceLocator : MonoBehaviour
             return (T)service;
         }
         
-        // 修复：使用 FindFirstObjectByType 替代 FindObjectOfType
-        MonoBehaviour monoService = FindFirstObjectByType(typeof(T)) as MonoBehaviour;
-        if (monoService != null)
+        // 修复：改为查找实现该接口的MonoBehaviour
+        if (type.IsInterface)
         {
-            RegisterService<T>((T)(object)monoService);
-            return (T)(object)monoService;
+            // 使用Linq查找所有实现该接口的MonoBehaviour
+            MonoBehaviour[] allMonoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            MonoBehaviour found = allMonoBehaviours.FirstOrDefault(mb => mb is T) as MonoBehaviour;
+            
+            if (found != null)
+            {
+                RegisterService<T>((T)(object)found);
+                return (T)(object)found;
+            }
+        }
+        else
+        {
+            // 如果是具体类型，使用原来的查找方式
+            MonoBehaviour monoService = FindFirstObjectByType(type) as MonoBehaviour;
+            if (monoService != null)
+            {
+                RegisterService<T>((T)(object)monoService);
+                return (T)(object)monoService;
+            }
         }
         
         Debug.LogWarning($"未找到服务: {type.Name}");

@@ -131,9 +131,12 @@ namespace ScavengingGame
             _dragImage.rectTransform.sizeDelta = new Vector2(50, 50);
             
             // 隐藏原格子图标，但保持格子可见
-            slot.iconImage.enabled = false;
-            slot.countText.enabled = false;
-            
+            //slot.iconImage.enabled = false;
+            //slot.countText.enabled = false;
+            if (slot.iconImage != null)
+            slot.iconImage.color = new Color(1, 1, 1, 0.3f); // 变半透明
+            if (slot.countText != null)
+            slot.countText.alpha = 0.3f; // TextMeshPro 使用 alpha
             // 清除当前目标
             _currentDropTargetSlot = null;
             _currentDropTargetEquipmentSlot = null;
@@ -342,8 +345,13 @@ namespace ScavengingGame
             if (_dragSourceSlot != null)
             {
                 // 恢复原格子的显示
-                _dragSourceSlot.iconImage.enabled = true;
-                _dragSourceSlot.countText.enabled = true;
+                //_dragSourceSlot.iconImage.enabled = true;
+                //_dragSourceSlot.countText.enabled = true;
+                // 新代码: 只需恢复透明度，真正的状态由数据刷新决定
+                if (_dragSourceSlot.iconImage != null)
+                _dragSourceSlot.iconImage.color = Color.white;
+                if (_dragSourceSlot.countText != null)
+                _dragSourceSlot.countText.alpha = 1f;
             }
         }
         
