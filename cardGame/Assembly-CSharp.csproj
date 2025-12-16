@@ -72,6 +72,7 @@
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
     <Compile Include="Assets/CS/对战AI/结果/CharacterBase.cs" />
+    <Compile Include="Assets/CS3/ThemeSequenceSO.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
     <Compile Include="Assets/CS/Scripts/Data/CardData.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
@@ -98,7 +99,9 @@
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
     <Compile Include="Assets/CS/Scripts/CardVisualManager.cs" />
     <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
+    <Compile Include="Assets/CS3/InfiniteCarouselController.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
+    <Compile Include="Assets/CS3/WorldSegmentItem.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventorySlotManager.cs" />
     <Compile Include="Assets/CS2/GameStateManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/IInventoryService.cs" />
