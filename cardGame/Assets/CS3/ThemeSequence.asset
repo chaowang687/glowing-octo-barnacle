@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themes:
   - themeName: red
-    groundSprite: {fileID: 21300000, guid: b524b6f2eb0554654bd55448c83ce455, type: 3}
+    groundSprite: {fileID: 21300000, guid: d2e9e9b8f20d14be69e971bf822e04a4, type: 3}
     decorations:
     - {fileID: 1601497499900524425, guid: 38b914c7a0aef437c89db395ed043817, type: 3}
   - themeName: green

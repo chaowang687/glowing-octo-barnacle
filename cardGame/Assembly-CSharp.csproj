@@ -69,6 +69,7 @@
     <Compile Include="Assets/CS2/宝箱搜刮/ChestLootData.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestInteractable.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
+    <Compile Include="Assets/CS3/New Folder/WorldTileEditor.cs" />
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
     <Compile Include="Assets/CS/对战AI/结果/CharacterBase.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Assets/CS2/PathSelectionUI.cs" />
     <Compile Include="Assets/CS/Scripts/CardDisplay.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/ItemData.cs" />
+    <Compile Include="Assets/CS3/New Folder/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
     <Compile Include="Assets/CS/Scripts/CardAction.cs" />
     <Compile Include="Assets/CS/对战AI/结果/Hero.cs" />
