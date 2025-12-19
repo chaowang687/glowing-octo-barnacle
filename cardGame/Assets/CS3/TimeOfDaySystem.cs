@@ -2,73 +2,87 @@ using UnityEngine;
 
 public class TimeOfDaySystem : MonoBehaviour
 {
-    // 静态实例，方便其他脚本（如地块、太阳）访问
     public static TimeOfDaySystem Instance;
 
-    [Header("设置")]
-    public float cycleDurationMinutes = 2f; // 完成一个昼夜循环的时间
-    public Material skyMaterial; // 拖入天空材质
+    [Header("时间设置")]
+    public float cycleDurationMinutes = 2f; 
+    public Material skyMaterial; 
 
     [Header("实时状态")]
-    public float gameTime = 0; // 0=清晨, 0.5=正午, 1.0=傍晚, 1.5=深夜
+    [Range(0, 2)] public float gameTime = 0; 
     
-    // 提供一个只读属性给其他脚本判定是否为夜晚
-    public bool IsNight => (gameTime % 2.0f > 1.3f || gameTime % 2.0f < 0.2f);
+    [Header("饥荒效果引用")]
+    public Transform playerTransform; 
+    public CanvasGroup nightVignette;
 
-    private void Awake()
+    private void Awake() => Instance = this;
+    [Header("灯光管理")]
+    public LampManager lampManager; // [新增] 拖拽你的 LampManager 物体到这里
+
+    // ... 其他变量保持不变 ...
+
+    private bool lightsAreOn = false; // [新增] 记录当前灯光状态，防止每帧重复调用
+
+    void Update()
+{
+    // 1. 先计算时间流逝
+    float speed = 2.0f / (cycleDurationMinutes * 60f);
+    gameTime += Time.deltaTime * speed;
+    if (gameTime >= 2.0f) gameTime -= 2.0f;
+
+    // 2. 【关键】必须先计算出 transition，后面才能用它
+    float transition = CalculateTransition(gameTime);
+
+    // 3. 现在使用 transition 来开关灯
+    if (lampManager != null)
     {
-        Instance = this;
+        if (transition > 0.5f && !lightsAreOn)
+        {
+            lightsAreOn = true;
+            lampManager.SwitchAllLights(true);
+        }
+        else if (transition <= 0.5f && lightsAreOn)
+        {
+            lightsAreOn = false;
+            lampManager.SwitchAllLights(false);
+        }
     }
-    void UpdateSkyMaterial()
+
+    // 4. 同步 Shader 和其他效果
+    Shader.SetGlobalFloat("_SkyTransition", transition);
+
+    if (playerTransform != null)
     {
-        if (skyMaterial == null) return;
+        Shader.SetGlobalVector("_PlayerPos", playerTransform.position);
+    }
 
-        float t = gameTime % 2.0f;
-        float transition = 0;
-
-        // 映射逻辑：
-        // 0.0 - 0.5 (黎明): 1 -> 0 (黑夜退去)
-        // 0.5 - 1.0 (白天): 0 (纯白昼)
-        // 1.0 - 1.5 (黄昏): 0 -> 1 (黑夜降临)
-        // 1.5 - 2.0 (深夜): 1 (纯黑夜)
-
-        if (t < 0.5f) transition = 1.0f - (t / 0.5f);
-        else if (t < 1.0f) transition = 0f;
-        else if (t < 1.5f) transition = (t - 1.0f) / 0.5f;
-        else transition = 1.0f;
-
-        // 传递给材质
+    if (skyMaterial != null)
+    {
         skyMaterial.SetFloat("_Transition", transition);
     }
-    void Update()
+
+    if (nightVignette != null)
     {
-        // 1. 更新时间流逝 (每秒流逝的 gameTime 数值)
-        // 2.0f 代表一个完整的 0->2 循环
-        float speed = 2.0f / (cycleDurationMinutes * 60f);
-        gameTime += Time.deltaTime * speed;
-        
-        // 保持在 0-2 范围内
-        if (gameTime > 2.0f) gameTime -= 2.0f;
-
-        // 2. 计算 Shader 所需的 Transition 值 (0=完全白天, 1=完全黑夜)
-        float transition = CalculateTransition(gameTime);
-
-        // 3. 同步到材质和全局变量
-        if (skyMaterial != null)
-        {
-            skyMaterial.SetFloat("_Transition", transition);
-        }
-        
-        // 设置全局变量，这样所有地块的 Shader 都能自动变暗
-        Shader.SetGlobalFloat("_SkyTransition", transition);
+        nightVignette.alpha = Mathf.SmoothStep(0, 1, (transition - 0.5f) * 2f);
     }
+
+    Debug.Log($"[昼夜系统] Transition: {transition} | 游戏时间: {gameTime}");
+}
 
     private float CalculateTransition(float t)
     {
-        // 复刻 HTML Demo 的曲线逻辑
-        if (t < 0.5f) return 1.0f - (t / 0.5f);      // 0.0-0.5: 黑夜 -> 白天
-        if (t < 1.0f) return 0f;                    // 0.5-1.0: 纯白天
-        if (t < 1.5f) return (t - 1.0f) / 0.5f;     // 1.0-1.5: 白天 -> 黑夜
-        return 1.0f;                                // 1.5-2.0: 纯黑夜
+        if (t < 0.5f) return 1.0f - (t / 0.5f); // 黎明
+        if (t < 1.0f) return 0f;                // 白天
+        if (t < 1.5f) return (t - 1.0f) / 0.5f; // 黄昏
+        return 1.0f;                           // 深夜
+    }
+
+    // 供钟表调用的时间获取
+    public void GetTimeValues(out int hours, out int minutes)
+    {
+        float totalHours = (gameTime / 2.0f) * 24f;
+        float displayHour = (totalHours + 6f) % 24f; 
+        hours = Mathf.FloorToInt(displayHour);
+        minutes = Mathf.FloorToInt((displayHour - hours) * 60f);
     }
 }

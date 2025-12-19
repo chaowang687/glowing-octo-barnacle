@@ -65,6 +65,7 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.29f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/Editor/BatchMaterialReplacer.cs" />
     <Compile Include="Assets/Editor/CSVReader.cs" />
     <Compile Include="Assets/Editor/WorldTileEditorInspector.cs" />
     <Compile Include="Assets/Editor/CardDataImporter.cs" />

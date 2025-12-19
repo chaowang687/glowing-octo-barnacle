@@ -1,93 +1,134 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 public class InfiniteCarouselController : MonoBehaviour
 {
-        // 在 InfiniteCarouselController.cs 中增加
-    public GameObject[] levelPrefabs; // 在 Inspector 中拖入你编辑好的森林、沙漠等 Prefab
-    private int _currentLevelIndex = 0;
-    private int _segmentsInCurrentLevel = 0; // 记录当前关卡已经跑了多少个地块
+    [Header("关卡与地块配置")]
+    public GameObject[] levelPrefabs; 
     public ThemeSequenceSO themeSO;
     public GameObject segmentPrefab;
     
-    public int totalSegments = 18;  // 一圈 18 张图
+    [Header("环形参数")]
+    public int totalSegments = 30;    
     public float radius = 8f;
-    public float scrollSpeed = 20f; // 模拟测试速度
+
+    [Header("移动平衡 (匀速配置)")]
+    [Tooltip("每秒旋转的角度。例如: 360 表示 1 秒转一圈")]
+    public float degreesPerSecond = 45f; 
+
+    [Header("运行时状态")]
+    [SerializeField] private bool _isMoving = false;
+    public bool IsMoving => _isMoving; 
 
     private List<WorldSegmentItem> _items = new List<WorldSegmentItem>();
-    private int _globalIndex = 0;   // 记录总共跑过了多少个地块
+    private int _globalIndex = 0;   
+    private int _currentLevelIndex = 0;
+    private int _segmentsInCurrentLevel = 0;
+    private float _currentTotalRotation = 0f; 
 
     void Start()
     {
         _items.Clear();
-   // 检查场景中是否已经存在地块（即手动编辑好的）
-    var existingItems = GetComponentsInChildren<WorldSegmentItem>();
-    
-    if (existingItems.Length > 0)
-    {
-        // 如果有，就直接用现成的，不要再 Instantiate 新的了
-        _items.AddRange(existingItems);
-        _globalIndex = _items.Count; 
-        Debug.Log("运行模式：检测到手动编辑的地块，已跳过自动生成。");
-    }
-    else
-    {
-        // 如果场景为空，则执行动态生成逻辑
+        var existingItems = GetComponentsInChildren<WorldSegmentItem>();
         float angleStep = 360f / totalSegments;
-        for (int i = 0; i < totalSegments; i++)
+
+        if (existingItems.Length > 0)
         {
-            var go = Instantiate(segmentPrefab, transform);
-            var item = go.GetComponent<WorldSegmentItem>();
-            item.Refresh(i * angleStep, radius, GetThemeForIndex(_globalIndex));
-            _items.Add(item);
-            _globalIndex++;
+            _items.AddRange(existingItems);
+            _globalIndex = _items.Count; 
+        }
+        else
+        {
+            for (int i = 0; i < totalSegments; i++)
+            {
+                var go = Instantiate(segmentPrefab, transform);
+                var item = go.GetComponent<WorldSegmentItem>();
+                item.Refresh(i * angleStep, radius, GetThemeForIndex(_globalIndex));
+                _items.Add(item);
+                _globalIndex++;
+            }
         }
     }
+
+    public void RollDiceAndMove(int steps)
+    {
+        if (_isMoving) return;
+        Debug.Log($"收到指令：走 {steps} 步");
+        StartCoroutine(MoveRoutine(steps));
     }
 
-    void Update()
+    private IEnumerator MoveRoutine(int steps)
     {
-        // 模拟手动滚动或自动滚动
-        float delta = scrollSpeed * Time.deltaTime;
-        float angleStep = 360f / totalSegments;
+        _isMoving = true;
+        
+        float anglePerStep = 360f / totalSegments; 
+        float moveAngle = steps * anglePerStep;    
+        
+        // 【核心修改】：根据距离和速度计算时间
+        // 时间 = 距离 / 速度
+        float dynamicDuration = moveAngle / degreesPerSecond;
+        
+        float elapsed = 0;
+        float startRotation = _currentTotalRotation;
+        float targetRotation = _currentTotalRotation + moveAngle;
 
+        while (elapsed < dynamicDuration)
+        {
+            elapsed += Time.deltaTime;
+            // 使用线性插值，确保匀速
+            float t = elapsed / dynamicDuration;
+            float nextRot = Mathf.Lerp(startRotation, targetRotation, t);
+            
+            float delta = nextRot - _currentTotalRotation;
+            RotateWorld(delta);
+            
+            _currentTotalRotation = nextRot;
+            yield return null;
+        }
+
+        // 最终精准对齐
+        RotateWorld(targetRotation - _currentTotalRotation);
+        _currentTotalRotation = targetRotation;
+        _isMoving = false;
+    }
+
+    private void RotateWorld(float delta)
+    {
         foreach (var item in _items)
         {
             item.Rotate(delta);
 
-            // 如果转出了屏幕左侧（比如角度 > 100度）
-           if (item.GetAngle() > 100f) 
-        {
-            float newAngle = item.GetAngle() - 360f;
-            
-            // 找到下一个关卡预设中对应的地块内容
-            GameObject nextLevelPrefab = levelPrefabs[_currentLevelIndex];
-            
-            // 获取那个预设里相同索引的地块（比如预设里的第 5 个地块）
-            int segmentIndexInPrefab = _globalIndex % totalSegments;
-            Transform sourceSegment = nextLevelPrefab.transform.GetChild(segmentIndexInPrefab);
-
-            // 执行接力：把预设里的 DecoContainer 内容复制到当前旋转的地块上
-            item.SyncFromPreset(newAngle, sourceSegment);
-
-            _globalIndex++;
-            _segmentsInCurrentLevel++;
-
-            // 如果当前关卡 18 个地块都跑完了，准备切换到下一个预设
-            if (_segmentsInCurrentLevel >= totalSegments)
+            if (item.GetAngle() > 100f) 
             {
-                _currentLevelIndex = (_currentLevelIndex + 1) % levelPrefabs.Length;
-                _segmentsInCurrentLevel = 0;
+                float newAngle = item.GetAngle() - 360f;
+                if (levelPrefabs.Length > 0)
+                {
+                    GameObject nextLevelPrefab = levelPrefabs[_currentLevelIndex];
+                    int segmentIndexInPrefab = _globalIndex % totalSegments;
+                    
+                    if (nextLevelPrefab.transform.childCount > segmentIndexInPrefab)
+                    {
+                        Transform sourceSegment = nextLevelPrefab.transform.GetChild(segmentIndexInPrefab);
+                        item.SyncFromPreset(newAngle, sourceSegment);
+                    }
+                }
+
+                _globalIndex++;
+                _segmentsInCurrentLevel++;
+
+                if (_segmentsInCurrentLevel >= totalSegments)
+                {
+                    _currentLevelIndex = (_currentLevelIndex + 1) % levelPrefabs.Length;
+                    _segmentsInCurrentLevel = 0;
+                }
             }
-        }
-    
         }
     }
 
-    // 核心逻辑：转一圈换一个场景
     ThemeSequenceSO.ThemeConfig GetThemeForIndex(int index)
     {
-        // 每过 totalSegments(18) 个地块，主题索引 +1
+        if (themeSO == null || themeSO.themes.Count == 0) return null;
         int themeIdx = (index / totalSegments) % themeSO.themes.Count;
         return themeSO.themes[themeIdx];
     }

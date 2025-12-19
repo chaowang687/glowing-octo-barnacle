@@ -5,6 +5,7 @@ public class WorldSegmentItem : MonoBehaviour
 {
     public SpriteRenderer groundRenderer;
     public Transform decoContainer;
+    public Transform nodeMarkerAnchor;
 
     [Header("分布配置 (公开可调)")]
     [Range(0, 1)] public float spawnChance = 0.6f;     
@@ -51,7 +52,17 @@ public class WorldSegmentItem : MonoBehaviour
 {
     _currentAngle = angle;
     _radius = radius;
-    
+    // 设置地面
+        if (groundRenderer != null) groundRenderer.sprite = theme.groundSprite;
+
+        // 生成节点小图标
+        if (nodeMarkerAnchor != null && theme.nodeMarkerPrefab != null)
+        {
+            // 清理旧图标
+            foreach (Transform child in nodeMarkerAnchor) Destroy(child.gameObject);
+            // 生成新图标
+            Instantiate(theme.nodeMarkerPrefab, nodeMarkerAnchor);
+        }
     // 1. 彻底清理旧装饰 (适配编辑器模式)
     if (decoContainer != null)
     {
