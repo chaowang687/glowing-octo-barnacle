@@ -73,7 +73,6 @@
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
     <Compile Include="Assets/CS/对战AI/结果/CharacterBase.cs" />
-    <Compile Include="Assets/CS3/ThemeSequenceSO.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
     <Compile Include="Assets/CS/Scripts/Data/CardData.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
@@ -90,6 +89,8 @@
     <Compile Include="Assets/CS2/ScavengingController.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/AudioManager.cs" />
     <Compile Include="Assets/CS/对战AI/行为/RoundBasedStrategy.cs" />
+    <Compile Include="Assets/CS4/ThemeSequenceSO.cs" />
+    <Compile Include="Assets/CS4/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS2/PathSelectionUI.cs" />
     <Compile Include="Assets/CS/Scripts/CardDisplay.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/ItemData.cs" />
@@ -104,7 +105,6 @@
     <Compile Include="Assets/CS4/InfiniteCarouselController.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
-    <Compile Include="Assets/CS3/WorldSegmentItem.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventorySlotManager.cs" />
     <Compile Include="Assets/CS2/GameStateManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/IInventoryService.cs" />
@@ -128,6 +128,7 @@
     <Compile Include="Assets/CS/对战AI/使用说明.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryEquipmentManager.cs" />
     <Compile Include="Assets/CS3/TimeOfDaySystem.cs" />
+    <Compile Include="Assets/CS4/WorldSegmentItem.cs" />
     <Compile Include="Assets/CS/Scripts/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS2/MapGridManager.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryTester.cs" />
@@ -135,7 +136,6 @@
     <Compile Include="Assets/CS/玩家敌人显示/CharacterDisplay.cs" />
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
-    <Compile Include="Assets/CS3/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS/Scripts/Deck/CardSystem.cs" />
     <Compile Include="Assets/CS/DeathRelay.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootAnimationManager.cs" />
@@ -155,7 +155,7 @@
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl" />
-    <None Include="Assets/CS4/WaveDisplacement.shader" />
+    <None Include="Assets/CS4/资源/WaveDisplacement.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader" />
     <None Include="Assets/CS3/资源/WorldSegmentHunger.shader" />
     <None Include="Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt" />

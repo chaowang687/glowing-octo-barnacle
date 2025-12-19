@@ -14,6 +14,7 @@ public class InfiniteCarouselController : MonoBehaviour
         public float speedMultiplier = 1.0f; 
         public int sortingOrderOffset = 0;   
         public bool isMainLogicLayer = false;
+        public bool syncWithCurrentLevel = false; // 新增：是否与当前关卡同步
     }
 
     [Header("多层视差配置")]
@@ -40,7 +41,7 @@ public class InfiniteCarouselController : MonoBehaviour
     private int _segmentsInCurrentLevel = 0; 
     private float _currentTotalRotation = 0f; 
     private bool _isMoving = false;
-    public bool IsMoving => _isMoving; // 修复 DiceManager 的报错
+    public bool IsMoving => _isMoving;
 
     void Start()
     {
@@ -57,16 +58,28 @@ public class InfiniteCarouselController : MonoBehaviour
         for (int i = 0; i < totalSegments; i++)
         {
             GameObject prefab = config.overridePrefab != null ? config.overridePrefab : segmentPrefab;
+            if (prefab == null)
+            {
+                Debug.LogError($"Prefab is null for layer: {config.layerName}");
+                continue;
+            }
+            
             var go = Instantiate(prefab, transform);
             var item = go.GetComponent<WorldSegmentItem>();
-            item.isMainLayer = config.isMainLogicLayer;      // 记录是否为主层
-            item.layerThemeOffset = config.themeIndexOffset; // 记录主题偏移
+            if (item == null)
+            {
+                Debug.LogError($"WorldSegmentItem component not found on prefab: {prefab.name}");
+                Destroy(go);
+                continue;
+            }
             
+            item.isMainLayer = config.isMainLogicLayer;
+            item.layerThemeOffset = config.themeIndexOffset;
             item.parallaxMultiplier = config.speedMultiplier;
+            item.syncWithCurrentLevel = config.syncWithCurrentLevel; // 存储同步设置
             
-            // 【重要】：存储该层的 Offset，以便在 RotateWorld 刷新时使用
-            // 我们通过改名或者动态添加一个标记来实现
-            go.name = config.isMainLogicLayer ? $"Main_{config.themeIndexOffset}" : $"Deco_{config.themeIndexOffset}";
+            // 存储更多信息到名字中
+            go.name = $"{config.layerName}_{config.isMainLogicLayer}_{config.themeIndexOffset}_{config.syncWithCurrentLevel}";
 
             if (item.groundRenderer != null)
                 item.groundRenderer.sortingOrder += config.sortingOrderOffset;
@@ -75,17 +88,44 @@ public class InfiniteCarouselController : MonoBehaviour
             go.transform.localScale = new Vector3(s.x * overlapFactor, s.y, s.z);
 
             float currentRadius = radius + config.radiusOffset;
-            var theme = GetThemeForLayer(i, config.themeIndexOffset);
-            item.Refresh(i * angleStep, currentRadius, theme);
+            
+            // 初始化刷新：根据是否是同步层选择不同的刷新方式
+            if (config.syncWithCurrentLevel && themeSO != null)
+            {
+                // 同步层：使用当前关卡的主题和对应的层资源
+                var currentTheme = themeSO.GetThemeForLevel(_currentLevelIndex);
+                if (currentTheme != null)
+                {
+                    var layerResource = currentTheme.GetLayerResource(config.layerName);
+                    item.RefreshWithLayerResource(i * angleStep, currentRadius, layerResource, currentTheme.nodeMarkerPrefab);
+                }
+            }
+            else
+            {
+                // 非同步层：使用原有的Refresh方法
+                var theme = GetThemeForLayer(i, config.themeIndexOffset, 0);
+                item.Refresh(i * angleStep, currentRadius, theme);
+            }
             
             _allSegments.Add(item);
         }
     }
 
-    // --- 掷骰子入口 ---
     public void RollDiceAndMove(int steps) 
     { 
-        if(_isMoving) return;  // 添加 return 语句
+        if(_isMoving) 
+        {
+            Debug.LogWarning("正在移动中，忽略新的移动请求");
+            return;
+        }
+        
+        if(steps <= 0)
+        {
+            Debug.LogError($"无效的步数: {steps}，必须为正数");
+            return;
+        }
+        
+        Debug.Log($"开始移动 {steps} 步，当前角度: {_currentTotalRotation}");
         StartCoroutine(MoveRoutine(steps)); 
     }
 
@@ -93,13 +133,14 @@ public class InfiniteCarouselController : MonoBehaviour
     { 
         _isMoving = true;
         Debug.Log($"MoveRoutine 开始，步数: {steps}");
-        // 计算每一格的角度：例如 30 格则每格 12 度
+        
         float anglePerStep = 360f / totalSegments; 
         float moveAngle = steps * anglePerStep;    
         Debug.Log($"每步角度: {anglePerStep}, 总移动角度: {moveAngle}");
-        // 根据设定速度计算所需时间
+        
         float duration = moveAngle / degreesPerSecond;
         Debug.Log($"移动持续时间: {duration} 秒");
+        
         float elapsed = 0;
         float startRot = _currentTotalRotation;
         float targetRot = _currentTotalRotation + moveAngle;
@@ -107,17 +148,14 @@ public class InfiniteCarouselController : MonoBehaviour
         while (elapsed < duration) 
         {
             elapsed += Time.deltaTime;
-            // 使用 Lerp 实现平滑旋转
             float nextRot = Mathf.Lerp(startRot, targetRot, elapsed / duration);
             
-            // 计算本帧增量并旋转世界
             RotateWorld(nextRot - _currentTotalRotation);
             _currentTotalRotation = nextRot;
             
             yield return null;
         }
 
-        // 确保最终位置精准对齐
         RotateWorld(targetRot - _currentTotalRotation);
         _currentTotalRotation = targetRot;
         
@@ -127,19 +165,32 @@ public class InfiniteCarouselController : MonoBehaviour
 
     private void RotateWorld(float delta)
     {
+        if (Mathf.Approximately(delta, 0f))
+        {
+            Debug.LogWarning("旋转增量为0，不执行旋转");
+            return;
+        }
+        
         foreach (var item in _allSegments)
         {
             item.Rotate(delta);
 
-            // 当地块旋转到上方 100 度（越界阈值）时，循环回圆环底部
             if (item.GetAngle() > 100f) 
             {
                 float newAngle = item.GetAngle() - 360f;
                 
-                // 从名字里解析出这层地块原本的 ThemeOffset 和是否为主层
+                // 从名字里解析出这层地块的信息
                 string[] nameParts = item.name.Split('_');
-                bool isMain = nameParts[0] == "Main";
-                int layerOffset = int.Parse(nameParts[1]);
+                if (nameParts.Length < 4)
+                {
+                    Debug.LogError($"地块名称格式错误: {item.name}");
+                    continue;
+                }
+                
+                string layerName = nameParts[0];
+                bool isMain = nameParts[1] == "True";
+                int layerOffset = int.Parse(nameParts[2]);
+                bool syncWithCurrentLevel = nameParts[3] == "True";
 
                 // --- 逻辑分支：是根据 LevelPrefab 同步还是根据 ThemeSO 生成 ---
                 if (levelPrefabs != null && levelPrefabs.Length > 0 && isMain)
@@ -156,8 +207,23 @@ public class InfiniteCarouselController : MonoBehaviour
                 }
                 else
                 {
-                    // 通用/装饰层刷新：根据 ThemeSO 和自己的层偏移获取资源
-                    item.Refresh(newAngle, item.GetRadius(), GetThemeForLayer(_globalIndex, layerOffset));
+                    // 非主层刷新
+                    if (syncWithCurrentLevel && themeSO != null)
+                    {
+                        // 同步层：使用当前关卡的主题和对应的层资源
+                        var currentTheme = themeSO.GetThemeForLevel(_currentLevelIndex);
+                        if (currentTheme != null)
+                        {
+                            var layerResource = currentTheme.GetLayerResource(layerName);
+                            item.RefreshWithLayerResource(newAngle, item.GetRadius(), layerResource, currentTheme.nodeMarkerPrefab);
+                        }
+                    }
+                    else
+                    {
+                        // 独立进度层：根据全局索引和层偏移获取主题
+                        var theme = GetThemeForLayer(_globalIndex, layerOffset, _currentLevelIndex);
+                        item.Refresh(newAngle, item.GetRadius(), theme);
+                    }
                 }
 
                 // --- 进度统计：只有主层越界才触发全球索引增加 ---
@@ -170,19 +236,83 @@ public class InfiniteCarouselController : MonoBehaviour
                     {
                         _currentLevelIndex = (_currentLevelIndex + 1) % levelPrefabs.Length;
                         _segmentsInCurrentLevel = 0;
+                        Debug.Log($"切换到下一个关卡: {_currentLevelIndex}");
                     }
                 }
             }
         }
     }
 
-    ThemeSequenceSO.ThemeConfig GetThemeForLayer(int index, int offset)
+    // 获取主题（基于全局索引和层偏移）
+    ThemeSequenceSO.ThemeConfig GetThemeForLayer(int index, int offset, int baseLevelIndex)
     {
-        if (themeSO == null || themeSO.themes.Count == 0) return null;
+        if (themeSO == null || themeSO.themes.Count == 0) 
+        {
+            Debug.LogError("ThemeSO is null or empty!");
+            return null;
+        }
+        
         // 计算当前是第几轮（圈）
         int circleIndex = (index / totalSegments);
         // 加上该层的偏移，实现三层海浪/森林不同的贴图
         int themeIdx = (circleIndex + offset) % themeSO.themes.Count;
         return themeSO.themes[themeIdx];
+    }
+    
+    // 新增：获取当前关卡的主题（用于同步层）
+    ThemeSequenceSO.ThemeConfig GetThemeForCurrentLevel(int offset)
+    {
+        if (themeSO == null || themeSO.themes.Count == 0) 
+        {
+            Debug.LogError("ThemeSO is null or empty!");
+            return null;
+        }
+        
+        // 使用当前关卡索引加上层偏移
+        int themeIdx = (_currentLevelIndex + offset) % themeSO.themes.Count;
+        return themeSO.themes[themeIdx];
+    }
+    
+    // 新增：手动切换到指定关卡（用于测试或关卡选择）
+    public void SwitchToLevel(int levelIndex)
+    {
+        if (levelIndex < 0 || levelIndex >= levelPrefabs.Length)
+        {
+            Debug.LogError($"无效的关卡索引: {levelIndex}");
+            return;
+        }
+        
+        _currentLevelIndex = levelIndex;
+        _segmentsInCurrentLevel = 0;
+        
+        Debug.Log($"手动切换到关卡: {_currentLevelIndex}");
+        
+        // 强制刷新所有同步层
+        foreach (var item in _allSegments)
+        {
+            string[] nameParts = item.name.Split('_');
+            if (nameParts.Length < 4) continue;
+            
+            string layerName = nameParts[0];
+            bool isMain = nameParts[1] == "True";
+            int layerOffset = int.Parse(nameParts[2]);
+            bool syncWithCurrentLevel = nameParts[3] == "True";
+            
+            if (!isMain && syncWithCurrentLevel && themeSO != null)
+            {
+                var currentTheme = themeSO.GetThemeForLevel(_currentLevelIndex);
+                if (currentTheme != null)
+                {
+                    var layerResource = currentTheme.GetLayerResource(layerName);
+                    item.RefreshWithLayerResource(item.GetAngle(), item.GetRadius(), layerResource, currentTheme.nodeMarkerPrefab);
+                }
+            }
+        }
+    }
+    
+    // 新增：获取当前关卡索引（供外部使用）
+    public int GetCurrentLevelIndex()
+    {
+        return _currentLevelIndex;
     }
 }

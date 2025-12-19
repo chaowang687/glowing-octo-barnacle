@@ -3,16 +3,17 @@ using System.Collections.Generic;
 
 public class WorldSegmentItem : MonoBehaviour
 {
-
-    // 在 WorldSegmentItem.cs 中添加
+    // 添加这些字段
     public bool isMainLayer;
     public int layerThemeOffset;
-    [Header("视差配置")]
     public float parallaxMultiplier = 1.0f;
+    public bool syncWithCurrentLevel = false; // 新增：是否与当前关卡同步
+    
+    [Header("渲染器引用")]
     public SpriteRenderer groundRenderer;
     public Transform decoContainer;
     public Transform nodeMarkerAnchor;
-
+    
     [Header("分布配置")]
     [Range(0, 1)] public float spawnChance = 0.6f;     
     public Vector2 heightOffsetRange = new Vector2(0f, 0.5f); 
@@ -51,6 +52,57 @@ public class WorldSegmentItem : MonoBehaviour
         UpdatePosition();
     }
 
+    // 新增：使用 LayerResource 刷新
+    public void RefreshWithLayerResource(float angle, float radius, ThemeSequenceSO.LayerResource layerResource, GameObject nodeMarkerPrefab = null)
+    {
+        _currentAngle = angle;
+        _radius = radius;
+
+        if (nodeMarkerAnchor != null)
+        {
+            foreach (Transform child in nodeMarkerAnchor) 
+            {
+                if (Application.isPlaying) Destroy(child.gameObject);
+                else DestroyImmediate(child.gameObject);
+            }
+        }
+
+        ClearDecos();
+
+        if (layerResource != null) 
+        {
+            if (groundRenderer != null) 
+            {
+                if (layerResource.groundSprite != null)
+                    groundRenderer.sprite = layerResource.groundSprite;
+                
+                if (layerResource.material != null)
+                    groundRenderer.material = layerResource.material;
+                
+                groundRenderer.color = layerResource.tintColor;
+            }
+            
+            if (nodeMarkerAnchor != null && nodeMarkerPrefab != null)
+                Instantiate(nodeMarkerPrefab, nodeMarkerAnchor);
+            
+            if (layerResource.decorations != null && layerResource.decorations.Length > 0)
+            {
+                for (int i = 0; i < _slotX.Length; i++)
+                {
+                    if (Random.value > spawnChance) continue;
+                    var prefab = layerResource.decorations[Random.Range(0, layerResource.decorations.Length)];
+                    var deco = Instantiate(prefab, decoContainer);
+                    deco.transform.localPosition = new Vector3(_slotX[i] + Random.Range(-0.2f, 0.2f), Random.Range(heightOffsetRange.x, heightOffsetRange.y), Random.Range(-zSpread, zSpread));
+                    float scale = Random.Range(sizeScaleRange.x, sizeScaleRange.y);
+                    deco.transform.localScale = new Vector3(scale, scale, scale);
+                    if (deco.TryGetComponent<SpriteRenderer>(out var sr)) sr.flipX = Random.value > 0.5f;
+                }
+            }
+        }
+        UpdatePosition(); 
+    }
+
+    // 保持向后兼容的 Refresh 方法
     public void Refresh(float angle, float radius, ThemeSequenceSO.ThemeConfig theme)
     {
         _currentAngle = angle;

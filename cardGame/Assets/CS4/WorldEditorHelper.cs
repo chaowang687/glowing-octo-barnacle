@@ -30,7 +30,10 @@ public class WorldEditorHelper : MonoBehaviour
 
         float angleStep = 360f / totalSegments;
         
-        // 4. 开始循环生成
+        // 4. 开始循环生成（使用第一个主题）
+        int themeIdx = 0; // 使用第一个主题
+        ThemeSequenceSO.ThemeConfig currentTheme = themeSO.themes[themeIdx];
+
         for (int i = 0; i < totalSegments; i++)
         {
             GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(segmentPrefab, transform);
@@ -38,13 +41,17 @@ public class WorldEditorHelper : MonoBehaviour
             
             float startAngle = i * angleStep;
 
-            // 【核心逻辑】：计算该地块应该对应哪个主题
-            // 模仿 Controller 的逻辑，取当前索引对应的主题配置
-            int themeIdx = (i / totalSegments) % themeSO.themes.Count;
-            ThemeSequenceSO.ThemeConfig currentTheme = themeSO.themes[themeIdx];
-
-            // 调用 Refresh 时传入主题，触发 WorldSegmentItem 内部的自动随机分布逻辑
-            item.Refresh(startAngle, radius, currentTheme);
+            // 使用地面层资源
+            var groundLayerResource = currentTheme.GetLayerResource("Ground");
+            if (groundLayerResource != null)
+            {
+                item.RefreshWithLayerResource(startAngle, radius, groundLayerResource, currentTheme.nodeMarkerPrefab);
+            }
+            else
+            {
+                // 向后兼容
+                item.Refresh(startAngle, radius, currentTheme);
+            }
             
             go.name = $"Segment_{i}";
         }

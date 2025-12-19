@@ -134,7 +134,7 @@ Material:
     - _StarIntensity: 1
     - _StarTiling: 5
     - _Surface: 0
-    - _Transition: 0.2269448
+    - _Transition: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

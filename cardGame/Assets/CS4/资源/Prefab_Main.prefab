@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &701888014147308771
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 514248215557865318}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &514248215557865318
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 701888014147308771}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.44, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7169609435862289952}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1179070894381795294
 GameObject:
   m_ObjectHideFlags: 0
@@ -55,7 +86,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1b0688f6488df436f9c2d227a8a8d6c8, type: 2}
+  - {fileID: 2100000, guid: 0be11c7a789404fa2a8596d9dbe3668e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -76,7 +107,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 98be57fc86e874039893401f7330ecb6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 60cc0b78735814e18a17b89bea71940a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -98,7 +129,7 @@ GameObject:
   - component: {fileID: 7169609435862289952}
   - component: {fileID: 9056104280216489823}
   m_Layer: 0
-  m_Name: Prefab_Front
+  m_Name: Prefab_Main
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -119,6 +150,7 @@ Transform:
   m_Children:
   - {fileID: 5794455178295602989}
   - {fileID: 8296902683328070848}
+  - {fileID: 514248215557865318}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9056104280216489823
@@ -133,10 +165,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f24b83f4af9e4ca9b60064c7d9c529c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isMainLayer: 0
+  layerThemeOffset: 0
   parallaxMultiplier: 1
+  syncWithCurrentLevel: 0
   groundRenderer: {fileID: 4514051101560032882}
   decoContainer: {fileID: 8296902683328070848}
-  nodeMarkerAnchor: {fileID: 0}
+  nodeMarkerAnchor: {fileID: 514248215557865318}
   spawnChance: 0.6
   heightOffsetRange: {x: 0, y: 0.5}
   sizeScaleRange: {x: 0.7, y: 1.3}
