@@ -3,11 +3,17 @@ using System.Collections.Generic;
 
 public class WorldSegmentItem : MonoBehaviour
 {
+
+    // 在 WorldSegmentItem.cs 中添加
+    public bool isMainLayer;
+    public int layerThemeOffset;
+    [Header("视差配置")]
+    public float parallaxMultiplier = 1.0f;
     public SpriteRenderer groundRenderer;
     public Transform decoContainer;
     public Transform nodeMarkerAnchor;
 
-    [Header("分布配置 (公开可调)")]
+    [Header("分布配置")]
     [Range(0, 1)] public float spawnChance = 0.6f;     
     public Vector2 heightOffsetRange = new Vector2(0f, 0.5f); 
     public Vector2 sizeScaleRange = new Vector2(0.7f, 1.3f);  
@@ -16,17 +22,16 @@ public class WorldSegmentItem : MonoBehaviour
     private float _currentAngle;
     private float _radius;
     private float[] _slotX = new float[] { -1.3f, 0f, 1.3f }; 
+
+    // 性能优化：静态属性块和 ID 缓存
+    private static MaterialPropertyBlock _sharedPropBlock;
+    private static readonly int CurrentAngleID = Shader.PropertyToID("_CurrentAngle");
+
     public void SyncFromPreset(float angle, Transform presetSource)
     {
         _currentAngle = angle;
+        ClearDecos();
 
-        // 1. 清理当前地块旧的装饰
-        for (int i = decoContainer.childCount - 1; i >= 0; i--)
-        {
-            Destroy(decoContainer.GetChild(i).gameObject);
-        }
-
-        // 2. 将预设地块中的装饰物克隆过来
         Transform presetDecoContainer = presetSource.Find("DecoContainer");
         if (presetDecoContainer != null)
         {
@@ -39,89 +44,85 @@ public class WorldSegmentItem : MonoBehaviour
             }
         }
 
-        // 3. 同步地面贴图
         var sourceRenderer = presetSource.Find("GroundVisual")?.GetComponent<SpriteRenderer>();
         if (sourceRenderer != null && groundRenderer != null)
-        {
             groundRenderer.sprite = sourceRenderer.sprite;
-        }
 
         UpdatePosition();
     }
+
     public void Refresh(float angle, float radius, ThemeSequenceSO.ThemeConfig theme)
-{
-    _currentAngle = angle;
-    _radius = radius;
-    // 设置地面
-        if (groundRenderer != null) groundRenderer.sprite = theme.groundSprite;
-
-        // 生成节点小图标
-        if (nodeMarkerAnchor != null && theme.nodeMarkerPrefab != null)
-        {
-            // 清理旧图标
-            foreach (Transform child in nodeMarkerAnchor) Destroy(child.gameObject);
-            // 生成新图标
-            Instantiate(theme.nodeMarkerPrefab, nodeMarkerAnchor);
-        }
-    // 1. 彻底清理旧装饰 (适配编辑器模式)
-    if (decoContainer != null)
     {
-        for (int i = decoContainer.childCount - 1; i >= 0; i--)
-        {
-            // 编辑器下必须使用 DestroyImmediate，否则循环会因报错中断
-            if (Application.isPlaying) 
-                Destroy(decoContainer.GetChild(i).gameObject);
-            else 
-                DestroyImmediate(decoContainer.GetChild(i).gameObject);
-        }
-    }
+        _currentAngle = angle;
+        _radius = radius;
 
-    // 2. 判空保护：只有 theme 不为 null 时才执行资源分配和随机生成
-    if (theme != null) 
-    {
-        if (groundRenderer != null) groundRenderer.sprite = theme.groundSprite;
-        
-        // 自动随机生成逻辑 (仅在有配置时运行)
-        if (theme.decorations != null && theme.decorations.Length > 0)
+        if (nodeMarkerAnchor != null)
         {
-            for (int i = 0; i < _slotX.Length; i++)
+            foreach (Transform child in nodeMarkerAnchor) 
             {
-                if (Random.value > spawnChance) continue;
-                var prefab = theme.decorations[Random.Range(0, theme.decorations.Length)];
-                var deco = Instantiate(prefab, decoContainer);
-                float posX = _slotX[i] + Random.Range(-0.2f, 0.2f);
-                float posY = Random.Range(heightOffsetRange.x, heightOffsetRange.y);
-                float posZ = Random.Range(-zSpread, zSpread);
-                deco.transform.localPosition = new Vector3(posX, posY, posZ);
-                float scale = Random.Range(sizeScaleRange.x, sizeScaleRange.y);
-                deco.transform.localScale = new Vector3(scale, scale, scale);
-                var sr = deco.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.flipX = Random.value > 0.5f;
+                if (Application.isPlaying) Destroy(child.gameObject);
+                else DestroyImmediate(child.gameObject);
             }
         }
+
+        ClearDecos();
+
+        if (theme != null) 
+        {
+            if (groundRenderer != null) groundRenderer.sprite = theme.groundSprite;
+            if (nodeMarkerAnchor != null && theme.nodeMarkerPrefab != null)
+                Instantiate(theme.nodeMarkerPrefab, nodeMarkerAnchor);
+            
+            if (theme.decorations != null && theme.decorations.Length > 0)
+            {
+                for (int i = 0; i < _slotX.Length; i++)
+                {
+                    if (Random.value > spawnChance) continue;
+                    var prefab = theme.decorations[Random.Range(0, theme.decorations.Length)];
+                    var deco = Instantiate(prefab, decoContainer);
+                    deco.transform.localPosition = new Vector3(_slotX[i] + Random.Range(-0.2f, 0.2f), Random.Range(heightOffsetRange.x, heightOffsetRange.y), Random.Range(-zSpread, zSpread));
+                    float scale = Random.Range(sizeScaleRange.x, sizeScaleRange.y);
+                    deco.transform.localScale = new Vector3(scale, scale, scale);
+                    if (deco.TryGetComponent<SpriteRenderer>(out var sr)) sr.flipX = Random.value > 0.5f;
+                }
+            }
+        }
+        UpdatePosition(); 
     }
-    
-    // 3. 无论 theme 是否为空，都必须更新位置，确保排成圆圈
-    UpdatePosition(); 
-}
+
+    private void ClearDecos()
+    {
+        if (decoContainer == null) return;
+        for (int i = decoContainer.childCount - 1; i >= 0; i--)
+        {
+            if (Application.isPlaying) Destroy(decoContainer.GetChild(i).gameObject);
+            else DestroyImmediate(decoContainer.GetChild(i).gameObject);
+        }
+    }
+
+    public float GetRadius() => _radius;
+    public float GetAngle() => _currentAngle;
 
     public void Rotate(float deltaAngle)
     {
-        _currentAngle += deltaAngle;
+        _currentAngle += (deltaAngle * parallaxMultiplier);
         UpdatePosition();
-    }
-
-    public float GetAngle() 
-    {
-        return _currentAngle;
     }
 
     private void UpdatePosition()
     {
+        // 坐标更新
         float rad = _currentAngle * Mathf.Deg2Rad;
-        // 计算地块在圆周上的坐标
         transform.localPosition = new Vector3(Mathf.Sin(rad), Mathf.Cos(rad), 0) * _radius;
-        // 让地块始终垂直于圆心
         transform.localRotation = Quaternion.Euler(0, 0, -_currentAngle);
+
+        // 极坐标同步逻辑 (解决独立跳动且优化卡顿)
+        if (groundRenderer != null) 
+        {
+            if (_sharedPropBlock == null) _sharedPropBlock = new MaterialPropertyBlock();
+            groundRenderer.GetPropertyBlock(_sharedPropBlock);
+            _sharedPropBlock.SetFloat(CurrentAngleID, _currentAngle); 
+            groundRenderer.SetPropertyBlock(_sharedPropBlock);
+        }
     }
 }

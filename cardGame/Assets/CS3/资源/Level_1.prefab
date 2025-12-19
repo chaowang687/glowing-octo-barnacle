@@ -4794,9 +4794,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 600144777915856358}
-  - component: {fileID: 1075940613542006726}
-  - component: {fileID: 4380030869304768868}
-  - component: {fileID: 8944675677893707550}
   m_Layer: 5
   m_Name: Level_1
   m_TagString: Untagged
@@ -4849,59 +4846,6 @@ Transform:
   - {fileID: 9111703057255699524}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1075940613542006726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4060968810434058221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4ac2c4b8f3de42da9a5847df5c7d401, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  levelPrefabs:
-  - {fileID: 2397073148307580141, guid: b550788f7d61441129b1f08d0a0a0900, type: 3}
-  - {fileID: 8557125119762315780, guid: 2eca45c3464ca4c31bfd563bb4f564cd, type: 3}
-  - {fileID: 2397073148307580141, guid: b550788f7d61441129b1f08d0a0a0900, type: 3}
-  themeSO: {fileID: 11400000, guid: 241b8e466aae94f33a96b77af2b799ea, type: 2}
-  segmentPrefab: {fileID: 4624993865942725934, guid: de3586079aeeb47019b59885c2255fe1, type: 3}
-  totalSegments: 30
-  radius: 19
-  degreesPerSecond: 45
-  _isMoving: 0
---- !u!114 &4380030869304768868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4060968810434058221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a70bdea6b6b2e4ff8b746728e83dd238, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  decoPrefabs:
-  - {fileID: 1601497499900524425, guid: 38b914c7a0aef437c89db395ed043817, type: 3}
-  selectedBrushIndex: 30
---- !u!114 &8944675677893707550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4060968810434058221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d34ac16b44204591946de41de3fc086, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  segmentPrefab: {fileID: 4624993865942725934, guid: de3586079aeeb47019b59885c2255fe1, type: 3}
-  themeSO: {fileID: 11400000, guid: 241b8e466aae94f33a96b77af2b799ea, type: 2}
-  totalSegments: 30
-  radius: 19
 --- !u!1 &4092926241102011868
 GameObject:
   m_ObjectHideFlags: 0

@@ -101,7 +101,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
     <Compile Include="Assets/CS/Scripts/CardVisualManager.cs" />
     <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
-    <Compile Include="Assets/CS3/InfiniteCarouselController.cs" />
+    <Compile Include="Assets/CS4/InfiniteCarouselController.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
     <Compile Include="Assets/CS3/WorldSegmentItem.cs" />
@@ -114,11 +114,11 @@
     <Compile Include="Assets/CS2/PlayerStats.cs" />
     <Compile Include="Assets/CS/对战AI/结果/Enemy.cs" />
     <Compile Include="Assets/CS/对战AI/执行/EnemyAI.cs" />
+    <Compile Include="Assets/CS3/ClockUIController.cs" />
     <Compile Include="Assets/CS/Scripts/Enums.cs" />
     <Compile Include="Assets/CS/Scripts/Data/CardDataEnums.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/EquipmentData.cs" />
     <Compile Include="Assets/CS/Scripts/UIManager.cs" />
-    <Compile Include="Assets/CS3/钟表/ClockUIController.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/EquipmentSlotUI.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryScrollRect.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryUIDebugger.cs" />
@@ -155,14 +155,15 @@
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl" />
+    <None Include="Assets/CS4/WaveDisplacement.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader" />
-    <None Include="Assets/CS3/WorldSegmentHunger.shader" />
+    <None Include="Assets/CS3/资源/WorldSegmentHunger.shader" />
     <None Include="Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt" />
-    <None Include="Assets/CS3/SimpleEmission.shader" />
+    <None Include="Assets/CS3/资源/SimpleEmission.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc" />
     <None Include="Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc" />
     <None Include="Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt" />
@@ -171,7 +172,7 @@
     <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader" />
     <None Include="Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader" />
-    <None Include="Assets/CS3/Sky Gradient Shader.shader" />
+    <None Include="Assets/CS3/资源/Sky Gradient Shader.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_Sprite.shader" />
   </ItemGroup>
   <ItemGroup>

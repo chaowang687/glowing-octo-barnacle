@@ -1914,6 +1914,7 @@ MonoBehaviour:
   gameTime: 0.72421867
   playerTransform: {fileID: 2088170535}
   nightVignette: {fileID: 0}
+  lampManager: {fileID: 344580669}
 --- !u!1 &2088170532
 GameObject:
   m_ObjectHideFlags: 0
@@ -2029,6 +2030,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4ac2c4b8f3de42da9a5847df5c7d401, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  layers:
+  - layerName: 
+    overridePrefab: {fileID: 4624993865942725934, guid: de3586079aeeb47019b59885c2255fe1, type: 3}
+    themeIndexOffset: 0
+    radiusOffset: 0
+    speedMultiplier: 1
+    sortingOrderOffset: 0
+    isMainLogicLayer: 1
   levelPrefabs:
   - {fileID: 4060968810434058221, guid: aba23ff41414f49369714ee810c31ff2, type: 3}
   - {fileID: 1704013968557782916, guid: 7dfe54cc65f4e43da8dd9f6245c84a2e, type: 3}
@@ -2038,8 +2047,8 @@ MonoBehaviour:
   segmentPrefab: {fileID: 4624993865942725934, guid: de3586079aeeb47019b59885c2255fe1, type: 3}
   totalSegments: 30
   radius: 19
+  overlapFactor: 1.02
   degreesPerSecond: 45
-  _isMoving: 0
 --- !u!1001 &638463276989140597
 PrefabInstance:
   m_ObjectHideFlags: 0
