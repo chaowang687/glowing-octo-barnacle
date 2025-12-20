@@ -66,7 +66,7 @@ public class TimeOfDaySystem : MonoBehaviour
         nightVignette.alpha = Mathf.SmoothStep(0, 1, (transition - 0.5f) * 2f);
     }
 
-    Debug.Log($"[昼夜系统] Transition: {transition} | 游戏时间: {gameTime}");
+    //Debug.Log($"[昼夜系统] Transition: {transition} | 游戏时间: {gameTime}");
 }
 
     private float CalculateTransition(float t)

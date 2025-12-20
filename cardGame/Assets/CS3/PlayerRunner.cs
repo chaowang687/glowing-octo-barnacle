@@ -29,4 +29,5 @@ public class PlayerRunner : MonoBehaviour
             // animator.SetBool("isMoving", false);
         }
     }
+    
 }

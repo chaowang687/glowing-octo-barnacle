@@ -3,11 +3,25 @@ using System.Collections.Generic;
 
 public class WorldSegmentItem : MonoBehaviour
 {
-    // 添加这些字段
+    // 新增字段，用于存储配置信息
+    public string layerName;
     public bool isMainLayer;
     public int layerThemeOffset;
+    public bool syncWithCurrentLevel;
+    
+    // 修改现有字段，确保正确初始化
+    public void Initialize(string lName, bool isMain, int themeOffset, bool sync)
+    {
+        layerName = lName;
+        isMainLayer = isMain;
+        layerThemeOffset = themeOffset;
+        syncWithCurrentLevel = sync;
+         }
+    // 添加这些字段
+   // public bool isMainLayer;
+   // public int layerThemeOffset;
     public float parallaxMultiplier = 1.0f;
-    public bool syncWithCurrentLevel = false; // 新增：是否与当前关卡同步
+   // public bool syncWithCurrentLevel = false; // 新增：是否与当前关卡同步
     
     [Header("渲染器引用")]
     public SpriteRenderer groundRenderer;

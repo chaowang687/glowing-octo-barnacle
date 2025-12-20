@@ -45,6 +45,10 @@ public class InfiniteCarouselController : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"InfiniteCarouselController 开始初始化");
+        Debug.Log($"Total Segments: {totalSegments}");
+        Debug.Log($"Level Prefabs Count: {(levelPrefabs != null ? levelPrefabs.Length : 0)}");
+        Debug.Log($"ThemeSO: {(themeSO != null ? "已设置" : "未设置")}");
         _allSegments.Clear();
         foreach (var config in layers)
         {
@@ -126,83 +130,136 @@ public class InfiniteCarouselController : MonoBehaviour
         }
         
         Debug.Log($"开始移动 {steps} 步，当前角度: {_currentTotalRotation}");
-        StartCoroutine(MoveRoutine(steps)); 
+        StartCoroutine(SmoothMoveRoutine(steps)); // ✅ 改为调用已存在的方法
     }
 
-    private IEnumerator MoveRoutine(int steps) 
-    { 
-        _isMoving = true;
-        Debug.Log($"MoveRoutine 开始，步数: {steps}");
-        
-        float anglePerStep = 360f / totalSegments; 
-        float moveAngle = steps * anglePerStep;    
-        Debug.Log($"每步角度: {anglePerStep}, 总移动角度: {moveAngle}");
-        
-        float duration = moveAngle / degreesPerSecond;
-        Debug.Log($"移动持续时间: {duration} 秒");
-        
-        float elapsed = 0;
-        float startRot = _currentTotalRotation;
-        float targetRot = _currentTotalRotation + moveAngle;
-
-        while (elapsed < duration) 
-        {
-            elapsed += Time.deltaTime;
-            float nextRot = Mathf.Lerp(startRot, targetRot, elapsed / duration);
-            
-            RotateWorld(nextRot - _currentTotalRotation);
-            _currentTotalRotation = nextRot;
-            
-            yield return null;
-        }
-
-        RotateWorld(targetRot - _currentTotalRotation);
-        _currentTotalRotation = targetRot;
-        
-        _isMoving = false;
-        Debug.Log($"MoveRoutine 结束，新角度: {_currentTotalRotation}");
-    }
-
-    private void RotateWorld(float delta)
+   public void SmoothMoveToStep(int steps)
+{ 
+    if(_isMoving) 
     {
-        if (Mathf.Approximately(delta, 0f))
-        {
-            Debug.LogWarning("旋转增量为0，不执行旋转");
-            return;
-        }
+        Debug.LogWarning("正在移动中，忽略新的移动请求");
+        return;
+    }
+    
+    if(steps <= 0)
+    {
+        Debug.LogError($"无效的步数: {steps}，必须为正数");
+        return;
+    }
+    
+    Debug.Log($"平滑移动到 {steps} 步，当前角度: {_currentTotalRotation}");
+    StartCoroutine(SmoothMoveRoutine(steps)); 
+}
+
+private IEnumerator SmoothMoveRoutine(int steps) 
+{ 
+    _isMoving = true;
+    
+    // 计算需要旋转的总角度
+    float anglePerStep = 360f / totalSegments; 
+    float totalAngle = steps * anglePerStep;     // 总旋转角度
+    
+    // 计算移动时间：角度 / 角速度
+    float duration = totalAngle / degreesPerSecond;
+    
+    Debug.Log($"移动 {steps} 步，角度: {totalAngle}°，时间: {duration}秒，角速度: {degreesPerSecond}°/秒");
+    
+    float elapsed = 0f;
+    float startAngle = _currentTotalRotation;
+    float targetAngle = _currentTotalRotation + totalAngle;
+    
+    while (elapsed < duration)
+    {
+        elapsed += Time.deltaTime;
+        float progress = Mathf.Clamp01(elapsed / duration);
         
-        foreach (var item in _allSegments)
+        // 使用缓动函数（可选）
+        float t = EaseInOutCubic(progress);
+        
+        float newAngle = Mathf.Lerp(startAngle, targetAngle, t);
+        float delta = newAngle - _currentTotalRotation;
+        
+        RotateWorld(delta);
+        _currentTotalRotation = newAngle;
+        
+        yield return null;
+    }
+    
+    // 确保最终位置准确
+    RotateWorld(targetAngle - _currentTotalRotation);
+    _currentTotalRotation = targetAngle;
+    _isMoving = false;
+}
+
+// 缓动函数
+private float EaseInOutCubic(float t)
+{
+    return t < 0.5f ? 4f * t * t * t : 1f - Mathf.Pow(-2f * t + 2f, 3f) / 2f;
+}
+    private void RotateWorld(float delta)
+{
+    Debug.Log($"RotateWorld 调用，delta: {delta}, 地块数量: {_allSegments.Count}");
+    
+    if (Mathf.Approximately(delta, 0f))
+    {
+        Debug.LogWarning("旋转增量为0，不执行旋转");
+        return;
+    }
+    
+    int resetCount = 0;
+    int errorCount = 0;
+    
+    foreach (var item in _allSegments)
+    {
+        try
         {
             item.Rotate(delta);
 
             if (item.GetAngle() > 100f) 
             {
+                resetCount++;
                 float newAngle = item.GetAngle() - 360f;
                 
-                // 从名字里解析出这层地块的信息
                 string[] nameParts = item.name.Split('_');
+                Debug.Log($"解析地块 {item.name}: 分割结果 = [{string.Join(", ", nameParts)}]");
+                
                 if (nameParts.Length < 4)
                 {
                     Debug.LogError($"地块名称格式错误: {item.name}");
+                    errorCount++;
                     continue;
                 }
                 
                 string layerName = nameParts[0];
                 bool isMain = nameParts[1] == "True";
-                int layerOffset = int.Parse(nameParts[2]);
+                
+                // 修正：正确的 TryParse 语法
+                int layerOffset;
+                if (!int.TryParse(nameParts[2], out layerOffset))
+                {
+                    Debug.LogError($"无法解析层偏移: '{nameParts[2]}' (类型: {nameParts[2].GetType()})，地块名称: {item.name}");
+                    errorCount++;
+                    continue;
+                }
+                
                 bool syncWithCurrentLevel = nameParts[3] == "True";
+                
+                Debug.Log($"地块信息: 层={layerName}, 主层={isMain}, 偏移={layerOffset}, 同步={syncWithCurrentLevel}");
 
                 // --- 逻辑分支：是根据 LevelPrefab 同步还是根据 ThemeSO 生成 ---
                 if (levelPrefabs != null && levelPrefabs.Length > 0 && isMain)
                 {
                     // 仅主逻辑层同步 LevelPrefab 的预制体内容
-                    GameObject currentLevel = levelPrefabs[_currentLevelIndex];
-                    int segmentIndexInPrefab = _globalIndex % totalSegments;
-                    
-                    if (currentLevel.transform.childCount > segmentIndexInPrefab)
+                    if (_currentLevelIndex >= 0 && _currentLevelIndex < levelPrefabs.Length)
                     {
-                        Transform source = currentLevel.transform.GetChild(segmentIndexInPrefab);
-                        item.SyncFromPreset(newAngle, source);
+                        GameObject currentLevel = levelPrefabs[_currentLevelIndex];
+                        int segmentIndexInPrefab = _globalIndex % totalSegments;
+                        
+                        if (currentLevel.transform.childCount > segmentIndexInPrefab)
+                        {
+                            Transform source = currentLevel.transform.GetChild(segmentIndexInPrefab);
+                            item.SyncFromPreset(newAngle, source);
+                        }
                     }
                 }
                 else
@@ -234,14 +291,30 @@ public class InfiniteCarouselController : MonoBehaviour
 
                     if (_segmentsInCurrentLevel >= totalSegments) 
                     {
-                        _currentLevelIndex = (_currentLevelIndex + 1) % levelPrefabs.Length;
+                        if (levelPrefabs != null && levelPrefabs.Length > 0)
+                        {
+                            _currentLevelIndex = (_currentLevelIndex + 1) % levelPrefabs.Length;
+                        }
+                        else
+                        {
+                            // 如果没有关卡预制体，重置为0
+                            _currentLevelIndex = 0;
+                        }
                         _segmentsInCurrentLevel = 0;
                         Debug.Log($"切换到下一个关卡: {_currentLevelIndex}");
                     }
                 }
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"处理地块 {item.name} 时出错: {e.Message}");
+            errorCount++;
+        }
     }
+    
+    Debug.Log($"旋转完成: 重置了 {resetCount} 个地块，遇到 {errorCount} 个错误");
+}
 
     // 获取主题（基于全局索引和层偏移）
     ThemeSequenceSO.ThemeConfig GetThemeForLayer(int index, int offset, int baseLevelIndex)
@@ -274,28 +347,50 @@ public class InfiniteCarouselController : MonoBehaviour
     }
     
     // 新增：手动切换到指定关卡（用于测试或关卡选择）
-    public void SwitchToLevel(int levelIndex)
+    // 新增：手动切换到指定关卡（用于测试或关卡选择）
+public void SwitchToLevel(int levelIndex)
+{
+    if (levelPrefabs == null || levelPrefabs.Length == 0)
     {
-        if (levelIndex < 0 || levelIndex >= levelPrefabs.Length)
-        {
-            Debug.LogError($"无效的关卡索引: {levelIndex}");
-            return;
-        }
-        
-        _currentLevelIndex = levelIndex;
-        _segmentsInCurrentLevel = 0;
-        
-        Debug.Log($"手动切换到关卡: {_currentLevelIndex}");
-        
-        // 强制刷新所有同步层
-        foreach (var item in _allSegments)
+        Debug.LogWarning("levelPrefabs 为空，无法切换关卡");
+        return;
+    }
+    
+    if (levelIndex < 0 || levelIndex >= levelPrefabs.Length)
+    {
+        Debug.LogError($"无效的关卡索引: {levelIndex}，有效范围: 0-{levelPrefabs.Length - 1}");
+        return;
+    }
+    
+    _currentLevelIndex = levelIndex;
+    _segmentsInCurrentLevel = 0;
+    
+    Debug.Log($"手动切换到关卡: {_currentLevelIndex}");
+    
+    // 强制刷新所有同步层
+    int refreshedCount = 0;
+    foreach (var item in _allSegments)
+    {
+        try
         {
             string[] nameParts = item.name.Split('_');
-            if (nameParts.Length < 4) continue;
+            if (nameParts.Length < 4) 
+            {
+                Debug.LogWarning($"地块名称格式错误，跳过: {item.name}");
+                continue;
+            }
             
             string layerName = nameParts[0];
             bool isMain = nameParts[1] == "True";
-            int layerOffset = int.Parse(nameParts[2]);
+            
+            // 修正：正确的 TryParse 语法
+            int layerOffset;
+            if (!int.TryParse(nameParts[2], out layerOffset))
+            {
+                Debug.LogWarning($"无法解析层偏移，跳过: {item.name}");
+                continue;
+            }
+            
             bool syncWithCurrentLevel = nameParts[3] == "True";
             
             if (!isMain && syncWithCurrentLevel && themeSO != null)
@@ -304,11 +399,22 @@ public class InfiniteCarouselController : MonoBehaviour
                 if (currentTheme != null)
                 {
                     var layerResource = currentTheme.GetLayerResource(layerName);
-                    item.RefreshWithLayerResource(item.GetAngle(), item.GetRadius(), layerResource, currentTheme.nodeMarkerPrefab);
+                    if (layerResource != null)
+                    {
+                        item.RefreshWithLayerResource(item.GetAngle(), item.GetRadius(), layerResource, currentTheme.nodeMarkerPrefab);
+                        refreshedCount++;
+                    }
                 }
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"切换关卡时处理地块 {item.name} 出错: {e.Message}");
+        }
     }
+    
+    Debug.Log($"切换关卡完成，刷新了 {refreshedCount} 个同步层地块");
+}
     
     // 新增：获取当前关卡索引（供外部使用）
     public int GetCurrentLevelIndex()

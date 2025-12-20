@@ -136,7 +136,7 @@ Material:
     - _LightOffsetY: -2.32
     - _LightRadius: 3
     - _Metallic: 0
-    - _MinNightBrightness: 0
+    - _MinNightBrightness: 0.057
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0

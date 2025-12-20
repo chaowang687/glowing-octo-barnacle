@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f24b83f4af9e4ca9b60064c7d9c529c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isMainLayer: 0
+  isMainLayer: 1
   layerThemeOffset: 0
   parallaxMultiplier: 1
   syncWithCurrentLevel: 0
