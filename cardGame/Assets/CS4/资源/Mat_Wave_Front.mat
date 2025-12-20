@@ -106,7 +106,7 @@ Material:
     - _Cull: 2
     - _CurrentAngle: 0
     - _Cutoff: 0.5
-    - _DayBrightness: 1
+    - _DayBrightness: 0.69
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -119,12 +119,12 @@ Material:
     - _LightIntensity: 1.69
     - _Metallic: 0
     - _MinNightBrightness: 0
-    - _NightBrightness: 0.231
+    - _NightBrightness: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _ScrollSpeed: -0.04
+    - _ScrollSpeed: 0
     - _SkyTransition: 0.5
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
@@ -135,7 +135,7 @@ Material:
     - _WaveAmplitude: 0.06
     - _WaveCount: 30
     - _WaveFrequency: 30
-    - _WaveSpeed: 3.92
+    - _WaveSpeed: 0.2
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
@@ -143,6 +143,6 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _WaveColor: {r: 0.22877358, g: 0.66437894, b: 0.9150943, a: 1}
+    - _WaveColor: {r: 0.5613208, g: 0.83956885, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

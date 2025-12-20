@@ -44,13 +44,12 @@ public class ThemeSequenceSO : ScriptableObject
         // 简化获取方法
         public LayerResource GetLayerResource(string layerType)
         {
-            switch (layerType)
-            {
-                case "Ground": return groundLayer;
-                case "Waves": return waveLayer;
-                case "Background": return backgroundLayer;
-                default: return groundLayer;
-            }
+            if (string.IsNullOrEmpty(layerType)) return groundLayer;
+
+            if (layerType.Equals("Ground", System.StringComparison.OrdinalIgnoreCase)) return groundLayer;
+            if (layerType.Equals("Waves", System.StringComparison.OrdinalIgnoreCase)) return waveLayer;
+            if (layerType.Equals("Background", System.StringComparison.OrdinalIgnoreCase)) return backgroundLayer;
+            return groundLayer;
         }
         
         // 向后兼容
