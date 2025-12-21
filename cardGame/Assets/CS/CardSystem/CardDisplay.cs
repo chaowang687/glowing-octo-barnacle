@@ -48,6 +48,8 @@ public class CardDisplay : MonoBehaviour,
     private Quaternion originalLocalRotation;
     
     // --- Initialization ---
+    private Vector2 dragOffset; // 解决 CS0103: dragOffset 不存在
+    public bool IsDragging => isDragging; // 解决 CS1061: 供 BattleManager 访问
     public void Initialize(CardData data, CharacterBase characterOwner)
     {
         cardData = data;
@@ -90,6 +92,9 @@ public class CardDisplay : MonoBehaviour,
     // --- 2. Drag Start Logic (IBeginDragHandler) ---
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // 计算鼠标点击位置与卡牌中心点的偏移
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+        rectTransform, eventData.position, eventData.pressEventCamera, out dragOffset);
         if (cardData == null || BattleManager.Instance == null || BattleManager.Instance.cardSystem == null) return;
         
         if (BattleManager.Instance.cardSystem.CurrentEnergy < cardData.energyCost)
@@ -104,6 +109,8 @@ public class CardDisplay : MonoBehaviour,
         }
 
         isDragging = true;
+        // ⭐ 关键点 1：彻底杀死当前卡牌的所有动画，防止“拉扯”
+        transform.DOKill(true);
         originalLocalPosition = rectTransform.localPosition;
         originalLocalRotation = rectTransform.localRotation;
         
@@ -127,10 +134,11 @@ public class CardDisplay : MonoBehaviour,
             transform.parent.GetComponent<RectTransform>(), 
             eventData.position, 
             eventData.pressEventCamera, 
-            out localPoint
+            out Vector2 localCursor
         ))
         {
-            rectTransform.localPosition = localPoint;
+            // 减去偏移量，卡牌就不会“瞬移”到鼠标中心了
+            rectTransform.localPosition = localCursor - dragOffset;
         }
 
         rectTransform.localRotation = Quaternion.identity;

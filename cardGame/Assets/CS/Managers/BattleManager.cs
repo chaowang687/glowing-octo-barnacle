@@ -1019,21 +1019,32 @@ public class BattleManager : MonoBehaviour
     /// <param name="duration">The duration of the animation. Use 0 for instant repositioning.</param>
     public void UpdateHandLayout(float duration) 
     { 
-        // 1. Calculate all layout data and update hover reference
+        // 1. 预检：如果没有手牌，直接返回
+        if (handDisplays == null || handDisplays.Count == 0) return;
+
+        // 2. 一次性计算出所有卡牌的目标布局数据
         List<CardLayoutData> layoutData = CalculateAllCurrentLayout(highlightedCard);
         
-        if (handDisplays.Count == 0) return;
-
-        // 2. Apply layout data (hover or post-play adjustment)
+        // 3. 遍历手牌列表，应用布局
         for (int i = 0; i < handDisplays.Count; i++)
         {
-            CardDisplay display = handDisplays[i];
+            CardDisplay card = handDisplays[i];
+
+            // ⭐ 关键点：如果卡牌正在被拖拽，跳过布局计算，完全交给 CardDisplay 的 OnDrag 处理
+            if (card.IsDragging) 
+            {
+                continue; 
+            }
+
+            // 4. 获取当前卡牌对应的布局目标 (确保索引安全)
+            if (i >= layoutData.Count) break;
             CardLayoutData targetData = layoutData[i];
 
-            // Execute animation or instant setting
-            display.transform.DOLocalMove(targetData.position, duration).SetEase(Ease.OutQuad);
-            display.transform.DOLocalRotate(targetData.rotation.eulerAngles, duration);
-            display.transform.DOScale(targetData.scale, duration); 
+            // 5. 执行平滑动画
+            // 使用 SetEase(Ease.OutQuad) 让手牌排列看起来更有弹性
+            card.transform.DOLocalMove(targetData.position, duration).SetEase(Ease.OutQuad);
+            card.transform.DOLocalRotate(targetData.rotation.eulerAngles, duration).SetEase(Ease.OutQuad);
+            card.transform.DOScale(targetData.scale, duration).SetEase(Ease.OutQuad);
         }
     }
 

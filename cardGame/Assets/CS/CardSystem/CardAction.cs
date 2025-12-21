@@ -14,6 +14,7 @@ public struct CardAction
 {
     [Tooltip("效果类型: 伤害, 格挡, 治疗, 施加增益/减益等.")]
     public EffectType effectType;
+   
 
     [Tooltip("目标类型: 自身, 所有敌人, 选定敌人等.")]
     public TargetType targetType;

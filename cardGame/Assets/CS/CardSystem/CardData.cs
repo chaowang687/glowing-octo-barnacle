@@ -22,6 +22,7 @@ public class CardData : ScriptableObject
     public string cardID = "";
     public string cardName = "新卡牌"; // 这是卡牌的名称
     
+    
     [TextArea]
     public string description = "描述";
     public Sprite artwork;
