@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening; // ⭐ 引入 DOTween 命名空间 ⭐
 using CardDataEnums; // 假设这是 IntentType 所在的命名空间
+using ScavengingGame; // 必须引入命名空间
 
 // 继承自 CharacterBase，但处理 AI 逻辑
 
@@ -69,6 +70,7 @@ public class EnemyAI : MonoBehaviour
         if (self == null || hero == null || nextIntent == IntentType.NONE) return DOTween.Sequence();
 
         Sequence actionSequence = DOTween.Sequence();
+        
         // ⭐ 修正：在序列开始时立即记录执行的意图 ⭐
             actionSequence.AppendCallback(() => {
                 Debug.Log($"LOG EXECUTION: Enemy {self.characterName} 执行行动，意图: {nextIntent}, 值: {intentValue}");
@@ -76,6 +78,28 @@ public class EnemyAI : MonoBehaviour
         // 根据预先计算的意图执行行动
         switch (nextIntent)
         {
+            case IntentType.Loot:
+            actionSequence.Append(self.transform.DOMove(hero.transform.position, 0.4f));
+            actionSequence.AppendCallback(() => {
+                string stolenName = InventoryManager.Instance.TakeRandomItem();
+                Debug.Log($"[AI] 尝试抢夺，拿到ID: {stolenName}");
+            if (!string.IsNullOrEmpty(stolenName)) {
+                if (display != null) {
+                    // 传给 display 播放动画
+                    display.PlayLootAnimation(stolenName); 
+                }
+        }
+                
+            });
+            break;
+
+            case IntentType.Escape:
+                actionSequence.Append(self.transform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.InBack)); // 缩小消失
+                actionSequence.AppendCallback(() => {
+                    BattleManager.Instance.HandleDyingCharacterCleanup(self); // 利用现有逻辑清理敌人
+                    Destroy(gameObject);
+                });
+                break;
             case IntentType.ATTACK:
                 // ⭐ 核心修正：在造成伤害前触发攻击动画 ⭐
                 actionSequence.AppendCallback(() =>

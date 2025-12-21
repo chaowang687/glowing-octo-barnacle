@@ -32,7 +32,38 @@ public class CharacterManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+        ClearExtraListeners();
+        
     }
+    private void OnLevelLog(int level) // 旧版本 Unity 用这个
+{
+    ClearExtraListeners();
+}
+
+// 在 Awake 或每次加载完新场景时执行
+
+private void ClearExtraListeners()
+{
+    // 找到场景中所有的监听器
+    AudioListener[] allListeners = FindObjectsOfType<AudioListener>();
+
+    if (allListeners.Length > 1)
+    {
+        Debug.Log($"<color=yellow>[Audio]</color> 检测到 {allListeners.Length} 个监听器，正在执行清理...");
+        
+        // 逻辑：优先保留主摄像机上的，如果没有主摄像机，保留第一个
+        for (int i = 0; i < allListeners.Length; i++)
+        {
+            // 如果这个物体不是叫 "Main Camera" 的物体，且我们已经有一个了，就禁掉它
+            if (i > 0) 
+            {
+                allListeners[i].enabled = false;
+                // 或者销毁组件：Destroy(allListeners[i]);
+                Debug.Log($"已禁用多余监听器：{allListeners[i].gameObject.name}");
+            }
+        }
+    }
+}
 
     /// <summary>
     /// 获取当前活跃的主角。

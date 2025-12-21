@@ -47,7 +47,9 @@ namespace CardDataEnums
         DrawCard,   
         Energy,     
         ApplyBuff,  
+        StealBack, // 🏴‍☠️ 新增卡牌效果：夺回物资
         ApplyDebuff 
+        
     }
 
     public enum TargetType

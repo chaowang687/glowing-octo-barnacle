@@ -14,7 +14,8 @@ public enum EffectType
     DrawCard,   // 抽卡
     Energy,     // 获得能量
     ApplyBuff,  // 施加增益状态 (如Strength)
-    ApplyDebuff // 施加减益状态 (如Weak, Vulnerable)
+    ApplyDebuff, // 施加减益状态 (如Weak, Vulnerable)
+    StealBack // 🏴‍☠️ 新增卡牌效果：夺回物资
 }
 
 // 2. 目标类型 (TargetType) (谁是卡牌效果的目标)
@@ -54,7 +55,9 @@ public enum IntentType
     ATTACK_DEBUFF,  // 攻击并施加Debuff
     DEFEND_BUFF,    // 防御并施加Buff
     HEAL,           // 治疗自己或盟友
-    SPECIAL         // 特殊行动 (通常是独特的或难以归类的)
+    SPECIAL,         // 特殊行动 (通常是独特的或难以归类的)
+    Loot,   // 🏴‍☠️ 新增：掠夺物资
+    Escape  // 🏴‍☠️ 新增：逃跑
 }
 
 public enum ItemRarity

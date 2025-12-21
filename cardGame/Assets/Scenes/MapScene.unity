@@ -1021,7 +1021,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 9
-  Type: 1
+  Type: 2
   NextNodes: []
   IconDisplay: {fileID: 0}
 --- !u!114 &266942295
@@ -2137,7 +2137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 1
-  Type: 1
+  Type: 2
   NextNodes:
   - {fileID: 2051563162}
   IconDisplay: {fileID: 0}
@@ -2289,7 +2289,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 6
-  Type: 1
+  Type: 2
   NextNodes:
   - {fileID: 1666486078}
   IconDisplay: {fileID: 0}
@@ -4474,7 +4474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 7
-  Type: 1
+  Type: 2
   NextNodes:
   - {fileID: 1809500867}
   IconDisplay: {fileID: 0}
@@ -5293,7 +5293,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 8
-  Type: 1
+  Type: 2
   NextNodes:
   - {fileID: 266942294}
   IconDisplay: {fileID: 0}
@@ -6549,7 +6549,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NodeId: 10
-  Type: 1
+  Type: 2
   NextNodes: []
   IconDisplay: {fileID: 0}
 --- !u!1 &2042093878

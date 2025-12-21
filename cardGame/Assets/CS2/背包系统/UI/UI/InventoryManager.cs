@@ -20,6 +20,52 @@ namespace ScavengingGame
         public event Action<EquipmentData.SlotType, EquipmentData> OnEquipmentChanged;
         public event Action OnInventoryChanged;
         
+     public string TakeRandomItem()
+{
+    if (_slotItemMap.Count == 0)
+    {
+        Debug.Log("<color=yellow>[BATTLE]</color> 玩家包里空空如也，海盗空手而归！");
+        return null;
+    }
+
+    int targetSlotIndex = -1;
+    string itemId = null;
+    string itemDisplayName = null; // 新增：用于存储要显示的名称
+
+    // 优先寻找装备
+    var equipmentSlots = _slotItemMap.Where(kvp => 
+    {
+        string id = kvp.Value;
+        return _itemStacks.ContainsKey(id) && _itemStacks[id].Item is EquipmentData;
+    }).ToList();
+
+    if (equipmentSlots.Count > 0)
+    {
+        var chosenKvp = equipmentSlots[UnityEngine.Random.Range(0, equipmentSlots.Count)];
+        targetSlotIndex = chosenKvp.Key;
+        itemId = chosenKvp.Value;
+        itemDisplayName = _itemStacks[itemId].Item.itemName; // 提取名字
+        Debug.Log("<color=orange>[AI决策]</color> 海盗盯上了你的装备！");
+    }
+    else
+    {
+        // 无装备则随机抢夺普通物资
+        int[] keys = _slotItemMap.Keys.ToArray();
+        targetSlotIndex = keys[UnityEngine.Random.Range(0, keys.Length)];
+        itemId = _slotItemMap[targetSlotIndex];
+        itemDisplayName = _itemStacks[itemId].Item.itemName; // 提取名字
+    }
+
+    if (targetSlotIndex != -1)
+    {
+        // 执行移除逻辑（此时仍需用 itemId 操作字典）
+        RemoveItemAt(targetSlotIndex, _itemStacks[itemId].Count);
+    }
+
+    // ⭐ 关键：返回名字而不是 ID
+    return itemDisplayName; 
+}
+        
         private void Start()
         {
             foreach (EquipmentData.SlotType slotType in Enum.GetValues(typeof(EquipmentData.SlotType)))
@@ -28,6 +74,23 @@ namespace ScavengingGame
                 {
                     _equippedItems[slotType] = null;
                 }
+            }
+        }
+        // --- InventoryManager.cs ---
+        public static InventoryManager Instance { get; private set; }
+
+        private void Awake()
+        {
+            // 如果没有实例，则指定自己并确保切换场景时不销毁
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject); // 将该物体提升到 DontDestroyOnLoad 逻辑场景中
+            }
+            else
+            {
+                // 如果已经存在实例（比如从战斗回到地图），销毁重复的自己
+                Destroy(gameObject);
             }
         }
         

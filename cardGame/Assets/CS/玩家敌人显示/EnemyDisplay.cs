@@ -13,6 +13,13 @@ using System.Linq;
 /// </summary>
 public class EnemyDisplay : MonoBehaviour
 {
+    // 在 EnemyDisplay.cs 中
+    public Animator lootAnimator; // 拖入刚才那个节点的 Animator
+    public TextMeshProUGUI lootText; // 拖入那个节点下的文本
+    [Header("Loot Feedback")]
+    public GameObject lootSuccessEffect; // 比如一个写着“抢到了！”的浮动图标预制体
+    public AudioClip lootLaughSound;     // 海盗大笑的音效
+    private AudioSource audioSource;
     // Public event for external scripts (如 DeathRelay.cs) 通知动画完成。
     public event Action OnDeathAnimationComplete;
 
@@ -22,6 +29,7 @@ public class EnemyDisplay : MonoBehaviour
 
     // 核心数据引用
     private CharacterBase character; 
+
     
     // ⭐ 关键修正 1：缓存角色名称，用于在 character 引用被销毁后仍能安全追踪和记录日志。 ⭐
     private string _dyingCharacterName = "Unknown Character"; 
@@ -51,9 +59,39 @@ public class EnemyDisplay : MonoBehaviour
     public float fadeDuration = 0.2f;
 
     private Sequence intentFadeSequence;
+    // EnemyDisplay.cs
+public void PlayLootAnimation(string itemName)
+{
+    // BroadcastMessage 会自动匹配参数名
+    if (lootAnimator != null)
+    {
+        if (lootText != null) lootText.text = $"Pirates seized the {itemName}!";
+        
+        // 直接触发，因为物体一直是 Active 的，Animator 绝对能收到
+        lootAnimator.SetTrigger("ShowLoot");
+        Debug.Log($"[动画激活] 成功触发 ShowLoot，物品：{itemName}");
+    }
+}
 
     // === Initialization and Reference Acquisition (已简化) ===
-    
+    public void ShowLootFeedback(string itemName)
+    {
+        // 弹出特效
+        if (lootSuccessEffect != null)
+        {
+            GameObject effect = Instantiate(lootSuccessEffect, transform.position + Vector3.up * 2f, Quaternion.identity);
+            effect.transform.DOMoveY(effect.transform.position.y + 1f, 1f);
+            Destroy(effect, 1.2f);
+        }
+
+        // 播放音效
+        if (audioSource != null && lootLaughSound != null)
+        {
+            audioSource.PlayOneShot(lootLaughSound);
+        }
+        
+        Debug.Log($"海盗：哈哈哈，你的 {itemName} 归我了！");
+    }
     void Awake()
     {
         Debug.Log($"[DEBUG TRACE: AWAKE] {gameObject.name} EnemyDisplay 开始执行 Awake。");

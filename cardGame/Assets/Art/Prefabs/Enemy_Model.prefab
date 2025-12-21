@@ -41,7 +41,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 256, y: 246}
+  m_SizeDelta: {x: 145, y: 181}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5858533590108859611
 CanvasRenderer:
@@ -79,7 +79,7 @@ MonoBehaviour:
   display: {fileID: 5086072131767724690, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
   roundBasedStrategy: {fileID: 0}
   enemyDisplay: {fileID: 5086072131767724690, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
-  enemyData: {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
+  enemyData: {fileID: 11400000, guid: 53d7366cb3a464337a69241d1da4f5d9, type: 2}
   nextIntent: 0
   intentValue: 0
 --- !u!114 &1909562342051364970
@@ -118,7 +118,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1075089703, guid: 3f0bc0b6f8283434a97ed15c7a363832, type: 3}
+  m_Sprite: {fileID: -114325617, guid: 91fdc8731dc5d49c1aa89bf063cabb72, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

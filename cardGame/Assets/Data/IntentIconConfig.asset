@@ -17,5 +17,7 @@ MonoBehaviour:
     iconSprite: {fileID: -215193517, guid: 6681280e042a14ac8afb33faee9e2a13, type: 3}
   - type: 2
     iconSprite: {fileID: 676212321, guid: 2c349ea0c4eee49ad97610696539bdfb, type: 3}
-  - type: 0
-    iconSprite: {fileID: 0}
+  - type: 10
+    iconSprite: {fileID: 21300000, guid: b60f6a6cd18b347b980d1efdda8581d0, type: 3}
+  - type: 9
+    iconSprite: {fileID: -1027827940, guid: cf60bcc62fb0049be8628da42f4c15c7, type: 3}
