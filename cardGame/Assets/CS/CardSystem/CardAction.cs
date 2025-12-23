@@ -22,6 +22,10 @@ public struct CardAction
     [Tooltip("效果的基础值 (例如: 伤害量, 格挡量, 抽卡数)")]
     public int value;
 
+    [Tooltip("效果重复执行的次数（例如：3点伤害打3次，这里填3）")]
+    public int repeatCount; // 新增字段
+
+
     // --- Scaling Field (Crucial for Roguelike mechanics) ---
     [Tooltip("If checked, the value scales with the character's status (Strength for Attack, Dexterity for Block).")]
     public bool scalesWithStatus; 

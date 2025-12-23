@@ -87,6 +87,7 @@
     <Compile Include="Assets/CS/EnemyEncounterData.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Item.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/CharacterUIDisplay.cs" />
+    <Compile Include="Assets/CS/CardSystem/CardDataEnums.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/InventoryInfoManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/ItemSlotUI.cs" />
     <Compile Include="Assets/CS2/PlayerPiece.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="Assets/CS/对战AI/行为/RoundBasedStrategy.cs" />
     <Compile Include="Assets/CS4/ThemeSequenceSO.cs" />
     <Compile Include="Assets/CS4/WorldEditorHelper.cs" />
+    <Compile Include="Assets/CS/CardSystem/Enums.cs" />
     <Compile Include="Assets/CS2/PathSelectionUI.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/ItemData.cs" />
     <Compile Include="Assets/CS/CardSystem/CardVisualManager.cs" />
@@ -123,8 +125,6 @@
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Hero.cs" />
     <Compile Include="Assets/CS/Managers/BattleManager.cs" />
     <Compile Include="Assets/CS3/ClockUIController.cs" />
-    <Compile Include="Assets/CS/Scripts/Enums.cs" />
-    <Compile Include="Assets/CS/Scripts/Data/CardDataEnums.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/EquipmentData.cs" />
     <Compile Include="Assets/CS/Scripts/UIManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/EquipmentSlotUI.cs" />

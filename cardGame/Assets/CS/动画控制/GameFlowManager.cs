@@ -41,7 +41,9 @@ public class GameFlowManager : MonoBehaviour
         // 在 Start 中获取 CharacterManager，确保单例已初始化
         StartCoroutine(InitializeCharacterManager());
     }
-
+    public void PlayAttackAnimation(RectTransform rect) {
+        // 这里写 DOTween 代码或 Animator 逻辑
+    }
     private System.Collections.IEnumerator InitializeCharacterManager()
     {
         // 等待一帧，确保所有 Awake 都执行完毕

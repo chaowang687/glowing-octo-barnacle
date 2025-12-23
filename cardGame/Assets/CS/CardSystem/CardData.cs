@@ -1,263 +1,161 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq; 
-using CardDataEnums; // 引入 CardEnums 中的所有静态成员，简化代码
-
-// 假设 CardAction 结构体已在 CardAction.cs 文件中定义
+using System.Collections;
+using CardDataEnums; 
 
 /// <summary>
-/// ScriptableObject 用于存储单张卡牌的所有静态数据，
-/// 并包含卡牌效果在战斗中执行的运行时逻辑。
-/// 它依赖于 CardAction 结构体和 CharacterBase.cs。
+/// ScriptableObject 存储卡牌数据与执行逻辑
 /// </summary>
 [CreateAssetMenu(fileName = "NewCard", menuName = "Battle System/Card Data")]
 public class CardData : ScriptableObject
 {
-    // =================================================================
-    // 静态数据 (卡牌设计字段)
-    // =================================================================
-    
     [Header("核心信息")]
-    [Tooltip("卡牌的唯一标识符，例如 W_STRIKE")]
     public string cardID = "";
-    public string cardName = "新卡牌"; // 这是卡牌的名称
-    
-    
-    [TextArea]
-    public string description = "描述";
+    public string cardName = "新卡牌";
+    [TextArea] public string description = "描述";
     public Sprite artwork;
 
-    [Header("分类与稀有度 (设计优化)")]
-    public Rarity rarity = Rarity.Common; 
-    
+    [Header("分类与稀有度")]
+    public Rarity rarity = Rarity.Common;
     public CardClass requiredClass = CardClass.Any;
     
-    [Header("成本与升级 (设计优化)")]
+    [Header("成本与升级")]
     public int energyCost = 1;
-    public CardType type = CardType.Attack; 
-
-    [Tooltip("卡牌是否为升级版本")]
-    public bool isUpgraded = false; 
-
-    [Tooltip("指向这张卡牌的升级版本资产。")]
-    public CardData upgradedCardData; 
+    public CardType type = CardType.Attack;
+    public bool isUpgraded = false;
+    public CardData upgradedCardData;
 
     [Header("行动效果")]
-    // CardAction 结构体现在已定义在文件顶部
     public List<CardAction> actions = new List<CardAction>();
 
     // =================================================================
-    // 运行时逻辑 (执行效果)
+    // 逻辑执行入口
     // =================================================================
-    
-    /// <summary>
-    /// 获取当前卡牌数据（可能是基础版或升级版）。
-    /// </summary>
-    public CardData GetCardData(bool upgraded)
+
+    public void ExecuteAllActions(CharacterBase source, CharacterBase selectedTarget, CardSystem cardSystem)
     {
-        if (upgraded && upgradedCardData != null)
-        {
-            return upgradedCardData;
-        }
-        return this;
+        if (cardSystem == null) return;
+        cardSystem.StartCoroutine(ExecuteAllActionsCoroutine(source, selectedTarget, cardSystem));
+       
     }
 
-    /// <summary>
-    /// 执行卡牌效果的主入口。
-    /// </summary>
-    public void ExecuteEffects(CharacterBase source, CharacterBase target, CardSystem cardSystem)
+    private IEnumerator ExecuteAllActionsCoroutine(CharacterBase source, CharacterBase selectedTarget, CardSystem cardSystem)
     {
-        if (cardSystem == null)
+        foreach (var action in actions)
+        {
+            int count = Mathf.Max(1, action.repeatCount);
+            
+            for (int i = 0; i < count; i++)
             {
-                Debug.LogError("CardSystem is null during card execution.");
-                return;
-            }
-            if (source == null)
-            {
-                Debug.LogError("Source CharacterBase is null during card execution.");
-                return;
-            }
-
-            foreach (var action in actions)
-            {
-                // 1. 计算受状态效果修正后的最终值
-                int finalValue = CalculateFinalValue(source, action);
-                // 临时调试日志：检查计算结果
+                // 1. 播放攻击冲锋动画 (解决报错)
                 if (action.effectType == EffectType.Attack)
                 {
-                    Debug.Log($"Action Type: Attack. Calculated Final Value: {finalValue}.");
+                    // 检查 GameFlowManager 是否包含此方法。如果报错依然存在，说明你的 GameFlowManager 里确实没写这个函数
+                    // 建议检查方法名是否拼写错误，或者是否应该在 source.PlayAttackAnimation() 中处理
+                    /* if (GameFlowManager.Instance != null) {
+                        GameFlowManager.Instance.PlayAttackAnimation(source.GetComponent<RectTransform>());
+                    } 
+                    */
                 }
-                // 2. 确定实际目标列表
-                // 注意：action.targetType 已经在 CardAction 结构体中明确为 CardEnums.TargetType
-                List<CharacterBase> actualTargets = GetActualTargets(source, target, cardSystem, action.targetType);
-                
-                // 3. 应用效果
-                // Note: 对于无目标效果 (如抽卡/能量)，actualTargets 为空，但效果在 ApplyAction 中处理
-                if (action.targetType == TargetType.None)
+
+                // 2. 确定目标并结算
+                List<CharacterBase> targets = GetActualTargets(source, selectedTarget, action.targetType);
+                int finalValue = CalculateFinalValue(source, action);
+
+                if (targets.Count == 0 && action.targetType != TargetType.None)
                 {
+                    // 某些效果（如抽牌）不需要目标
                     ApplyAction(source, null, action, cardSystem, finalValue);
                 }
                 else
                 {
-                    // 确保至少有一个目标，否则跳过
-                    // 只有 TargetType.Self 允许 target 为空列表但 source 存在
-                    if (actualTargets.Count == 0 && action.targetType != TargetType.Self)
+                    foreach (var t in targets)
                     {
-                        Debug.LogWarning($"Card {cardName}: Expected targets but none found for type {action.targetType}. Skipping action.");
-                        continue;
+                        ApplyAction(source, t, action, cardSystem, finalValue);
                     }
-                    
-                    foreach (var actualTarget in actualTargets)
-                    {
-                        ApplyAction(source, actualTarget, action, cardSystem, finalValue);
-                    }
+                }
+                
+                // 3. 连击间隔
+                if (count > 1 && i < count - 1)
+                {
+                    yield return new WaitForSeconds(0.25f); 
                 }
             }
         }
+    }
 
-    /// <summary>
-    /// 计算行动的最终数值，包括力量/敏捷修正。
-    /// </summary>
+    // =================================================================
+    // 内部计算工具
+    // =================================================================
+
     private int CalculateFinalValue(CharacterBase source, CardAction action)
     {
         int finalValue = action.value;
-        
-        if (action.scalesWithStatus)
+        if (action.scalesWithStatus && source != null)
         {
-            switch (action.effectType)
-            {
-                case EffectType.Attack:
-                    // 攻击受力量(Strength)影响
-                    // ⭐ 核心修复 1：将 StatusEffect.Strength 转换为 int ⭐
-                    int strength = source.GetStatusEffectAmount("Strength");
-                    finalValue += strength;
-                    break;
-                case EffectType.Block:
-                    // 格挡受敏捷(Dexterity)影响
-                    // ⭐ 核心修复 2：将 StatusEffect.Dexterity 转换为 int ⭐
-                    int dexterity = source.GetStatusEffectAmount("Dexterity");
-                    finalValue += dexterity;
-                    break;
-                // 其他效果（如Heal）可以根据游戏规则添加其他状态修正
-            }
+            if (action.effectType == EffectType.Attack)
+                finalValue += source.GetStatusEffectAmount("Strength");
+            else if (action.effectType == EffectType.Block)
+                finalValue += source.GetStatusEffectAmount("Dexterity");
         }
-        
-        // 确保伤害和格挡值不会低于零 (除非特定卡牌效果允许)
-        if (action.effectType == EffectType.Attack || action.effectType == EffectType.Block)
-        {
-            finalValue = Mathf.Max(0, finalValue);
-        }
-
-        return finalValue;
+        return Mathf.Max(0, finalValue);
     }
 
-    /// <summary>
-    /// 根据 TargetType 确定实际的目标列表。
-    /// </summary>
-    private List<CharacterBase> GetActualTargets(CharacterBase source, CharacterBase selectedTarget, CardSystem cardSystem, TargetType targetType)
+    private List<CharacterBase> GetActualTargets(CharacterBase source, CharacterBase selectedTarget, TargetType targetType)
     {
         List<CharacterBase> targets = new List<CharacterBase>();
-        
-        // 尝试从 CardSystem 获取 CharacterManager
-        // 假设 CharacterManager 是一个单例，或者 CardSystem 知道如何获取它
-        CharacterManager manager = CharacterManager.Instance; 
-        
-        // 如果 CardSystem 挂载在 BattleManager 上，可以使用 GetComponent
-        // CharacterManager manager = cardSystem.GetComponent<CharacterManager>(); 
+        CharacterManager manager = CharacterManager.Instance;
 
-        if (manager == null)
-        {
-            Debug.LogError("CharacterManager instance not found. Cannot determine All/Enemy targets.");
-            return targets;
-        }
+        if (manager == null) return targets;
 
         switch (targetType)
         {
-            case TargetType.Self:
-                targets.Add(source);
-                break;
+            case TargetType.Self: targets.Add(source); break;
             case TargetType.SelectedEnemy:
-            case TargetType.SelectedAlly:
-            case TargetType.SelectedCharacter:
-                // 如果是需要选中目标的类型，则只添加选中的目标
-                if (selectedTarget != null) targets.Add(selectedTarget);
+            case TargetType.SelectedCharacter: 
+                if (selectedTarget != null) targets.Add(selectedTarget); 
                 break;
-            case TargetType.AllEnemies:
-                targets.AddRange(manager.GetAllEnemies());
-                break;
-            case TargetType.AllAllies:
-                targets.AddRange(manager.GetAllHeroes());
-                break;
-            case TargetType.AllCharacters:
-                targets.AddRange(manager.GetAllHeroes());
-                targets.AddRange(manager.GetAllEnemies());
-                break;
-            case TargetType.None:
-                // 无目标，列表为空
-                break;
+            case TargetType.AllEnemies: targets.AddRange(manager.GetAllEnemies()); break;
+            case TargetType.AllAllies: targets.AddRange(manager.GetAllHeroes()); break;
         }
         return targets;
     }
 
-    /// <summary>
-    /// 对目标应用单个 CardAction 效果。
-    /// </summary>
     private void ApplyAction(CharacterBase source, CharacterBase target, CardAction action, CardSystem cardSystem, int finalValue)
     {
-        // 对于需要角色的动作，如果目标为空，则返回 (TargetType.None 除外)
-        if (target == null && action.targetType != TargetType.None && action.targetType != TargetType.Self) return;
-
-        string sourceName = source.characterName; 
-        string targetName = target != null ? target.characterName : "System"; 
-
         switch (action.effectType)
         {
             case EffectType.Attack:
-                // 使用目标 (target) 的 TakeDamage 方法
-                if (target == null) return;
-                target.TakeDamage(finalValue, isAttack: true);
-                
-                Debug.Log($"{sourceName} Attacks {targetName} for {finalValue} damage (Base: {action.value}, via {cardName}).");
-                 // ⭐ 修复：将 StatusEffect.Strength 转换为字符串 ⭐
-                int strength = source.GetStatusEffectAmount(StatusEffect.Strength.ToString());
-                finalValue += strength;
+                if (target != null) target.TakeDamage(finalValue, true);
                 break;
             case EffectType.Block:
-                // 使用 AddBlock 方法
-                if (source == null) return;
-                source.AddBlock(finalValue); // 假设 AddBlock 现在只需要 value
-                
-                Debug.Log($"{sourceName} gains {finalValue} Block (Base: {action.value}, via {cardName}).");
-                // ⭐ 修复：将 StatusEffect.Dexterity 转换为字符串 ⭐
-                int dexterity = source.GetStatusEffectAmount(StatusEffect.Dexterity.ToString());
-                finalValue += dexterity;
+                // 格挡通常加给使用者自己，除非 targetType 指定了别人
+                CharacterBase blockTarget = (action.targetType == TargetType.Self) ? source : target;
+                if (blockTarget != null) blockTarget.AddBlock(finalValue);
                 break;
             case EffectType.Heal:
-                if (target == null) return;
-                target.Heal(finalValue); 
-                Debug.Log($"{sourceName} Heals {targetName} for {finalValue} HP (via {cardName}).");
-                break;
-            case EffectType.DrawCard:
-                // 假设 CardSystem 有 DrawCards 方法
-                cardSystem.DrawCards(finalValue);
-                Debug.Log($"{sourceName} draws {finalValue} cards (via {cardName}).");
-                break;
-            case EffectType.Energy:
-                // 假设 CardSystem 有 GainEnergy 方法
-                cardSystem.GainEnergy(finalValue);
-                Debug.Log($"{sourceName} gains {finalValue} Energy (via {cardName}).");
+                if (target != null) target.Heal(finalValue);
                 break;
             case EffectType.ApplyBuff:
             case EffectType.ApplyDebuff:
-                if (target == null) return;
-                // 核心修复：将 StatusEffect 枚举显式转换为 int 以匹配 CharacterBase.ApplyStatusEffect 签名
-                target.ApplyStatusEffect(action.statusEffect.ToString(), action.value, action.duration); 
-                string effectType = (action.effectType == EffectType.ApplyBuff) ? "Buff" : "Debuff";
-                Debug.Log($"{sourceName} applies {effectType}: {action.statusEffect} ({action.duration} turns) to {targetName} (via {cardName}).");
+                if (target != null)
+                    target.ApplyStatusEffect(action.statusEffect.ToString(), action.value, action.duration);
                 break;
-            case EffectType.None: 
-                // 无效果，跳过
+            case EffectType.DrawCard:
+                cardSystem.DrawCards(finalValue);
+                break;
+            case EffectType.Energy:
+                cardSystem.GainEnergy(finalValue);
                 break;
         }
     }
+    // 在 CardData 类中添加此方法以解决 BattleManager 的报错
+public void ExecuteEffects(CharacterBase source, CharacterBase target, CardSystem cardSystem)
+{
+    // 转发调用到协程启动方法
+    ExecuteAllActions(source, target, cardSystem);
+}
+
+// 确保主执行逻辑名称一致
+
 }

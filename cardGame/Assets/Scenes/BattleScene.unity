@@ -178,7 +178,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1931825473}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
@@ -1094,7 +1095,6 @@ RectTransform:
   - {fileID: 826493738}
   - {fileID: 629862148}
   - {fileID: 1290867192}
-  - {fileID: 1931825473}
   - {fileID: 374203507}
   - {fileID: 969549190}
   - {fileID: 914265450}
@@ -1554,16 +1554,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1931825472}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 889373303}
+  m_Father: {fileID: 42594364}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1222, y: -366}
+  m_AnchoredPosition: {x: -262, y: 174}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1933791710
@@ -1695,11 +1695,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
   - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 2b450d132df394e09aea7bc39c0433b7, type: 2}
+  - {fileID: 11400000, guid: 40e6d534d888d443d9c3953224dcd58e, type: 2}
+  - {fileID: 11400000, guid: bf03f38e91f50457aac7a92f40ccddf2, type: 2}
+  - {fileID: 11400000, guid: a64a22acff444499b97d28cb9939da89, type: 2}
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
-  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
-  - {fileID: 11400000, guid: 9409753e5768a4e038a0b4e47b329787, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
 --- !u!1 &2004134095
 GameObject:
   m_ObjectHideFlags: 0

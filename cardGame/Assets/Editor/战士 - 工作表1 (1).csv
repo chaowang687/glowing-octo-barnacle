@@ -1,0 +1,6 @@
+CardID,CardName,Description,EnergyCost,Type,Rarity,Action_1_effectType,Action_1_targetType,Action_1_value,Action_1_statusEffect,Action_1_duration
+B_PREP,备战,获得 6 点格挡下回合开始时获得 1 点能量,1,Skill,Common,Block,Self,6,None,0
+B_MARK,深度标记,造成 4 点伤害施加 2 层易伤,1,Attack,Common,ApplyDebuf,SelectedEnemy,2,Vulnerable,2
+B_STRENG,战吼,获得 2 层力量,1,Skill,Uncommon,ApplyBuff,Self,2,Strength,0
+B_FRENZY,狂乱挥砍,造成 3 点伤害连续触发 3 次,2,Attack,Uncommon,Attack,SelectedEnemy,3,None,0
+B_EXECUTE,处决,造成 15 点伤害如果目标有易伤伤害大幅提升,3,Attack,Rare,Attack,SelectedEnemy,15,None,0
