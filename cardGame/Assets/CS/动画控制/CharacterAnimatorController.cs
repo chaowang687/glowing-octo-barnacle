@@ -7,6 +7,11 @@ public class CharacterAnimatorController : MonoBehaviour
     [Tooltip("请将控制角色模型的 Animator 组件拖拽到此字段。如果 Animator 是动态生成的，请留空。")]
     public Animator characterAnimator; 
     
+    [Header("动画设置")]
+    public float attackAnimationDuration = 1.0f;
+    public float hitAnimationDuration = 0.5f;
+    public float dieAnimationDuration = 1.5f;
+    
     // Animator Hashes (统一管理，提高性能)
     private readonly int AttackTriggerHash = Animator.StringToHash("Attack");
     private readonly int HitTriggerHash = Animator.StringToHash("Hit");
@@ -14,6 +19,16 @@ public class CharacterAnimatorController : MonoBehaviour
     
     // 意图姿态 Bool Hash (用于控制 Idle <-> Intent Stance 的切换)
     private readonly int IsVisibleBoolHash = Animator.StringToHash("IsVisible"); 
+    
+    // ⭐ 新增：动画状态跟踪 ⭐
+    private bool _isPlayingAttack = false;
+    private bool _isPlayingHit = false;
+    private bool _isPlayingDie = false;
+    
+    // ⭐ 新增：动画事件回调 ⭐
+    public System.Action OnAttackAnimationComplete;
+    public System.Action OnHitAnimationComplete;
+    public System.Action OnDieAnimationComplete;
     
     // Awake在所有脚本的Start之前调用，是初始化引用的最佳时机
     private void Awake()
@@ -25,8 +40,6 @@ public class CharacterAnimatorController : MonoBehaviour
         if (characterAnimator == null)
         {
             // 2. 如果未设置 (针对动态生成的子物体)，则进行动态查找
-            //    由于 CharacterAnimatorController 挂载在父对象，它会向下在子物体中查找 Animator 组件。
-            //    注意：如果模型是动态加载的，此查找可能会失败！
             characterAnimator = GetComponentInChildren<Animator>(true);
             
             if (characterAnimator == null)
@@ -51,7 +64,6 @@ public class CharacterAnimatorController : MonoBehaviour
 
     /// <summary>
     /// 私有方法：初始化所有 Animator 参数的默认值。
-    /// 确保角色默认处于 Idle 姿态，避免状态机进入未知状态。
     /// </summary>
     private void InitializeAnimatorParameters()
     {
@@ -65,7 +77,6 @@ public class CharacterAnimatorController : MonoBehaviour
 
     /// <summary>
     /// 【重要】供外部脚本调用：在模型加载完成后，必须使用此方法将 Animator 引用传递给控制器。
-    /// (例如：由负责加载模型的脚本调用)
     /// </summary>
     public void SetAnimator(Animator animator)
     {
@@ -80,69 +91,120 @@ public class CharacterAnimatorController : MonoBehaviour
     }
 
     /// <summary>
-    /// 触发 Hit (受伤) 动画。由外部脚本（如 EnemyDisplay）调用。
+    /// 触发 Hit (受伤) 动画。
     /// </summary>
     public void TriggerHitAnimation()
     {
-        if (characterAnimator != null)
+        if (characterAnimator != null && !_isPlayingHit)
         {
+            _isPlayingHit = true;
             characterAnimator.SetTrigger(HitTriggerHash);
             Debug.Log($"[ANIMATION SEND] Successfully sent Trigger: Hit");
+            
+            // 重置状态
+            Invoke(nameof(ResetHitState), hitAnimationDuration);
         }
-        else
+        else if (characterAnimator == null)
         {
-            Debug.LogError("Cannot trigger Hit animation: Animator reference is null. (Load/Link Issue)", this);
-        }
-    }
-
-    /// <summary>
-    /// 触发 Attack (攻击) 动画。由外部脚本（如 EnemyDisplay）调用。
-    /// </summary>
-    public void TriggerAttackAnimation()
-    {
-        if (characterAnimator != null)
-        {
-            characterAnimator.SetTrigger(AttackTriggerHash);
-            Debug.Log($"[ANIMATION SEND] Successfully sent Trigger: Attack");
-        }
-        else
-        {
-            Debug.LogError("Cannot trigger Attack animation: Animator reference is null. (Load/Link Issue)", this);
-        }
-    }
-
-    /// <summary>
-    /// 触发 Die (死亡) 动画。由外部脚本（如 EnemyDisplay）调用。
-    /// </summary>
-    public void TriggerDieAnimation()
-    {
-        if (characterAnimator != null)
-        {
-            characterAnimator.SetTrigger(DieTriggerHash);
-            Debug.Log($"[ANIMATION SEND] Successfully sent Trigger: Die");
-        }
-        else
-        {
-            Debug.LogError("Cannot trigger Die animation: Animator reference is null. (Load/Link Issue)", this);
+            Debug.LogError("Cannot trigger Hit animation: Animator reference is null.", this);
         }
     }
     
+    private void ResetHitState()
+    {
+        _isPlayingHit = false;
+        OnHitAnimationComplete?.Invoke();
+    }
+
     /// <summary>
-    /// 设置意图姿态的可见性布尔值。由 EnemyDisplay 调用。
-    /// This method uses SetBool to drive smooth transitions between Idle and Intent Stance.
+    /// 触发 Attack (攻击) 动画。
     /// </summary>
-    /// <param name="isVisible">意图姿态是否可见/激活 (true = Intent Stance, false = Idle Stance)</param>
+    public void TriggerAttackAnimation()
+    {
+        if (characterAnimator != null && !_isPlayingAttack)
+        {
+            _isPlayingAttack = true;
+            characterAnimator.SetTrigger(AttackTriggerHash);
+            Debug.Log($"[ANIMATION SEND] Successfully sent Trigger: Attack");
+            
+            // 重置状态
+            Invoke(nameof(ResetAttackState), attackAnimationDuration);
+        }
+        else if (characterAnimator == null)
+        {
+            Debug.LogError("Cannot trigger Attack animation: Animator reference is null.", this);
+        }
+    }
+    
+    private void ResetAttackState()
+    {
+        _isPlayingAttack = false;
+        OnAttackAnimationComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// 触发 Die (死亡) 动画。
+    /// </summary>
+    public void TriggerDieAnimation()
+    {
+        if (characterAnimator != null && !_isPlayingDie)
+        {
+            _isPlayingDie = true;
+            characterAnimator.SetTrigger(DieTriggerHash);
+            Debug.Log($"[ANIMATION SEND] Successfully sent Trigger: Die");
+            
+            // 重置状态
+            Invoke(nameof(ResetDieState), dieAnimationDuration);
+        }
+        else if (characterAnimator == null)
+        {
+            Debug.LogError("Cannot trigger Die animation: Animator reference is null.", this);
+        }
+    }
+    
+    private void ResetDieState()
+    {
+        _isPlayingDie = false;
+        OnDieAnimationComplete?.Invoke();
+    }
+    
+    /// <summary>
+    /// 设置意图姿态的可见性布尔值。
+    /// </summary>
     public void SetIntentVisibility(bool isVisible)
     {
         if (characterAnimator != null)
         {
-            // 使用布尔值控制 Idle <-> Intent Stance 之间的平滑过渡
             characterAnimator.SetBool(IsVisibleBoolHash, isVisible);
             Debug.Log($"[ANIMATION SEND] Successfully sent Bool: IsVisible = {isVisible}");
         }
         else
         {
-            Debug.LogError("Cannot set Intent Visibility: Animator reference is null. (Load/Link Issue)", this);
+            Debug.LogError("Cannot set Intent Visibility: Animator reference is null.", this);
         }
+    }
+    
+    /// <summary>
+    /// ⭐ 新增：检查是否正在播放动画 ⭐
+    /// </summary>
+    public bool IsPlayingAnimation()
+    {
+        return _isPlayingAttack || _isPlayingHit || _isPlayingDie;
+    }
+    
+    /// <summary>
+    /// ⭐ 新增：获取 Animator 引用 ⭐
+    /// </summary>
+    public Animator GetAnimator()
+    {
+        return characterAnimator;
+    }
+    
+    /// <summary>
+    /// ⭐ 新增：检查 Animator 是否可用 ⭐
+    /// </summary>
+    public bool IsAnimatorAvailable()
+    {
+        return characterAnimator != null && characterAnimator.enabled;
     }
 }

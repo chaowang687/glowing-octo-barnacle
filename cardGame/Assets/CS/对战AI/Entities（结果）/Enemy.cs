@@ -1,107 +1,289 @@
 using UnityEngine;
-using CardDataEnums; // 确保导入命名空间
-using System.Collections.Generic;
-using System.Linq;
+using System;
+using DG.Tweening;
+using System.Collections;
 
-/// <summary>
-/// 敌人的核心脚本，继承自 CharacterBase。
-/// 职责：执行 AI 决策并管理生命状态、目标。
-/// 它将所有的决策和行动逻辑委托给 EnemyAI 组件。
-/// </summary>
-[RequireComponent(typeof(EnemyAI))] // 确保场景中挂载了 EnemyAI 脚本
+// Enemy.cs - 敌人角色类
 public class Enemy : CharacterBase
 {
-    // 引用 AI 决策组件
-    private EnemyAI enemyAI; 
-    private CharacterBase targetHero; 
+    [Header("Enemy Specific Stats")]
+    public int enemyLevel = 1;
+    public int baseDamage = 10;
+    public int experienceReward = 50;
+    public int goldReward = 25;
     
-    // 跟踪当前战斗回合数 (通常由 BattleManager 提供)
-    // 这里我们只是模拟一个回合计数器
-    private int currentRound = 1; 
-
-    protected override void Awake() 
+    [Header("Enemy Abilities")]
+    public bool hasSpecialAbility = false;
+    public string specialAbilityName = "";
+    public int specialAbilityCooldown = 0;
+    private int currentCooldown = 0;
+    
+    [Header("Visual Effects")]
+    public GameObject deathEffectPrefab;
+    public AudioClip deathSound;
+    public AudioClip attackSound;
+    
+    private AudioSource audioSource;
+    
+    // 修复：正确重写 Awake 方法
+    protected override void Awake()
     {
-        // 1. 调用基类的初始化
+        // 调用基类的 Awake
         base.Awake();
-        // ❌ 移除错误的调用：base.Die(); ❌ 
         
-        // 2. 获取 AI 组件
-        enemyAI = GetComponent<EnemyAI>();
-        if (enemyAI == null)
+        // 敌人特有的初始化
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
         {
-            Debug.LogError("Enemy 脚本需要 EnemyAI 组件，但未找到!");
+            audioSource = gameObject.AddComponent<AudioSource>();
         }
         
-        // 3. 设置初始属性 (可从 EnemyData 中加载)
-        maxHp = 40; 
-        currentHp = maxHp;
-    }
-
-    /// <summary>
-    /// 在战斗开始时或回合开始前调用，用于设置目标。
-    /// </summary>
-    public void SetTarget(CharacterBase hero)
-    {
-        targetHero = hero;
-    }
-
-    // -------------------------------------------------------------------------
-    // 外部调用方法 (通常由 BattleManager 调用)
-    // -------------------------------------------------------------------------
-
-    /// <summary>
-    /// 告知 AI 确定下一回合的行动意图。
-    /// 将决策工作委托给 EnemyAI。
-    /// </summary>
-    public void DetermineIntent()
-    {
-        if (isDead) return;
-        
-        // 委托给 EnemyAI 组件，让它根据策略计算意图
-        enemyAI.CalculateIntent(targetHero, currentRound);
-        
-        // 注意：EnemyAI 内部已设置 nextIntent 和 intentValue
-    }
-
-    /// <summary>
-    /// 执行敌人当前确定的意图。
-    /// 将执行工作委托给 EnemyAI。
-    /// </summary>
-    public void ExecuteTurn()
-    {
-        if (isDead)
-        {
-            Debug.Log($"{characterName} 已死亡，跳过回合。");
-            return;
-        }
-
-        if (targetHero == null)
-        {
-            Debug.LogError("敌人没有目标 (Hero)，无法执行回合。");
-            return;
-        }
-        
-        // 委托给 EnemyAI 组件执行行动
-        enemyAI.PerformAction(targetHero, currentRound);
-        
-        // 调用基类的回合结束逻辑 (清除格挡、减少状态持续时间)
-        base.AtEndOfTurn();
-        
-        // 模拟回合计数器递增
-        currentRound++;
+        Debug.Log($"Enemy {characterName} initialized");
     }
     
-    // -------------------------------------------------------------------------
-    // 重写基类方法 (可选，仅用于添加自定义逻辑)
-    // -------------------------------------------------------------------------
-
     /// <summary>
-    /// 当角色生命值归零时调用，触发死亡流程。
-    /// 必须为 public override 以匹配基类。
+    /// 敌人初始化
     /// </summary>
-    public override void Die() // ⭐ 修复 CS0507: 必须是 public override ⭐
+    public void InitializeEnemy(string name, int maxHp, int level = 1, int damage = 10)
     {
-        base.Die(); 
-        Debug.Log($"{characterName} 敌人被击败！");
+        Initialize(name, maxHp);
+        enemyLevel = level;
+        baseDamage = damage;
+        experienceReward = level * 50;
+        goldReward = level * 25;
+        
+        Debug.Log($"Enemy {characterName} (Level {level}) initialized with {maxHp} HP and {damage} damage");
+    }
+    
+    /// <summary>
+    /// 敌人死亡处理 - 正确重写 HandleDeath 方法
+    /// </summary>
+    protected override void HandleDeath()
+    {
+        if (IsDead) return;
+        
+        Debug.Log($"Enemy {characterName} is dying...");
+        
+        // 1. 调用基类的死亡处理
+        base.HandleDeath();
+        
+        // 2. 敌人特有的死亡逻辑
+        PlayEnemyDeathAnimation();
+        
+        // 3. 掉落奖励
+        DropRewards();
+        
+        // 4. 通知战斗管理器
+        if (BattleManager.Instance != null)
+        {
+            BattleManager.Instance.HandleDyingCharacterCleanup(this);
+        }
+    }
+    
+    /// <summary>
+    /// 播放敌人死亡动画
+    /// </summary>
+    private void PlayEnemyDeathAnimation()
+    {
+        // 死亡特效
+        if (deathEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 2f);
+        }
+        
+        // 死亡音效
+        if (audioSource != null && deathSound != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+    }
+    
+    /// <summary>
+    /// 重写淡出协程，为敌人添加特殊效果
+    /// </summary>
+    protected override IEnumerator FadeOutCoroutine()
+    {
+        // 敌人可以有更戏剧性的死亡效果
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            // 先变红然后消失
+            spriteRenderer.color = Color.red;
+            
+            float duration = 1.0f;
+            float elapsed = 0f;
+            
+            while (elapsed < duration)
+            {
+                float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+                spriteRenderer.color = new Color(1f, 0f, 0f, alpha);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+        
+        // 延迟后销毁
+        yield return new WaitForSeconds(0.5f);
+        
+        Destroy(gameObject);
+    }
+    
+    /// <summary>
+    /// 掉落奖励
+    /// </summary>
+    private void DropRewards()
+    {
+        Debug.Log($"{characterName} dropped {experienceReward} EXP and {goldReward} Gold");
+        
+        // 这里可以触发奖励UI显示
+        // 例如：UIManager.Instance.ShowRewardPopup(experienceReward, goldReward);
+        
+        // 如果有特殊掉落
+        if (UnityEngine.Random.value < 0.3f) // 30% 几率掉落物品
+        {
+            Debug.Log($"{characterName} dropped a special item!");
+            // 触发物品掉落逻辑
+        }
+    }
+    
+    /// <summary>
+    /// 敌人攻击 - 覆盖基类的攻击行为
+    /// </summary>
+    public override Sequence TakeDamage(int damage, bool isAttack = false)
+    {
+        // 敌人可以有特殊的受伤害反应
+        Debug.Log($"{characterName} is taking {damage} damage");
+        
+        // 如果有特殊能力，可能在受到伤害时触发
+        if (hasSpecialAbility && currentCooldown <= 0 && UnityEngine.Random.value < 0.2f)
+        {
+            TriggerSpecialAbility();
+        }
+        
+        // 调用基类的受伤害处理
+        return base.TakeDamage(damage, isAttack);
+    }
+    
+    /// <summary>
+    /// 触发特殊能力
+    /// </summary>
+    private void TriggerSpecialAbility()
+    {
+        if (string.IsNullOrEmpty(specialAbilityName)) return;
+        
+        Debug.Log($"{characterName} uses {specialAbilityName}!");
+        
+        // 根据能力名称执行不同效果
+        switch (specialAbilityName.ToLower())
+        {
+            case "heal":
+                Heal(maxHp / 4); // 恢复25%生命
+                break;
+            case "rage":
+                // 增加攻击力
+                baseDamage = (int)(baseDamage * 1.5f);
+                Debug.Log($"{characterName} enrages! Damage increased to {baseDamage}");
+                break;
+            case "shield":
+                // 增加格挡
+                AddBlock(15, 2);
+                Debug.Log($"{characterName} raises a shield!");
+                break;
+            default:
+                Debug.Log($"{characterName} uses an unknown ability: {specialAbilityName}");
+                break;
+        }
+        
+        // 设置冷却时间
+        currentCooldown = specialAbilityCooldown;
+    }
+    
+    /// <summary>
+    /// 敌人回合开始
+    /// </summary>
+    public override void AtStartOfTurn()
+    {
+        base.AtStartOfTurn();
+        
+        // 减少特殊能力冷却
+        if (currentCooldown > 0)
+        {
+            currentCooldown--;
+            Debug.Log($"{characterName}'s {specialAbilityName} cooldown: {currentCooldown} turns remaining");
+        }
+    }
+    
+    /// <summary>
+    /// 敌人攻击玩家
+    /// </summary>
+    public Sequence PerformAttack(CharacterBase target)
+    {
+        if (target == null || target.IsDead)
+        {
+            Debug.LogWarning("Cannot attack null or dead target");
+            return DOTween.Sequence();
+        }
+        
+        Sequence attackSequence = DOTween.Sequence();
+        
+        Debug.Log($"{characterName} attacks {target.characterName} for {baseDamage} damage!");
+        
+        // 攻击音效
+        if (audioSource != null && attackSound != null)
+        {
+            audioSource.PlayOneShot(attackSound);
+        }
+        
+        // 攻击动画：冲向目标然后返回
+        Vector3 originalPosition = transform.position;
+        float attackDistance = 1.5f;
+        
+        attackSequence.Append(transform.DOMove(
+            target.transform.position - (target.transform.position - originalPosition).normalized * attackDistance, 
+            0.2f));
+        attackSequence.AppendCallback(() => {
+            // 应用伤害
+            target.TakeDamage(baseDamage, true);
+        });
+        attackSequence.Append(transform.DOMove(originalPosition, 0.2f));
+        
+        return attackSequence;
+    }
+    
+    /// <summary>
+    /// 获取经验奖励
+    /// </summary>
+    public int GetExperienceReward()
+    {
+        return experienceReward;
+    }
+    
+    /// <summary>
+    /// 获取金币奖励
+    /// </summary>
+    public int GetGoldReward()
+    {
+        return goldReward;
+    }
+    
+    /// <summary>
+    /// 敌人逃跑（用于某些特殊敌人）
+    /// </summary>
+    public void Flee()
+    {
+        Debug.Log($"{characterName} flees from battle!");
+        
+        Sequence fleeSequence = DOTween.Sequence();
+        fleeSequence.Append(transform.DOMove(transform.position + Vector3.right * 5f, 1f));
+        fleeSequence.Join(transform.DOScale(Vector3.zero, 1f));
+        fleeSequence.OnComplete(() => {
+            // 逃跑后通知战斗管理器
+            if (BattleManager.Instance != null)
+            {
+                BattleManager.Instance.HandleDyingCharacterCleanup(this);
+            }
+            Destroy(gameObject);
+        });
     }
 }

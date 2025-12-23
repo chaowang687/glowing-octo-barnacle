@@ -129,13 +129,13 @@ public class CardData : ScriptableObject
                 case EffectType.Attack:
                     // 攻击受力量(Strength)影响
                     // ⭐ 核心修复 1：将 StatusEffect.Strength 转换为 int ⭐
-                    int strength = source.GetStatusEffectAmount((int)StatusEffect.Strength);
+                    int strength = source.GetStatusEffectAmount("Strength");
                     finalValue += strength;
                     break;
                 case EffectType.Block:
                     // 格挡受敏捷(Dexterity)影响
                     // ⭐ 核心修复 2：将 StatusEffect.Dexterity 转换为 int ⭐
-                    int dexterity = source.GetStatusEffectAmount((int)StatusEffect.Dexterity);
+                    int dexterity = source.GetStatusEffectAmount("Dexterity");
                     finalValue += dexterity;
                     break;
                 // 其他效果（如Heal）可以根据游戏规则添加其他状态修正
@@ -218,6 +218,9 @@ public class CardData : ScriptableObject
                 target.TakeDamage(finalValue, isAttack: true);
                 
                 Debug.Log($"{sourceName} Attacks {targetName} for {finalValue} damage (Base: {action.value}, via {cardName}).");
+                 // ⭐ 修复：将 StatusEffect.Strength 转换为字符串 ⭐
+                int strength = source.GetStatusEffectAmount(StatusEffect.Strength.ToString());
+                finalValue += strength;
                 break;
             case EffectType.Block:
                 // 使用 AddBlock 方法
@@ -225,6 +228,9 @@ public class CardData : ScriptableObject
                 source.AddBlock(finalValue); // 假设 AddBlock 现在只需要 value
                 
                 Debug.Log($"{sourceName} gains {finalValue} Block (Base: {action.value}, via {cardName}).");
+                // ⭐ 修复：将 StatusEffect.Dexterity 转换为字符串 ⭐
+                int dexterity = source.GetStatusEffectAmount(StatusEffect.Dexterity.ToString());
+                finalValue += dexterity;
                 break;
             case EffectType.Heal:
                 if (target == null) return;
@@ -245,7 +251,7 @@ public class CardData : ScriptableObject
             case EffectType.ApplyDebuff:
                 if (target == null) return;
                 // 核心修复：将 StatusEffect 枚举显式转换为 int 以匹配 CharacterBase.ApplyStatusEffect 签名
-                target.ApplyStatusEffect((int)action.statusEffect, action.duration); 
+                target.ApplyStatusEffect(action.statusEffect.ToString(), action.value, action.duration); 
                 string effectType = (action.effectType == EffectType.ApplyBuff) ? "Buff" : "Debuff";
                 Debug.Log($"{sourceName} applies {effectType}: {action.statusEffect} ({action.duration} turns) to {targetName} (via {cardName}).");
                 break;

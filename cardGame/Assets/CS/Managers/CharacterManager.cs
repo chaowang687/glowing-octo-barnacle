@@ -1,10 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq; // 确保导入 Linq 以支持 Where().ToList() 和 Concat()
+using System.Linq;
 
 public class CharacterManager : MonoBehaviour
 {
-    public static CharacterManager Instance { get; private set; } // 添加单例模式
+    public static CharacterManager Instance { get; private set; }
 
     [Header("Heroes")]
     public CharacterBase activeHero;
@@ -12,66 +12,63 @@ public class CharacterManager : MonoBehaviour
 
     [Header("Enemies")]
     public List<CharacterBase> allEnemies = new List<CharacterBase>();
-    // ⭐ 修复 CS1061：添加 ActiveEnemies 属性 (用于兼容旧代码，但推荐使用 GetAllEnemies()) ⭐
-    public List<CharacterBase> ActiveEnemies { get; private set; } = new List<CharacterBase>();
-    // CharacterManager.cs (添加以下新方法)
-
-    /// <summary>
-    /// 递减指定列表中所有角色的格挡持续时间。
-    /// </summary>
-    /// <param name="characters">要处理的角色列表。</param>
-    public void DecrementSpecificGroupBlockDurations(List<CharacterBase> characters)
-    {
-        foreach (var character in characters.Where(c => c != null))
-        {
-            // 假设 CharacterBase 中有 DecrementBlockDuration() 方法
-            character.DecrementBlockDuration(); 
-        }
+    
+    // 修改：ActiveEnemies 改为只读属性，动态计算
+    public List<CharacterBase> ActiveEnemies { 
+        get { return GetAllEnemies(); } 
     }
+
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        // 修复单例初始化
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // 确保跨场景不销毁
+        }
+        else if (Instance != this)
+        {
+            Debug.LogWarning($"销毁重复的CharacterManager实例: {gameObject.name}");
+            Destroy(gameObject);
+            return;
+        }
+        
         ClearExtraListeners();
         
+        // 确保列表初始化
+        if (allHeroes == null) allHeroes = new List<CharacterBase>();
+        if (allEnemies == null) allEnemies = new List<CharacterBase>();
     }
-    private void OnLevelLog(int level) // 旧版本 Unity 用这个
-{
-    ClearExtraListeners();
-}
 
-// 在 Awake 或每次加载完新场景时执行
-
-private void ClearExtraListeners()
-{
-    // 找到场景中所有的监听器
-    AudioListener[] allListeners = FindObjectsOfType<AudioListener>();
-
-    if (allListeners.Length > 1)
+    private void OnLevelLog(int level)
     {
-        Debug.Log($"<color=yellow>[Audio]</color> 检测到 {allListeners.Length} 个监听器，正在执行清理...");
-        
-        // 逻辑：优先保留主摄像机上的，如果没有主摄像机，保留第一个
-        for (int i = 0; i < allListeners.Length; i++)
+        ClearExtraListeners();
+    }
+
+    private void ClearExtraListeners()
+    {
+        AudioListener[] allListeners = FindObjectsOfType<AudioListener>();
+
+        if (allListeners.Length > 1)
         {
-            // 如果这个物体不是叫 "Main Camera" 的物体，且我们已经有一个了，就禁掉它
-            if (i > 0) 
+            Debug.Log($"<color=yellow>[Audio]</color> 检测到 {allListeners.Length} 个监听器，正在执行清理...");
+            
+            for (int i = 0; i < allListeners.Length; i++)
             {
-                allListeners[i].enabled = false;
-                // 或者销毁组件：Destroy(allListeners[i]);
-                Debug.Log($"已禁用多余监听器：{allListeners[i].gameObject.name}");
+                if (i > 0) 
+                {
+                    allListeners[i].enabled = false;
+                    Debug.Log($"已禁用多余监听器：{allListeners[i].gameObject.name}");
+                }
             }
         }
     }
-}
 
     /// <summary>
     /// 获取当前活跃的主角。
     /// </summary>
-    /// <returns>活着的 CharacterBase 实例，否则返回 null。</returns>
     public CharacterBase GetActiveHero()
     {
-        // 确保返回活着的英雄
         return activeHero != null && activeHero.currentHp > 0 ? activeHero : null;
     }
 
@@ -80,7 +77,6 @@ private void ClearExtraListeners()
     /// </summary>
     public List<CharacterBase> GetAllHeroes()
     {
-        // 确保只返回活着的英雄
         return allHeroes.Where(h => h != null && h.currentHp > 0).ToList();
     }
 
@@ -89,30 +85,80 @@ private void ClearExtraListeners()
     /// </summary>
     public List<CharacterBase> GetAllEnemies()
     {
-        // 确保只返回活着的敌人
         return allEnemies.Where(e => e != null && e.currentHp > 0).ToList();
     }
     
-    // ----------------------------------------------------------------------------------
-    // ⭐ 核心修正区域：持久化格挡与回合钩子 ⭐
-    // ----------------------------------------------------------------------------------
-
-    // ❌ 旧的 ClearAllBlocks() 方法已被删除，以避免调用不存在的 ClearBlock() 方法，并强制使用新的持久化系统。
-    /* public void ClearAllBlocks()
+    /// <summary>
+    /// 获取活跃敌人列表（与GetAllEnemies相同，为兼容性保留）
+    /// </summary>
+    public List<CharacterBase> GetActiveEnemies()
     {
-        // 逻辑已迁移到 DecrementAllBlockDurations() 中
+        return GetAllEnemies();
     }
-    */
+    
+    /// <summary>
+    /// 添加英雄到管理列表
+    /// </summary>
+    public void RegisterHero(CharacterBase hero)
+    {
+        if (hero != null && !allHeroes.Contains(hero))
+        {
+            allHeroes.Add(hero);
+            Debug.Log($"注册英雄: {hero.characterName}");
+        }
+    }
+    
+    /// <summary>
+    /// 添加敌人到管理列表
+    /// </summary>
+    public void RegisterEnemy(CharacterBase enemy)
+    {
+        if (enemy != null && !allEnemies.Contains(enemy))
+        {
+            allEnemies.Add(enemy);
+            Debug.Log($"注册敌人: {enemy.characterName}");
+        }
+    }
+    
+    /// <summary>
+    /// 从管理列表移除角色
+    /// </summary>
+    public void UnregisterCharacter(CharacterBase character)
+    {
+        if (character == null) return;
+        
+        if (allHeroes.Contains(character))
+        {
+            allHeroes.Remove(character);
+            if (activeHero == character) activeHero = null;
+        }
+        
+        if (allEnemies.Contains(character))
+        {
+            allEnemies.Remove(character);
+        }
+    }
+
+    /// <summary>
+    /// 递减指定列表中所有角色的格挡持续时间。
+    /// </summary>
+    public void DecrementSpecificGroupBlockDurations(List<CharacterBase> characters)
+    {
+        if (characters == null) return;
+        
+        foreach (var character in characters.Where(c => c != null))
+        {
+            character.DecrementBlockDuration(); 
+        }
+    }
 
     /// <summary>
     /// 【必须实现】由 BattleManager 在回合结束时调用，以递减并清除过期的格挡。
     /// </summary>
     public void DecrementAllBlockDurations()
     {
-        // 遍历所有英雄和敌人，过滤掉 null 或已死亡的角色，调用 CharacterBase.DecrementBlockDuration()
         foreach (var character in allHeroes.Concat(allEnemies).Where(c => c != null && c.currentHp > 0))
         {
-            // ⭐ 调用 CharacterBase 中新的格挡清除逻辑 ⭐
             character.DecrementBlockDuration();
         }
     }
@@ -122,10 +168,8 @@ private void ClearExtraListeners()
     /// </summary>
     public void AtStartOfTurn()
     {
-        // 遍历所有活着的角色
         foreach (var character in allHeroes.Concat(allEnemies).Where(c => c != null && c.currentHp > 0))
         {
-            // ⭐ 调用 CharacterBase 上的 AtStartOfTurn 逻辑 ⭐
             character.AtStartOfTurn();
         }
     }
@@ -135,10 +179,8 @@ private void ClearExtraListeners()
     /// </summary>
     public void AtEndOfTurn()
     {
-        // 遍历所有活着的角色
         foreach (var character in allHeroes.Concat(allEnemies).Where(c => c != null && c.currentHp > 0))
         {
-            // ⭐ 调用 CharacterBase 上的 AtEndOfTurn 逻辑 ⭐
             character.AtEndOfTurn();
         }
     }

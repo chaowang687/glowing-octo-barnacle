@@ -146,13 +146,15 @@ namespace ScavengingGame
                 Debug.Log($"战斗场景加载进度: {progress * 100}%");
                 yield return null;
             }
-            
+            // ⭐ 关键：等待一帧，确保新场景的物体的 Awake 和 Start 已经跑过
+            yield return new WaitForEndOfFrame();
             Debug.Log("[GameStateManager] 战斗场景加载完成");
             InitializeBattleInLoadedScene();
         }
         
         private void InitializeBattleInLoadedScene()
         {
+            Debug.Log("[DEBUG] 尝试在新加载的场景中寻找 BattleManager...");
             BattleManager battleManager = FindBattleManagerInScene();
             
             if (battleManager == null)
@@ -168,7 +170,12 @@ namespace ScavengingGame
         
         private BattleManager FindBattleManagerInScene()
         {
-            BattleManager[] battleManagers = FindObjectsByType<BattleManager>(FindObjectsSortMode.None);
+            // ⭐ 使用 IncludeIndices.IncludeInactive 确保即便物体没勾选也能找到
+    BattleManager[] battleManagers = FindObjectsByType<BattleManager>(
+        FindObjectsInactive.Include, // 包含非激活物体
+        FindObjectsSortMode.None
+    );
+            //BattleManager[] battleManagers = FindObjectsByType<BattleManager>(FindObjectsSortMode.None);
             
             if (battleManagers.Length == 0)
             {

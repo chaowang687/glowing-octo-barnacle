@@ -1,3 +1,4 @@
+
 using UnityEngine.UI;
 using UnityEngine;
 using System.Collections.Generic;
@@ -8,55 +9,23 @@ using System.Collections;
 using TMPro; 
 using System; 
 using ScavengingGame;
+
 public class BattleManager : MonoBehaviour
 {
-   
-        // 由GameStateManager调用以初始化战斗
-        public void InitializeBattle(EnemyEncounterData encounterData)
-        {
-            if (encounterData != null)
-            {
-                Debug.Log($"开始战斗遭遇: {encounterData.encounterName}");
-                // 1. 根据encounterData生成敌人
-                // 2. 初始化玩家卡组和状态
-                // 3. 开始战斗流程
-            }
-            else
-            {
-                Debug.Log("开始默认战斗");
-                // 使用默认敌人配置
-            }
-            
-            // 开始战斗逻辑...
-        }
-        
-        // 战斗结束时调用（胜利或失败）
-        public void EndBattle(bool isVictory)
-        {
-            List<ItemData> rewards = new List<ItemData>();
-            
-            if (isVictory)
-            {
-                // 生成战利品
-                // rewards = GenerateBattleRewards();
-            }
-            
-            // 通知GameStateManager战斗结束
-            GameStateManager.Instance.EndBattle(isVictory, rewards);
-        }
-    
-     [Header("战斗角色清理设置")]
-    [Tooltip("角色死亡后，其游戏对象被销毁前的延迟时间（秒），用于播放死亡动画。")]
-    public float characterDestroyDelay = 1.5f;
+    // 修复单例模式
     public static BattleManager Instance { get; private set; }
     
-    // 战斗状态：用于追踪战斗是否结束 (Battle State: Used to track if the battle is over)
+    [Header("战斗角色清理设置")]
+    [Tooltip("角色死亡后，其游戏对象被销毁前的延迟时间（秒），用于播放死亡动画。")]
+    public float characterDestroyDelay = 1.5f;
+    
+    // 战斗状态：用于追踪战斗是否结束
     public bool IsBattleOver { get; private set; } = false; 
     
-    // VITAL: 回合锁，防止连续点击或异步逻辑冲突 (End Turn Lock)
+    // VITAL: 回合锁，防止连续点击或异步逻辑冲突
     private bool isTurnInProgress = false; 
     
-    // VITAL NEW: 打牌锁，防止连续打牌冲突 (Play Card Lock)
+    // VITAL NEW: 打牌锁，防止连续打牌冲突
     private bool isCardBeingPlayed = false; 
 
     [Header("系统引用 (必须设置)")]
@@ -102,17 +71,17 @@ public class BattleManager : MonoBehaviour
     
     [Header("动画参数")]
     [Range(0.1f, 1f)]
-    public float repositionDuration = 0.3f; // 整理阶段的动画时长 (Tidy phase duration, also used for hover)
+    public float repositionDuration = 0.3f; // 整理阶段的动画时长
     
     [Range(0.1f, 1f)]
     [Tooltip("打出卡牌后，剩余卡牌重新布局的动画时长。")]
     public float postPlayRepositionDuration = 0.2f; // NEW: 打牌后整理时长
     
     [Range(0.05f, 1f)]
-    public float drawDuration = 0.5f; // 抽牌阶段单张卡牌的时长 (Draw phase single card duration)
+    public float drawDuration = 0.5f; // 抽牌阶段单张卡牌的时长
     
     [Range(0.001f, 0.2f)]
-    public float drawCardDelay = 0.08f; // 抽牌阶段的卡牌间隔 (Delay between drawing each card)
+    public float drawCardDelay = 0.08f; // 抽牌阶段的卡牌间隔
     
     [Range(0.05f, 0.5f)]
     public float playCardDuration = 0.1f; 
@@ -125,7 +94,7 @@ public class BattleManager : MonoBehaviour
     
     [Header("抽牌整理动画参数")]
     [Range(0.01f, 0.3f)]
-    public float layoutCardDelay = 0.05f; // 整理阶段单张卡牌的间隔 (Delay between layouting each card)
+    public float layoutCardDelay = 0.05f; // 整理阶段单张卡牌的间隔
     [Tooltip("卡牌在中央堆叠时，每张卡牌的X/Y/Z轴偏移量，用于形成可见的堆叠。")]
     public Vector3 centralPileOffset = new Vector3(0f, 20f, -0.1f); 
     
@@ -161,12 +130,137 @@ public class BattleManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        // 修复单例初始化
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (Instance != this)
+        {
+            Debug.LogWarning($"销毁重复的BattleManager实例: {gameObject.name}");
+            Destroy(gameObject);
+            return;
+        }
         
         if (handContainer != null && handContainerRect == null)
         {
             handContainerRect = handContainer.GetComponent<RectTransform>();
+        }
+        
+        // 确保组件引用
+        if (cardSystem == null) cardSystem = GetComponentInChildren<CardSystem>();
+        if (characterManager == null) characterManager = CharacterManager.Instance;
+    }
+    
+    [Header("调试用遭遇战数据")]
+    public EnemyEncounterData testEncounterData; // 在 Inspector 中拖入你配置的多敌人遭遇战
+
+    [Header("调试控制")]
+    public bool autoStartTestBattle = false;
+
+
+
+    void Start()
+    {
+        // 只有开启自动战斗模式时才会自动开始
+        if (autoStartTestBattle)
+        {
+            // 优先使用配置的遭遇战数据
+            if (testEncounterData != null)
+            {
+                Debug.Log($"自动开始遭遇战: {testEncounterData.encounterName}");
+                InitializeBattle(testEncounterData);
+            }
+            else if (defaultEnemyDataAsset != null) 
+            {
+                Debug.Log("自动开始测试战斗（单个敌人）...");
+                EnemyEncounterData testEncounter = ScriptableObject.CreateInstance<EnemyEncounterData>();
+                testEncounter.enemyList = new List<EnemyData> { defaultEnemyDataAsset };
+                testEncounter.encounterName = "测试遭遇战";
+                InitializeBattle(testEncounter);
+            }
+        }
+        else
+        {
+            Debug.Log("BattleManager: 自动战斗已禁用，等待外部调用");
+        }
+    }
+
+    // 由GameStateManager调用以初始化战斗
+    public void InitializeBattle(EnemyEncounterData encounterData)
+    {
+        // ⭐ 关键修复：检查 encounterData 是否为 null，如果是则使用默认值 ⭐
+        if (encounterData == null) 
+        {
+            Debug.LogError("InitializeBattle: encounterData 为 null，尝试使用默认遭遇战数据");
+            
+            // 尝试使用 testEncounterData
+            if (testEncounterData != null)
+            {
+                encounterData = testEncounterData;
+                Debug.Log("InitializeBattle: 使用 testEncounterData");
+            }
+            // 如果 testEncounterData 也没有，尝试使用 defaultEnemyDataAsset 创建默认遭遇战
+            else if (defaultEnemyDataAsset != null)
+            {
+                Debug.Log("InitializeBattle: 创建默认遭遇战数据");
+                encounterData = ScriptableObject.CreateInstance<EnemyEncounterData>();
+                encounterData.enemyList = new List<EnemyData> { defaultEnemyDataAsset };
+                encounterData.encounterName = "默认遭遇战";
+            }
+            else
+            {
+                Debug.LogError("InitializeBattle: 没有可用的遭遇战数据！无法开始战斗。");
+                return;
+            }
+        }
+
+        // 1. 必须先初始化卡组 (如果还没初始化的话)
+        if (cardSystem != null) 
+        {
+            cardSystem.SetupDeck(); // 确保抽牌堆里有牌
+        }
+        else
+        {
+            Debug.LogError("InitializeBattle: cardSystem 为 null");
+            return;
+        }
+
+        // 2. 生成角色
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.SetupEncounter(encounterData);
+        }
+        else
+        {
+            Debug.LogError("InitializeBattle: GameFlowManager.Instance 为 null");
+            return;
+        }
+        
+        // 3. 启动战斗 (这会设置 Round = 1)
+        StartBattle();
+    }
+    
+    // 战斗结束时调用（胜利或失败）
+    public void EndBattle(bool isVictory)
+    {
+        List<ItemData> rewards = new List<ItemData>();
+        
+        if (isVictory)
+        {
+            // 生成战利品
+            // rewards = GenerateBattleRewards();
+        }
+        
+        // 通知GameStateManager战斗结束
+        if (GameStateManager.Instance != null)
+        {
+            GameStateManager.Instance.EndBattle(isVictory, rewards);
+        }
+        else
+        {
+            Debug.LogError("GameStateManager.Instance 为 null，无法结束战斗");
         }
     }
     
@@ -182,19 +276,6 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"Processing character death registration: {character.name}. Removing from active lists.");
     }
 
-    void Start()
-    {
-        if (cardSystem == null) cardSystem = FindFirstObjectByType<CardSystem>();
-        if (characterManager == null) characterManager = FindFirstObjectByType<CharacterManager>();
-        
-        SetupMockCharactersIfNecessary();
-        
-        if (cardSystem != null) cardSystem.SetupDeck();
-        
-        // StartBattle() handles the initial CurrentRound setup
-        StartBattle();
-    }
-    
     void Update()
     {
         // 只有当回合和卡牌动画都没有进行时，才处理悬停
@@ -295,7 +376,7 @@ public class BattleManager : MonoBehaviour
              heroChar.currentHp = heroChar.maxHp;
              
              characterManager.activeHero = heroChar;
-             characterManager.allHeroes.Add(heroChar);
+             characterManager.RegisterHero(heroChar);
              
              Debug.Log("Created Mock Hero for testing.");
         }
@@ -331,7 +412,7 @@ public class BattleManager : MonoBehaviour
                  Debug.LogError("UI INIT ERROR: Failed to add EnemyDisplay on Mock Enemy. Death cleanup will fail.");
             }
             
-            characterManager.allEnemies.Add(enemyChar);
+            characterManager.RegisterEnemy(enemyChar);
             Debug.Log("Created Mock Enemy for testing.");
         }
     }
@@ -340,10 +421,17 @@ public class BattleManager : MonoBehaviour
     {
         IsBattleOver = false; // Ensure battle state is reset
         CurrentRound = 1; 
+        
+        if (characterManager == null)
+        {
+            Debug.LogError("StartBattle: characterManager is null");
+            return;
+        }
+        
         if (characterManager.GetActiveHero() != null)
         {
             CalculateAllEnemyIntents();
-            StartNewTurn();
+            StartPlayerTurn();
         }
         else
         {
@@ -351,7 +439,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void StartNewTurn()
+    public void StartPlayerTurn()
     {
         // Key: Check battle end immediately before starting the turn
         if (CheckBattleEnd()) return;
@@ -361,7 +449,11 @@ public class BattleManager : MonoBehaviour
             characterManager.AtStartOfTurn(); 
         }
 
-        if (cardSystem == null) return;
+        if (cardSystem == null) 
+        {
+            Debug.LogError("StartPlayerTurn: cardSystem is null");
+            return;
+        }
         
         cardSystem.ResetEnergy(); 
         DiscardHandDisplays(); 
@@ -415,7 +507,7 @@ public class BattleManager : MonoBehaviour
         
         // 3. 立即更新游戏逻辑状态：清空手牌
         DiscardHandDisplays();
-        cardSystem.DiscardHand(); 
+        if (cardSystem != null) cardSystem.DiscardHand(); 
         
         // 4. 计算总等待时间：如果弃牌了，需要等待动画时长 + 缓冲；否则只等待缓冲。
         float totalWaitTime = cardsWereDiscarded ? discardDuration + postExecutionDelay : postExecutionDelay;
@@ -443,66 +535,40 @@ public class BattleManager : MonoBehaviour
         });
     }
 
-    private void StartEnemyTurn()
+private void StartEnemyTurn()
+{
+    // Key: Check battle end immediately before starting the turn
+    if (CheckBattleEnd()) 
     {
-        // Key: Check battle end immediately before starting the turn
-        if (CheckBattleEnd()) 
-        {
-            isTurnInProgress = false; // VITAL: If battle ends here, release lock immediately
-            return;
-        }
-
-        Debug.Log($"--- Enemy Turn Start (Round {CurrentRound}) ---");
-        
-        CharacterBase activeHero = characterManager.GetActiveHero();
-        if (activeHero == null)
-        {
-            CheckBattleEnd();
-            isTurnInProgress = false; // VITAL: If hero dies, release lock
-            return;
-        }
-        Sequence enemyTurnSequence = DOTween.Sequence(); 
-        
-        if (characterManager != null)
-        {
-            characterManager.AtStartOfTurn();
-        }
-
-        foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0)) 
-        {
-            EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
-            
-            if (enemyAI != null)
-            {
-                Sequence actionSequence = enemyAI.PerformAction(activeHero, CurrentRound);
-                enemyTurnSequence.Append(actionSequence);
-            }
-        }
-        
-        enemyTurnSequence.OnComplete(() =>
-        {
-            // Delay for visual buffer
-            DOVirtual.DelayedCall(0.5f, () => {
-        
-                Debug.Log($"LOG FLOW: Enemy action sequence complete, preparing for turn transition."); 
-
-                if (characterManager != null)
-                {
-                    // End of Enemy Turn -> Decrement Player Durations
-                    Debug.Log("LOG FLOW: Decrementing player block and status durations.");
-                    characterManager.DecrementSpecificGroupBlockDurations(characterManager.allHeroes);
-                    
-                    if (characterManager.GetActiveHero() != null)
-                    {
-                        characterManager.GetActiveHero().AtEndOfTurn(); 
-                    }
-                }
-                
-                DOVirtual.DelayedCall(postExecutionDelay, OnEnemyTurnCleanupComplete);
-                
-            }).SetUpdate(true);
-        });
+        isTurnInProgress = false; // VITAL: If battle ends here, release lock immediately
+        return;
     }
+
+    Debug.Log($"--- Enemy Turn Start (Round {CurrentRound}) ---");
+    
+    if (characterManager == null)
+    {
+        Debug.LogError("StartEnemyTurn: characterManager is null");
+        isTurnInProgress = false;
+        return;
+    }
+    
+    CharacterBase activeHero = characterManager.GetActiveHero();
+    if (activeHero == null)
+    {
+        CheckBattleEnd();
+        isTurnInProgress = false; // VITAL: If hero dies, release lock
+        return;
+    }
+    
+    if (characterManager != null)
+    {
+        characterManager.AtStartOfTurn();
+    }
+    
+    // 使用协程执行敌人回合，确保每个敌人依次攻击
+    StartCoroutine(ExecuteEnemyTurnSequentially());
+}
     
     private void OnEnemyTurnCleanupComplete()
     {
@@ -517,7 +583,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        StartNewTurn(); // Enter new player turn, which calls DrawCards
+        StartPlayerTurn(); // Enter new player turn, which calls DrawCards
     }
 
     /// <summary>
@@ -528,20 +594,10 @@ public class BattleManager : MonoBehaviour
     {
         if (dyingCharacter == null) return;
 
-        // 1. Key: Immediately remove the character from CharacterManager's active list
-        if (characterManager.ActiveEnemies.Contains(dyingCharacter)) 
-        {
-             characterManager.ActiveEnemies.Remove(dyingCharacter);
-             Debug.Log($"[Death Cleanup] {dyingCharacter.characterName} synchronously removed from activeEnemies list.");
-        }
-        else if (characterManager.activeHero == dyingCharacter)
-        {
-             Debug.Log($"[Death Cleanup] Hero {dyingCharacter.characterName} death event captured.");
-        }
-        else
-        {
-             Debug.LogWarning($"[Death Cleanup] {dyingCharacter.characterName} not found in active lists.");
-        }
+        // 修改：不需要手动从 ActiveEnemies 中移除，因为 GetActiveEnemies() 会实时计算
+        // 我们只需要确保角色被正确标记为死亡（currentHp <= 0）即可
+    
+        Debug.Log($"[Death Cleanup] {dyingCharacter.characterName} death event captured.");
         
         // 2. Immediately check if the battle should end
         CheckBattleEnd();
@@ -556,11 +612,14 @@ public class BattleManager : MonoBehaviour
         // List removal and state cleanup done in HandleDyingCharacterCleanup.
         // This method handles the final destruction of the GameObject.
         
-        Debug.Log($"[Death Animation Complete] Destroying object: {deadCharacterObject.name}");
-        if (deadCharacterObject != null)
+        if (deadCharacterObject == null)
         {
-            Destroy(deadCharacterObject);
+            Debug.LogWarning("HandleDeathAnimationComplete: deadCharacterObject is null");
+            return;
         }
+        
+        Debug.Log($"[Death Animation Complete] Destroying object: {deadCharacterObject.name}");
+        Destroy(deadCharacterObject);
     }
     
     /// <summary>
@@ -580,9 +639,13 @@ public class BattleManager : MonoBehaviour
         // Example: Disable all card interaction and turn buttons
     }
 
-
     private void CalculateAllEnemyIntents()
     {
+        if (characterManager == null)
+        {
+            Debug.LogError("CalculateAllEnemyIntents: characterManager is null");
+            return;
+        }
        
         CharacterBase activeHero = characterManager.GetActiveHero();
         if (activeHero == null) return;
@@ -593,18 +656,18 @@ public class BattleManager : MonoBehaviour
             
             if (enemyAI != null) 
             {
-            enemyAI.CalculateIntent(activeHero, CurrentRound); 
+                enemyAI.CalculateIntent(activeHero, CurrentRound); 
             
-            EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
-            if (display != null)
-            {
-                display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
-                Debug.Log($"DEBUG: Intent refresh notification sent to {enemy.characterName}。");
-            }
-            else
-            {
-                Debug.LogError($"Could not find EnemyDisplay script on {enemy.characterName}!");
-            }
+                EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
+                if (display != null)
+                {
+                    display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
+                    Debug.Log($"DEBUG: Intent refresh notification sent to {enemy.characterName}。");
+                }
+                else
+                {
+                    Debug.LogError($"Could not find EnemyDisplay script on {enemy.characterName}!");
+                }
             } 
         }
         Debug.Log($"LOG FLOW: Starting intent calculation for all enemies, based on round: {CurrentRound}"); 
@@ -628,6 +691,7 @@ public class BattleManager : MonoBehaviour
         
         if (cardSystem == null || characterManager == null) 
         {
+            Debug.LogError($"DrawCards: cardSystem or characterManager is null. cardSystem={cardSystem}, characterManager={characterManager}");
             isTurnInProgress = false; // VITAL: If draw fails immediately, release lock
             return;
         }
@@ -769,7 +833,6 @@ public class BattleManager : MonoBehaviour
         float adjustedTotalWidth = totalCardWidth + totalGapOffset;
         float currentLayoutStart = -adjustedTotalWidth / 2f;
 
-
         for (int i = 0; i < count; i++)
         {
             CardDisplay display = handDisplays[i];
@@ -823,7 +886,6 @@ public class BattleManager : MonoBehaviour
         return layoutDataList;
     }
 
-
     private void DiscardHandDisplays()
     {
         // Only clear the list and reference, the visual animation (Destroy) is handled in EndPlayerTurn
@@ -839,7 +901,7 @@ public class BattleManager : MonoBehaviour
     /// <param name="cardDisplay">要打出的卡牌显示对象，用于唯一确定卡牌。</param>
     /// <param name="target">选定的目标角色，如果不需要目标则为 null。</param>
     /// <returns>如果打牌成功则返回 true，否则返回 false。</returns>
-    public bool TryPlayCard(CardDisplay cardDisplay, CharacterBase target) // 仅接受 CardDisplay 和 Target
+    public bool TryPlayCard(CardDisplay cardDisplay, CharacterBase target)
     {
         // 1. VITAL GUARD: 战斗或回合转换中不允许打牌
         if (isTurnInProgress || IsBattleOver) return false;
@@ -851,7 +913,11 @@ public class BattleManager : MonoBehaviour
             return false;
         }
         
-        if (cardSystem == null || characterManager == null || cardDisplay == null) return false;
+        if (cardSystem == null || characterManager == null || cardDisplay == null) 
+        {
+            Debug.LogError($"TryPlayCard: 必要组件为空。cardSystem={cardSystem}, characterManager={characterManager}, cardDisplay={cardDisplay}");
+            return false;
+        }
         
         // 从 CardDisplay 获取唯一的 CardData
         CardData card = cardDisplay.GetCardData();
@@ -882,7 +948,6 @@ public class BattleManager : MonoBehaviour
             
             if (actualTarget == null)
             {
-                
                 Debug.LogWarning($"Card {card.cardName} requires a target, but no living enemies were found.");
                 return false;
             }
@@ -920,6 +985,13 @@ public class BattleManager : MonoBehaviour
 
     public void AnimatePlayCard(CardData card, Transform cardTransform, Transform targetTransform, Transform discardPileTransform)
     {
+        if (cardTransform == null || discardPileTransform == null)
+        {
+            Debug.LogError("AnimatePlayCard: cardTransform or discardPileTransform is null");
+            isCardBeingPlayed = false; // 释放锁
+            return;
+        }
+        
         float discardDuration = 0.2f;
         Transform centerPos = playCenterTransform != null ? playCenterTransform : handContainer;
 
@@ -1029,6 +1101,7 @@ public class BattleManager : MonoBehaviour
         for (int i = 0; i < handDisplays.Count; i++)
         {
             CardDisplay card = handDisplays[i];
+            if (card == null) continue;
 
             // ⭐ 关键点：如果卡牌正在被拖拽，跳过布局计算，完全交给 CardDisplay 的 OnDrag 处理
             if (card.IsDragging) 
@@ -1051,11 +1124,120 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// Checks if the battle has ended. If so, calls EndBattle.
     /// </summary>
+    // 在 BattleManager.cs 中处理敌人回合
+private IEnumerator ExecuteEnemyTurnSequentially()
+{
+    // 获取所有存活的敌人
+    var enemies = characterManager.GetAllEnemies().Where(e => e.currentHp > 0).ToList();
+    
+    Debug.Log($"[战斗流程] 敌人回合开始，存活敌人数量: {enemies.Count}");
+    
+    // 依次执行每个敌人的行动
+    foreach (var enemy in enemies) 
+    {
+        EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
+        
+        if (enemyAI != null && enemy.currentHp > 0) 
+        {
+            Debug.Log($"[战斗流程] {enemy.characterName} 开始行动...");
+            
+            // 1. 计算意图
+            enemyAI.CalculateIntent(characterManager.GetActiveHero(), CurrentRound); 
+            
+            // 2. 更新UI显示意图
+            EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
+            if (display != null)
+            {
+                display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
+            }
+            
+            // 3. 短暂延迟，让玩家看到意图
+            yield return new WaitForSeconds(0.8f);
+            
+            // 4. 执行攻击
+            Debug.Log($"[战斗流程] {enemy.characterName} 执行攻击...");
+            
+            // ⭐ 关键修改：确保获取英雄引用
+            CharacterBase hero = characterManager.GetActiveHero();
+            if (hero == null || hero.currentHp <= 0)
+            {
+                Debug.LogWarning($"[战斗流程] 英雄已死亡，跳过敌人行动");
+                break;
+            }
+            
+            // 执行攻击动作
+            Sequence enemyAction = enemyAI.PerformAction(hero, CurrentRound);
+            
+            // 5. 关键：等待攻击动画和扣血完成
+            if (enemyAction != null)
+            {
+                Debug.Log($"[战斗流程] {enemy.characterName} 等待动画完成...");
+                
+                // 等待动画序列完成
+                yield return enemyAction.WaitForCompletion();
+                
+                Debug.Log($"[战斗流程] {enemy.characterName} 动画完成");
+            }
+            else
+            {
+                Debug.LogWarning($"[战斗流程] {enemy.characterName} 的 enemyAction 为空");
+                // 即使没有序列，也要等待一个基本的动画时间
+                yield return new WaitForSeconds(0.6f);
+            }
+            
+            // 6. 攻击间隔
+            yield return new WaitForSeconds(0.4f);
+            
+            // 7. 检查英雄是否死亡
+            if (characterManager.GetActiveHero() == null || characterManager.GetActiveHero().currentHp <= 0)
+            {
+                Debug.Log("[战斗流程] 英雄在敌人攻击中死亡！");
+                
+                // 触发英雄死亡动画或效果
+                if (characterManager.GetActiveHero() != null)
+                {
+                    CharacterBase deadHero = characterManager.GetActiveHero();
+                    Debug.Log($"[战斗流程] 英雄 {deadHero.characterName} 已死亡");
+                    
+                    // 这里可以添加英雄死亡的特效或UI反馈
+                    // 例如：英雄图像闪烁、变灰等
+                }
+                
+                break;
+            }
+        }
+    }
+    
+    Debug.Log($"[战斗流程] 所有敌人行动完成，准备回合转换。"); 
+
+    if (characterManager != null)
+    {
+        // 敌人回合结束 -> 减少玩家的格挡持续时间
+        Debug.Log("[战斗流程] 减少玩家格挡和状态持续时间。");
+        characterManager.DecrementSpecificGroupBlockDurations(characterManager.allHeroes);
+        
+        if (characterManager.GetActiveHero() != null)
+        {
+            characterManager.GetActiveHero().AtEndOfTurn(); 
+        }
+    }
+    
+    // 延迟一点时间，让玩家看清结果
+    yield return new WaitForSeconds(0.8f);
+    
+    OnEnemyTurnCleanupComplete();
+}
+
+  
     public bool CheckBattleEnd()
     {
         if (IsBattleOver) return true; // Battle already over
 
-        if (characterManager == null) return false; 
+        if (characterManager == null) 
+        {
+            Debug.LogError("CheckBattleEnd: characterManager is null");
+            return false;
+        }
         
         // Victory Condition: All enemies in the ActiveEnemies list are dead
         bool allEnemiesDead = characterManager.ActiveEnemies.Count == 0;
@@ -1081,5 +1263,4 @@ public class BattleManager : MonoBehaviour
         // Battle continues
         return false;
     }
-    
 }

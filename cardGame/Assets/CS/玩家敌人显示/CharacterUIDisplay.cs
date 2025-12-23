@@ -1,8 +1,9 @@
 using UnityEngine;
-using System; // ⭐ 确保这行存在 ⭐
+using System;
 using UnityEngine.UI;
 using System.Linq; 
-using TMPro; // ⭐ 核心修正：导入 TextMeshPro 命名空间 ⭐
+using TMPro;
+using System.Collections; // ⭐ 添加 System.Collections 命名空间 ⭐
 
 public class CharacterUIDisplay : MonoBehaviour
 {
@@ -11,8 +12,8 @@ public class CharacterUIDisplay : MonoBehaviour
     // UI 组件引用 (例如：血条 Image 或 Slider)
     [Header("UI Components")]
     public Slider hpSlider;
-    public TextMeshProUGUI nameText; // ⭐ 修正为 TMP ⭐
-    public TextMeshProUGUI hpValueText; // ⭐ 修正为 TMP ⭐
+    public TextMeshProUGUI nameText;
+    public TextMeshProUGUI hpValueText;
 
     // ⭐ 格挡 UI 引用 ⭐
     [Header("格挡 UI 引用")]
@@ -21,24 +22,35 @@ public class CharacterUIDisplay : MonoBehaviour
     [Tooltip("显示格挡图标的 Image 组件。")]
     public Image blockIconImage; 
     [Tooltip("显示格挡数值的 TextMeshProUGUI 组件")]
-    public TextMeshProUGUI blockValueText; // ⭐ 修正为 TMP ⭐
+    public TextMeshProUGUI blockValueText;
 
     [Header("资产引用")]
     [Tooltip("用于格挡 UI 的 Sprite 资产（蓝色盾牌）。")]
     public Sprite blockSprite; 
 
-    private CharacterBase _targetCharacter; 
+    private CharacterBase _targetCharacter;
+    private bool _isSubscribed = false;
 
     /// <summary>
     /// 绑定 UI 视图到角色数据，并订阅生命值和格挡变化事件。
     /// </summary>
     public void Initialize(CharacterBase character)
     {
-        this.character = character;
-        this.character.OnCharacterDied += HandleDeath;
-        if (character == null) return; 
+        if (character == null) 
+        {
+            Debug.LogError("CharacterUIDisplay.Initialize: character is null");
+            return;
+        }
         
+        // 如果已经订阅了另一个角色的事件，先取消订阅
+        if (_isSubscribed && _targetCharacter != null && _targetCharacter != character)
+        {
+            UnsubscribeEvents();
+        }
+        
+        this.character = character;
         _targetCharacter = character;
+        
         Debug.Log($"UI Display bound to character: {character.characterName}");
 
         // 1. 首次初始化 HP
@@ -46,6 +58,7 @@ public class CharacterUIDisplay : MonoBehaviour
         {
             hpSlider.maxValue = character.maxHp;
             hpSlider.value = character.currentHp;
+            Debug.Log($"血条Slider初始化: 最大值={character.maxHp}, 当前值={character.currentHp}");
         }
         if (hpValueText != null)
         {
@@ -53,26 +66,75 @@ public class CharacterUIDisplay : MonoBehaviour
         }
 
         // 2. 订阅事件 (View 绑定到 Model)
-        character.OnHealthChanged += UpdateHealthBar;
-        character.OnBlockChanged += RefreshBlockDisplay;
+        SubscribeEvents();
         
         // 首次初始化格挡显示
-        RefreshBlockDisplay(); 
+        RefreshBlockDisplay(character.CurrentBlock);
 
-        // 3. 销毁监听器
-        DestroyListener listener = character.gameObject.AddComponent<DestroyListener>();
-        listener.onDestroy += OnTargetDestroyed;
-
-        // 绑定名称显示
+        // 3. 绑定名称显示
         if (nameText != null)
         {
             nameText.text = character.characterName;
         }
     }
+    
+    /// <summary>
+    /// 订阅角色事件
+    /// </summary>
+    private void SubscribeEvents()
+    {
+        if (_targetCharacter == null) return;
+        
+        _targetCharacter.OnHealthChanged += UpdateHealthBar;
+        _targetCharacter.OnBlockChanged += RefreshBlockDisplay;
+        _targetCharacter.OnCharacterDied += HandleDeath;
+        
+        _isSubscribed = true;
+        Debug.Log($"已订阅 {_targetCharacter.characterName} 的事件");
+    }
+    
+    /// <summary>
+    /// 处理角色死亡
+    /// </summary>
     private void HandleDeath()
     {
-    // 稍后你可以在这里添加死亡动画和清理代码
-    Debug.Log($"{character.characterName} 正在处理死亡显示..."); 
+        if (character == null) return;
+        
+        Debug.Log($"{character.characterName} 正在处理死亡显示...");
+        
+        // 死亡时取消订阅事件
+        UnsubscribeEvents();
+        
+        // 这里可以添加死亡动画，比如淡出效果
+        if (this != null && gameObject != null)
+        {
+            StartCoroutine(FadeOutAndDestroy());
+        }
+    }
+    
+    /// <summary>
+    /// 淡出并销毁 UI 的协程
+    /// </summary>
+    private IEnumerator FadeOutAndDestroy()
+    {
+        CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+        
+        float fadeDuration = 1.0f;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < fadeDuration)
+        {
+            canvasGroup.alpha = 1f - (elapsedTime / fadeDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        
+        // 销毁 UI 对象
+        Destroy(gameObject);
     }
 
     /// <summary>
@@ -93,12 +155,9 @@ public class CharacterUIDisplay : MonoBehaviour
     /// <summary>
     /// 刷新格挡 UI 的显示（包含图标和数值）。
     /// </summary>
-    public void RefreshBlockDisplay()
+    /// <param name="currentBlock">当前格挡值</param>
+    public void RefreshBlockDisplay(int currentBlock)
     {
-        if (_targetCharacter == null) return;
-        
-        int currentBlock = _targetCharacter.CurrentBlock;
-        
         if (currentBlock > 0)
         {
             // 有格挡时：显示根对象，并设置图标和数值
@@ -107,7 +166,6 @@ public class CharacterUIDisplay : MonoBehaviour
                 blockDisplayRoot.SetActive(true);
             }
             
-            // ⭐ 修正：使用 TextMeshProUGUI.text 属性 ⭐
             if (blockValueText != null)
             {
                 blockValueText.text = currentBlock.ToString();
@@ -128,28 +186,39 @@ public class CharacterUIDisplay : MonoBehaviour
                 blockDisplayRoot.SetActive(false);
             }
         }
+        
+        Debug.Log($"格挡UI刷新: {_targetCharacter?.characterName ?? "Unknown"} 格挡值: {currentBlock}");
     }
 
     /// <summary>
-    /// 目标角色游戏对象销毁时调用，用于取消订阅。
+    /// 统一取消订阅所有事件
     /// </summary>
-    private void OnTargetDestroyed()
+    private void UnsubscribeEvents()
     {
-        if (_targetCharacter != null)
+        if (_targetCharacter != null && _isSubscribed)
         {
             _targetCharacter.OnHealthChanged -= UpdateHealthBar;
             _targetCharacter.OnBlockChanged -= RefreshBlockDisplay;
+            _targetCharacter.OnCharacterDied -= HandleDeath;
+            
+            _isSubscribed = false;
             Debug.Log($"Successfully unsubscribed {_targetCharacter.characterName}'s events.");
         }
     }
 
-    // 推荐：如果 CharacterUIDisplay 对象本身被销毁，也要取消订阅
-    private void OnDestroy()
+    /// <summary>
+    /// 无参版本的刷新格挡UI（用于直接调用）
+    /// </summary>
+    public void RefreshBlockDisplay()
     {
         if (_targetCharacter != null)
         {
-             _targetCharacter.OnHealthChanged -= UpdateHealthBar;
-             _targetCharacter.OnBlockChanged -= RefreshBlockDisplay;
+            RefreshBlockDisplay(_targetCharacter.CurrentBlock);
         }
+    }
+
+    private void OnDestroy()
+    {
+        UnsubscribeEvents();
     }
 }

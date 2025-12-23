@@ -1,402 +1,454 @@
-using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System; 
-using DG.Tweening; 
+using System;
+using DG.Tweening;
+using System.Collections;
 
-// Character state type
-public enum CharacterType
-{
-    Hero,
-    Enemy
-}
-
-// Block entry structure
-[Serializable]
-public struct BlockEntry
-{
-    public int Amount;
-    [Tooltip("Duration of the block in turns. 1 means it is cleared at the start of the next turn (i.e., lasts only the current turn).")]
-    public int Duration; 
-}
-
-/// <summary>
-/// Character base class (Hero or Enemy). Contains core attributes and combat methods, with full support for status effects.
-/// </summary>
 public class CharacterBase : MonoBehaviour
 {
-    // --- Event Definitions ---
-    // Parameters: (currentHp, maxHp, damageTaken)
-    public event Action<int, int, int> OnHpChanged; 
+    // 事件定义
+    public event Action<int, int> OnHealthChanged; // 修复：改为 OnHealthChanged 与 EnemyDisplay 匹配
+    public event Action<int> OnBlockChanged;
+    public event Action OnCharacterDied;
     
-    public event Action OnCharacterDied; // Triggered when the character dies
-    public event Action<int, int> OnHealthChanged; // (currentHp, maxHp) Used to notify UI (e.g., health bar)
-    public event Action OnBlockChanged; // Used to notify UI of block changes
-
-    public bool IsDead => currentHp <= 0; // Property to check if dead
+    // 属性
+    [SerializeField] protected string _characterName;
+    [SerializeField] protected int _maxHp;
+    [SerializeField] protected int _currentHp;
+    [SerializeField] protected int _currentBlock;
     
-    [Header("Base Stats")]
-    public string characterName = "Character";
+    protected int blockDuration = 0;
     
-    public int maxHp = 100; // Max HP
-    public int currentHp; // Current HP
-    
-    [Header("Block Persistence")]
-    // Tracks all block entries (amount and duration)
-    private List<BlockEntry> blockEntries = new List<BlockEntry>();
-    
-    // Read-only property: calculates the current total block value
-    public int CurrentBlock { get { return blockEntries.Sum(e => e.Amount); } }
-    
-    public bool isDead = false; 
-    
-    // Status effect list (simplified using Dictionary<int, int> assuming StatusEffect is an enum)
-    protected Dictionary<int, int> statusEffects = new Dictionary<int, int>(); 
-
-    protected virtual void Awake()
+    // 状态效果管理
+    [System.Serializable]
+    public class StatusEffect
     {
-        currentHp = maxHp; 
-        isDead = false;
-        blockEntries.Clear(); // Clear the block list upon initialization
-    }
-
-    /// <summary>
-    /// Initialization method required by GameFlowManager.
-    /// </summary>
-    public virtual void Initialize(string name, int maxHp, Sprite artwork)
-    {
-        this.maxHp = maxHp;
-        this.currentHp = maxHp;
-        this.characterName = name;
-        OnHealthChanged?.Invoke(currentHp, this.maxHp);
-    }
-    
-    // --- Status Effect Handling (simplified logic for compatibility) ---
-    public int GetStatusEffectAmount(int effect) // StatusEffect effect
-    {
-        return statusEffects.TryGetValue(effect, out int amount) ? amount : 0;
-    }
-    
-    public virtual void ApplyStatusEffect(int effect, int duration) // StatusEffect effect
-    {
-        if (duration <= 0) return;
+        public string effectName;
+        public int amount;
+        public int duration;
         
-        if (statusEffects.ContainsKey(effect))
+        public StatusEffect(string name, int amt, int dur)
         {
-            statusEffects[effect] += duration;
+            effectName = name;
+            amount = amt;
+            duration = dur;
         }
-        else
-        {
-            statusEffects.Add(effect, duration);
-        }
-        Debug.Log($"{characterName} gained StatusEffect({effect}), stacks: {statusEffects[effect]}");
     }
-
-    protected void DecreaseStatusDurations()
-    {
-        var keys = statusEffects.Keys.ToList();
-        
-        foreach (var effect in keys)
+    
+    protected System.Collections.Generic.List<StatusEffect> statusEffects = 
+        new System.Collections.Generic.List<StatusEffect>();
+    
+    // 公共属性
+    public string characterName 
+    { 
+        get => _characterName; 
+        set => _characterName = value; 
+    }
+    
+    public int maxHp 
+    { 
+        get => _maxHp; 
+        set => _maxHp = value; 
+    }
+    
+    public int currentHp 
+    { 
+        get => _currentHp; 
+        set 
         {
-            // Assuming Strength/Dexterity/Metallicize have int values 1, 2, 3, and they do not decrease
-            if (effect == 1 || effect == 2 || effect == 3) // StatusEffect.Strength, StatusEffect.Dexterity, StatusEffect.Metallicize
+            if (_currentHp != value)
             {
-                continue; 
-            }
-            
-            if (statusEffects.ContainsKey(effect) && statusEffects[effect] > 0)
-            {
-                statusEffects[effect]--;
-                if (statusEffects[effect] <= 0)
+                int oldHp = _currentHp;
+                _currentHp = Mathf.Clamp(value, 0, _maxHp);
+                OnHealthChanged?.Invoke(_currentHp, _maxHp); // 触发事件
+                
+                // 计算伤害/治疗量
+                int damageTaken = oldHp - _currentHp;
+                
+                if (_currentHp <= 0 && !IsDead)
                 {
-                    statusEffects.Remove(effect);
+                    // 调用虚方法，允许子类重写死亡处理
+                    HandleDeath();
                 }
             }
         }
     }
-
-    // --- Turn Hooks ---
-
+    
+    // 修复：添加 OnHpChanged 属性作为 OnHealthChanged 的别名（兼容性）
+    public event Action<int, int> OnHpChanged
+    {
+        add { OnHealthChanged += value; }
+        remove { OnHealthChanged -= value; }
+    }
+    
+    // 修复：将 CurrentBlock 的 set 访问器改为 protected
+    public int CurrentBlock 
+    { 
+        get => _currentBlock; 
+        protected set // 允许子类设置
+        {
+            if (_currentBlock != value)
+            {
+                _currentBlock = value;
+                OnBlockChanged?.Invoke(_currentBlock);
+            }
+        }
+    }
+    
+    // 死亡标记
+    public bool IsDead { get; protected set; } = false;
+    
+    protected virtual void Awake()
+    {
+        // 基类初始化
+        if (_maxHp <= 0) _maxHp = 100;
+        if (_currentHp <= 0) _currentHp = _maxHp;
+        
+        // 初始化事件委托，避免null
+        OnHealthChanged = delegate { };
+        OnBlockChanged = delegate { };
+        OnCharacterDied = delegate { };
+    }
+    
+    /// <summary>
+    /// 初始化方法
+    /// </summary>
+    public void Initialize(string name, int maxHp, Sprite artwork = null)
+    {
+        characterName = name;
+        this.maxHp = maxHp;
+        currentHp = maxHp;
+        CurrentBlock = 0;
+        IsDead = false;
+        
+        // 清除所有状态效果
+        statusEffects.Clear();
+        
+        Debug.Log($"{characterName} initialized with {maxHp} HP");
+    }
+    
+    /// <summary>
+    /// 受到伤害 - 现在是虚方法，可以重写
+    /// </summary>
+    public virtual Sequence TakeDamage(int damage, bool isAttack = false)
+{
+    if (IsDead) return DOTween.Sequence();
+    
+    Sequence damageSequence = DOTween.Sequence();
+    
+    // 计算实际伤害（考虑格挡）
+    int actualDamage = damage;
+    if (CurrentBlock > 0)
+    {
+        if (CurrentBlock >= damage)
+        {
+            // 格挡完全吸收伤害
+            actualDamage = 0;
+            CurrentBlock -= damage;
+        }
+        else
+        {
+            // 格挡部分吸收伤害
+            actualDamage = damage - CurrentBlock;
+            CurrentBlock = 0;
+        }
+    }
+    
+    // 问题在这里！立即扣血，没有等待动画
+    if (actualDamage > 0)
+    {
+        currentHp -= actualDamage;  // <-- 立即扣血
+    }
+    
+    // 伤害动画序列（但血条已经扣过了）
+    damageSequence.Append(transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 1, 0.5f));
+    damageSequence.AppendCallback(() => {
+        string blockText = (damage - actualDamage > 0) ? $"（格挡吸收了 {damage - actualDamage} 点）" : "";
+        Debug.Log($"{characterName} 受到 {damage} 点伤害{blockText}");
+        
+        if (currentHp <= 0)
+        {
+            Debug.Log($"{characterName} 被击败！");
+        }
+    });
+    
+    return damageSequence;
+}
+    
+    /// <summary>
+    /// 处理死亡 - 现在是受保护的虚方法，子类可以重写
+    /// </summary>
+    protected virtual void HandleDeath()
+    {
+        if (IsDead) return;
+        
+        IsDead = true;
+        
+        // 触发死亡事件
+        OnCharacterDied?.Invoke();
+        
+        // 基础死亡效果
+        Debug.Log($"{characterName} 死亡");
+        
+        // 简单淡出效果（子类可以重写为更复杂的动画）
+        StartCoroutine(FadeOutCoroutine());
+    }
+    
+    /// <summary>
+    /// 淡出协程
+    /// </summary>
+    protected virtual IEnumerator FadeOutCoroutine()
+    {
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            float duration = 1.0f;
+            float elapsed = 0f;
+            Color originalColor = spriteRenderer.color;
+            
+            while (elapsed < duration)
+            {
+                float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+                spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+        
+        // 延迟后销毁（或只是隐藏）
+        yield return new WaitForSeconds(0.5f);
+        
+        // 这里可以选择销毁或只是隐藏
+        // Destroy(gameObject);
+        // 或者隐藏，以便可能复活
+        gameObject.SetActive(false);
+    }
+    
+    /// <summary>
+    /// 添加格挡值并设置持续时间
+    /// </summary>
+    public void AddBlock(int amount, int duration = 1)
+    {
+        if (amount > 0 && !IsDead)
+        {
+            CurrentBlock += amount; // 现在可以设置，因为 set 是 protected
+            blockDuration = Mathf.Max(blockDuration, duration);
+            Debug.Log($"{characterName} 获得 {amount} 点格挡，持续 {blockDuration} 回合");
+        }
+    }
+    
+    /// <summary>
+    /// 设置格挡值（直接设置，不添加）
+    /// </summary>
+    public void SetBlock(int amount)
+    {
+        if (!IsDead)
+        {
+            CurrentBlock = amount;
+            Debug.Log($"{characterName} 格挡值设置为 {amount}");
+        }
+    }
+    
+    /// <summary>
+    /// 递减格挡持续时间，如果到期则清除格挡
+    /// </summary>
+    public void DecrementBlockDuration()
+    {
+        if (blockDuration > 0)
+        {
+            blockDuration--;
+            Debug.Log($"{characterName} 格挡持续时间减少至 {blockDuration} 回合");
+            
+            if (blockDuration <= 0)
+            {
+                ClearBlock();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 清除所有格挡
+    /// </summary>
+    public void ClearBlock()
+    {
+        if (CurrentBlock > 0)
+        {
+            Debug.Log($"{characterName} 的 {CurrentBlock} 点格挡被清除");
+            CurrentBlock = 0;
+            blockDuration = 0;
+        }
+    }
+    
+    /// <summary>
+    /// 治疗
+    /// </summary>
+    public void Heal(int amount)
+    {
+        if (IsDead) return;
+        
+        int oldHp = currentHp;
+        currentHp = Mathf.Min(currentHp + amount, maxHp);
+        int healedAmount = currentHp - oldHp;
+        
+        if (healedAmount > 0)
+        {
+            Debug.Log($"{characterName} 恢复了 {healedAmount} 点生命值");
+            
+            // 治疗特效
+            transform.DOPunchScale(Vector3.one * 0.05f, 0.3f, 1, 0.5f);
+        }
+    }
+    
+    // ===== 状态效果相关方法 =====
+    
+    /// <summary>
+    /// 应用状态效果（修复：添加缺失的方法）
+    /// </summary>
+    public void ApplyStatusEffect(string effectName, int amount, int duration)
+    {
+        if (IsDead) return;
+        
+        // 检查是否已有相同效果
+        StatusEffect existingEffect = statusEffects.Find(e => e.effectName == effectName);
+        if (existingEffect != null)
+        {
+            // 更新现有效果
+            existingEffect.amount = amount;
+            existingEffect.duration = duration;
+        }
+        else
+        {
+            // 添加新效果
+            statusEffects.Add(new StatusEffect(effectName, amount, duration));
+        }
+        
+        Debug.Log($"{characterName} 获得状态效果: {effectName} ({amount}), 持续 {duration} 回合");
+        
+        // 立即应用某些效果
+        if (effectName == "Poison" || effectName == "Burn")
+        {
+            // 中毒或燃烧立即造成伤害
+            currentHp -= amount;
+        }
+    }
+    
+    /// <summary>
+    /// 获取状态效果数值（修复：添加缺失的方法）
+    /// </summary>
+    public int GetStatusEffectAmount(string effectName)
+    {
+        StatusEffect effect = statusEffects.Find(e => e.effectName == effectName);
+        return effect != null ? effect.amount : 0;
+    }
+    
+    /// <summary>
+    /// 移除状态效果
+    /// </summary>
+    public void RemoveStatusEffect(string effectName)
+    {
+        StatusEffect effect = statusEffects.Find(e => e.effectName == effectName);
+        if (effect != null)
+        {
+            statusEffects.Remove(effect);
+            Debug.Log($"{characterName} 移除了状态效果: {effectName}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新状态效果持续时间
+    /// </summary>
+    public void UpdateStatusEffects()
+    {
+        for (int i = statusEffects.Count - 1; i >= 0; i--)
+        {
+            StatusEffect effect = statusEffects[i];
+            effect.duration--;
+            
+            if (effect.duration <= 0)
+            {
+                statusEffects.RemoveAt(i);
+                Debug.Log($"{characterName} 的状态效果 {effect.effectName} 已过期");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 是否有指定状态效果
+    /// </summary>
+    public bool HasStatusEffect(string effectName)
+    {
+        return statusEffects.Exists(e => e.effectName == effectName);
+    }
+    
+    // ===== 回合相关方法 =====
+    
+    /// <summary>
+    /// 回合开始时的逻辑
+    /// </summary>
     public virtual void AtStartOfTurn()
     {
         if (IsDead) return;
         
-        int poisonEffectId = 4; // Assuming StatusEffect.Poison = 4
-        int poisonAmount = GetStatusEffectAmount(poisonEffectId);
-        if (poisonAmount > 0)
+        Debug.Log($"{characterName} 回合开始");
+        
+        // 应用持续伤害效果
+        foreach (StatusEffect effect in statusEffects)
         {
-            TakeDamage(poisonAmount, isAttack: false)?.OnComplete(() =>
+            if (effect.effectName == "Poison" || effect.effectName == "Burn")
             {
-                if (statusEffects.ContainsKey(poisonEffectId))
-                {
-                    statusEffects[poisonEffectId] = Mathf.Max(0, statusEffects[poisonEffectId] - 1);
-                    if (statusEffects[poisonEffectId] <= 0)
-                    {
-                        statusEffects.Remove(poisonEffectId);
-                    }
-                }
-                Debug.Log($"{characterName} took {poisonAmount} Poison damage, Poison stacks reduced.");
-            });
-        }
-    }
-
-    public virtual void AtEndOfTurn() 
-    {
-        if (IsDead) return;
-        
-        int metallicizeEffectId = 3; // Assuming StatusEffect.Metallicize = 3
-        int metallicizeAmount = GetStatusEffectAmount(metallicizeEffectId);
-        if (metallicizeAmount > 0)
-        {
-            // AddBlock, duration set to 2 (current turn + cleared at start of next turn)
-            AddBlock(metallicizeAmount, duration: 2); 
-            Debug.Log($"{characterName} gained {metallicizeAmount} Block from Metallicize (lasts 1 turn).");
+                currentHp -= effect.amount;
+                Debug.Log($"{characterName} 受到 {effect.effectName} 效果，损失 {effect.amount} 生命值");
+            }
         }
         
-        DecrementBlockDuration(); // Decrement block duration at end of turn
-        DecreaseStatusDurations(); // Decrement status duration at end of turn
+        // 更新状态效果持续时间
+        UpdateStatusEffects();
     }
     
     /// <summary>
-    /// Called at the end of the turn to decrease the duration of all non-permanent blocks and clear expired ones.
+    /// 回合结束时的逻辑
     /// </summary>
-    public void DecrementBlockDuration()
-    {
-        if (IsDead) return;
-
-        bool wasBlockCleared = false;
-        
-        for (int i = blockEntries.Count - 1; i >= 0; i--)
-        {
-            // Duration <= 0 means permanent block (e.g., Buffer effect), do not decrement
-            if (blockEntries[i].Duration <= 0) continue; 
-            
-            // Decrement duration
-            blockEntries[i] = new BlockEntry { 
-                Amount = blockEntries[i].Amount, 
-                Duration = blockEntries[i].Duration - 1 
-            };
-            
-            // Check if it should be cleared
-            if (blockEntries[i].Duration <= 0)
-            {
-                int clearedAmount = blockEntries[i].Amount;
-                blockEntries.RemoveAt(i);
-                wasBlockCleared = true;
-                Debug.Log($"{characterName}'s {clearedAmount} Block cleared due to end of duration.");
-            }
-        }
-        
-        if (wasBlockCleared)
-        {
-            OnBlockChanged?.Invoke();
-        }
-    }
-    
-    // --- Core Combat Method: Damage Entry ---
-
-    /// <summary>
-    /// Primary damage receiving method, returns a DOTween Sequence for animation and async handling.
-    /// </summary>
-    public virtual Sequence TakeDamage(int amount, bool isAttack = true)
-    {
-        if (IsDead) 
-        {
-            Debug.Log($"[DAMAGE FLOW] {characterName} is already dead, ignoring damage.");
-            return DOTween.Sequence();
-        }
-        if (amount <= 0)
-        {
-            Debug.Log($"[DAMAGE FLOW] Damage amount is 0 or less, ignoring.");
-            return DOTween.Sequence();
-        }
-
-        // 1. Pure Data Calculation: Calculate final damage taken based on block/vulnerable, and consume block
-        int finalDamageTaken = CalculateDamage(amount, isAttack);
-        
-        // 2. Animation Settlement: Execute UI animation, and perform actual HP deduction after animation completion
-        return AnimateDamage(finalDamageTaken);
-    }
-
-    /// <summary>
-    /// Pure Data Calculation: Calculates final damage taken based on vulnerable and block, and consumes block.
-    /// </summary>
-    /// <returns>The actual damage value taken.</returns>
-    private int CalculateDamage(int amount, bool isAttack)
-    {
-        int damageTaken = amount;
-        int initialTotalBlock = CurrentBlock; // Record initial total block
-
-        int vulnerableEffectId = 5; // Assuming StatusEffect.Vulnerable = 5
-        
-        // 1. Vulnerable Correction
-        if (isAttack && GetStatusEffectAmount(vulnerableEffectId) > 0)
-        {
-            // Vulnerable: damage increased by 50%
-            damageTaken = (int)(damageTaken * 1.5f);
-            Debug.Log($"[DAMAGE CALC] {characterName} is Vulnerable, damage corrected to {damageTaken}.");
-        }
-        
-        // 2. Core Correction: Consume block from the block entry list
-        if (CurrentBlock > 0)
-        {
-            Debug.Log($"[DAMAGE CALC] Attempting to consume {characterName}'s Block ({CurrentBlock}).");
-            // Iterate backwards for safe removal
-            for (int i = blockEntries.Count - 1; i >= 0 && damageTaken > 0; i--)
-            {
-                BlockEntry entry = blockEntries[i];
-                
-                if (damageTaken >= entry.Amount)
-                {
-                    // Damage is greater than block, consume the entire entry
-                    damageTaken -= entry.Amount;
-                    blockEntries.RemoveAt(i);
-                }
-                else
-                {
-                    // Damage is less than block, only reduce the entry amount
-                    entry.Amount -= damageTaken;
-                    damageTaken = 0;
-                    blockEntries[i] = entry; // Update the struct in the list
-                }
-            }
-            
-            // Crucial: Trigger event after block consumption
-            if (CurrentBlock != initialTotalBlock)
-            {
-                OnBlockChanged?.Invoke(); 
-                Debug.Log($"[DAMAGE CALC] {characterName} Block consumed, triggering OnBlockChanged.");
-            }
-        }
-        
-        return damageTaken;
-    }
-
-    /// <summary>
-    /// Damage settlement animation, and final HP deduction.
-    /// </summary>
-    private Sequence AnimateDamage(int finalDamage)
-    {
-        if (finalDamage <= 0) 
-        {
-            Debug.Log($"[DAMAGE FLOW] {characterName} final damage is 0, returning empty Sequence.");
-            return DOTween.Sequence();
-        }
-        
-        Sequence damageSequence = DOTween.Sequence();
-        
-        // Sample: Character color flash animation (add your SpriteRenderer or Image reference if needed)
-        // damageSequence.Append(GetComponent<SpriteRenderer>().DOColor(Color.red, 0.1f).SetLoops(2, LoopType.Yoyo));
-        
-        // Final Callback: Actually deduct HP and update UI
-        damageSequence.AppendCallback(() => 
-        {
-            // Execute final HP deduction
-            int previousHp = currentHp;
-            currentHp -= finalDamage;
-            currentHp = Mathf.Max(0, currentHp); 
-            
-            // Calculate actual HP deducted (for event notification)
-            int actualDamageTaken = previousHp - currentHp;
-
-            Debug.Log($"[DAMAGE FINISH] {characterName} took {finalDamage} final damage. HP remaining: {currentHp}.");
-            
-            // Trigger events to notify UI update
-            OnHpChanged?.Invoke(currentHp, maxHp, actualDamageTaken);
-            Debug.Log($"[DAMAGE FINISH] **OnHpChanged event sent from CharacterBase**."); 
-            OnHealthChanged?.Invoke(currentHp, maxHp); 
-            
-            // Death Check
-            if (currentHp <= 0)
-            {
-                Die();
-            }
-        });
-        
-        return damageSequence;
-    }
-
-    /// <summary>
-    /// Gain block. Calculates Dexterity correction.
-    /// </summary>
-    public virtual void AddBlock(int amount, int duration = 2)
+    public virtual void AtEndOfTurn()
     {
         if (IsDead) return;
         
-        int finalBlock = amount;
+        Debug.Log($"{characterName} 回合结束");
         
-        int dexterityEffectId = 2; // Assuming StatusEffect.Dexterity = 2
-        
-        // Dexterity correction
-        finalBlock += GetStatusEffectAmount(dexterityEffectId);
-        finalBlock = Mathf.Max(0, finalBlock);
-        
-        if (finalBlock <= 0) return;
-        
-        // Core Correction: Add to blockEntries list
-        blockEntries.Add(new BlockEntry { Amount = finalBlock, Duration = duration });
-        
-        OnBlockChanged?.Invoke(); 
-        
-        Debug.Log($"{characterName} gained {finalBlock} final Block. Total Block: {CurrentBlock}. Duration: {duration} turns.");
-    }
-
-    /// <summary>
-    /// Heal.
-    /// </summary>
-    public virtual void Heal(int amount)
-    {
-        if (IsDead) return;
-        
-        int previousHp = currentHp;
-        currentHp = Mathf.Min(maxHp, currentHp + amount);
-        int amountHealed = currentHp - previousHp;
-        
-        Debug.Log($"{characterName} healed {amountHealed}. Current HP: {currentHp}");
-        
-        // Healing also uses OnHpChanged event, but damage value is negative (represents recovery)
-        OnHpChanged?.Invoke(currentHp, maxHp, -amountHealed);
-        OnHealthChanged?.Invoke(currentHp, maxHp); 
+        // 递减状态效果持续时间等
+        DecrementBlockDuration();
     }
     
     /// <summary>
-    /// Character death.
-    /// This version ensures synchronous removal from BattleManager after a slight animation delay.
+    /// 复活角色
     /// </summary>
-    public virtual void Die()
+    public virtual void Revive(int reviveHp = 0)
     {
-        if (isDead) return; 
+        if (!IsDead) return;
         
-        isDead = true;
-        Debug.Log($"[DEATH] {characterName} has been defeated. Starting synchronous cleanup process.");
+        IsDead = false;
+        currentHp = (reviveHp > 0) ? Mathf.Min(reviveHp, maxHp) : maxHp / 2;
+        CurrentBlock = 0;
+        blockDuration = 0;
         
-        // 1. Immediately trigger the death event (EnemyDisplay starts animation)
-        OnCharacterDied?.Invoke(); 
+        // 清除所有状态效果
+        statusEffects.Clear();
         
-        // 2. ⭐ CORE FIX: Delay a short period (e.g., 0.5s) to allow the visual animation to start ⭐
-        // After this delay, we assume the animation is playing and perform the crucial data cleanup.
-        float deathAnimationDuration = 0.5f; // Adjust this value to match your shortest death animation time
+        gameObject.SetActive(true);
         
-        // Use DelayedCall to run the cleanup after the visual start
-        DOVirtual.DelayedCall(deathAnimationDuration, () =>
+        // 恢复显示
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
         {
-            Debug.Log($"[DEATH CLEANUP DELAYED] {characterName} delay complete. Performing data cleanup.");
-
-            // 3. ⭐ CRUCIAL: Immediately notify BattleManager to remove the character from the active list ⭐
-            if (BattleManager.Instance != null)
-            {
-                // We assume BattleManager has a method to remove the character and check end-of-battle
-                // This call is SYNCHRONOUS and ensures the character is removed immediately from the active combatants.
-                BattleManager.Instance.HandleDyingCharacterCleanup(this);
-                Debug.Log($"[DEATH CLEANUP DELAYED] BattleManager notified to remove {characterName} from active list.");
-            }
-
-        }).SetId(this); // Set DOTween ID to manage/kill if needed
+            spriteRenderer.color = Color.white;
+        }
+        
+        Debug.Log($"{characterName} 已复活，生命值: {currentHp}/{maxHp}");
     }
     
-    // Optional: Ensure all DOTween calls related to this character are stopped on destroy
-    private void OnDestroy()
+    /// <summary>
+    /// 获取所有状态效果
+    /// </summary>
+    public System.Collections.Generic.List<StatusEffect> GetAllStatusEffects()
     {
-        DOTween.Kill(this);
+        return statusEffects;
     }
 }

@@ -7,7 +7,7 @@ namespace ScavengingGame
     /// 敌人遭遇数据，用于在场景间传递战斗信息
     /// </summary>
     [CreateAssetMenu(fileName = "NewEnemyEncounter", menuName = "Scavenge/Enemy Encounter")]
-    public class EnemyEncounterData : ScriptableObject
+    public class EnemyEncounterData_q : ScriptableObject
     {
         [Header("敌人配置")]
         public string encounterName = "普通遭遇";

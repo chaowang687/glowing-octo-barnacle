@@ -24,7 +24,7 @@ MonoBehaviour:
   upgradedCardData: {fileID: 0}
   actions:
   - effectType: 1
-    targetType: 5
+    targetType: 2
     value: 3
     scalesWithStatus: 0
     statusEffect: 0

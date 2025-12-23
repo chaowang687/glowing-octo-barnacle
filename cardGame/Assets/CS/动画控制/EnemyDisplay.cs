@@ -9,7 +9,8 @@ using System.Linq;
 // 假设 IntentType, IntentIconConfig, CharacterAnimatorController, CharacterBase, BattleManager 在其他地方定义
 
 /// <summary>
-/// 负责角色的视觉表现、动画触发、UI 意图和血条的显示。
+/// 负责角色的视觉表现、UI 意图和血条的显示。
+/// 【修改】不再直接触发动画，只负责UI和视觉效果
 /// </summary>
 public class EnemyDisplay : MonoBehaviour
 {
@@ -17,7 +18,7 @@ public class EnemyDisplay : MonoBehaviour
     public Animator lootAnimator; // 拖入刚才那个节点的 Animator
     public TextMeshProUGUI lootText; // 拖入那个节点下的文本
     [Header("Loot Feedback")]
-    public GameObject lootSuccessEffect; // 比如一个写着“抢到了！”的浮动图标预制体
+    public GameObject lootSuccessEffect; // 比如一个写着"抢到了！"的浮动图标预制体
     public AudioClip lootLaughSound;     // 海盗大笑的音效
     private AudioSource audioSource;
     // Public event for external scripts (如 DeathRelay.cs) 通知动画完成。
@@ -30,6 +31,8 @@ public class EnemyDisplay : MonoBehaviour
     // 核心数据引用
     private CharacterBase character; 
 
+    // ⭐ 添加：记录上次的HP值，用于计算HP变化量
+    private int _previousHp = 0;
     
     // ⭐ 关键修正 1：缓存角色名称，用于在 character 引用被销毁后仍能安全追踪和记录日志。 ⭐
     private string _dyingCharacterName = "Unknown Character"; 
@@ -39,11 +42,14 @@ public class EnemyDisplay : MonoBehaviour
     /// </summary>
     public CharacterBase CharacterData => character; 
 
-    // 角色模型动画控制器引用
+    // ⭐ 修改：动画控制器引用改为私有，EnemyDisplay不再直接控制动画 ⭐
     [Header("角色动画控制器引用")]
-    [Tooltip("请将 CharacterAnimatorController 脚本拖拽到此处。")]
-    public CharacterAnimatorController characterAnimController; 
-
+    [Tooltip("动画控制器引用 - 主要用于UI和视觉反馈")]
+    private CharacterAnimatorController _characterAnimController; 
+    
+    [Header("精灵图显示")]
+    public Image characterImage; // 用于显示敌人2D图像
+    
     // UI 动画控制器引用 (用于血条闪烁、意图淡入淡出等)
     [Header("UI 动画控制器引用")]
     [Tooltip("请将控制意图/血条 UI 的 Animator 组件拖拽到此处。")]
@@ -59,19 +65,56 @@ public class EnemyDisplay : MonoBehaviour
     public float fadeDuration = 0.2f;
 
     private Sequence intentFadeSequence;
-    // EnemyDisplay.cs
-public void PlayLootAnimation(string itemName)
-{
-    // BroadcastMessage 会自动匹配参数名
-    if (lootAnimator != null)
+    
+    // ⭐ 新增：存储 EnemyData 引用 ⭐
+    private EnemyData _enemyData;
+    
+    /// <summary>
+    /// 设置精灵图
+    /// </summary>
+    public void SetArtwork(Sprite sprite)
     {
-        if (lootText != null) lootText.text = $"Pirates seized the {itemName}!";
-        
-        // 直接触发，因为物体一直是 Active 的，Animator 绝对能收到
-        lootAnimator.SetTrigger("ShowLoot");
-        Debug.Log($"[动画激活] 成功触发 ShowLoot，物品：{itemName}");
+        if (characterImage != null && sprite != null)
+        {
+            characterImage.sprite = sprite;
+            characterImage.gameObject.SetActive(true);
+            Debug.Log($"[DEBUG] 设置敌人精灵图: {sprite.name}");
+        }
+        else if (characterImage == null)
+        {
+            Debug.LogWarning($"[DEBUG] characterImage 为空，无法设置精灵图");
+        }
+        else if (sprite == null)
+        {
+            Debug.LogWarning($"[DEBUG] 传入的精灵图为空");
+        }
     }
-}
+    
+    /// <summary>
+    /// ⭐ 新增：设置动画控制器引用（由外部设置）⭐
+    /// </summary>
+    public void SetAnimatorController(CharacterAnimatorController animController)
+    {
+        _characterAnimController = animController;
+        if (_characterAnimController != null)
+        {
+            Debug.Log($"[DEBUG] EnemyDisplay 已设置动画控制器: {_characterAnimController.gameObject.name}");
+        }
+    }
+    
+    // EnemyDisplay.cs
+    public void PlayLootAnimation(string itemName)
+    {
+        // BroadcastMessage 会自动匹配参数名
+        if (lootAnimator != null)
+        {
+            if (lootText != null) lootText.text = $"Pirates seized the {itemName}!";
+            
+            // 直接触发，因为物体一直是 Active 的，Animator 绝对能收到
+            lootAnimator.SetTrigger("ShowLoot");
+            Debug.Log($"[动画激活] 成功触发 ShowLoot，物品：{itemName}");
+        }
+    }
 
     // === Initialization and Reference Acquisition (已简化) ===
     public void ShowLootFeedback(string itemName)
@@ -92,30 +135,12 @@ public void PlayLootAnimation(string itemName)
         
         Debug.Log($"海盗：哈哈哈，你的 {itemName} 归我了！");
     }
+    
     void Awake()
     {
         Debug.Log($"[DEBUG TRACE: AWAKE] {gameObject.name} EnemyDisplay 开始执行 Awake。");
 
-        // 检查角色模型动画控制器引用
-        if (characterAnimController == null)
-        {
-            // 尝试从父对象查找
-            characterAnimController = GetComponentInParent<CharacterAnimatorController>();
-
-            if (characterAnimController == null)
-            {
-                Debug.LogError($"[DEBUG ERROR: INIT] {gameObject.name} EnemyDisplay 致命错误：未设置 CharacterAnimatorController 引用，且在父对象中也找不到！请检查 Inspector 或脚本挂载位置。", this);
-            }
-            else
-            {
-                Debug.Log($"[DEBUG SUCCESS: ANIMATOR INIT] CharacterAnimatorController 引用成功 (通过父对象动态查找)。");
-            }
-        }
-        else
-        {
-            Debug.Log($"[DEBUG SUCCESS: ANIMATOR INIT] CharacterAnimatorController 引用成功 (Inspector 设置)。");
-        }
-        
+        // ⭐ 修改：不再在Awake中查找动画控制器，等待外部设置 ⭐
         // 检查 UI 动画控制器引用 (UI Animator 通常是可选的，但建议检查)
         if (uiAnimator == null)
         {
@@ -126,6 +151,13 @@ public void PlayLootAnimation(string itemName)
         if (intentUIRoot != null)
         {
             intentUIRoot.SetActive(false);
+        }
+        
+        // ⭐ 新增：尝试获取 AudioSource ⭐
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
         }
     }
     
@@ -151,6 +183,9 @@ public void PlayLootAnimation(string itemName)
         
         if (this.character != null)
         {
+            // ⭐ 记录初始HP值 ⭐
+            _previousHp = this.character.currentHp;
+            
             this.character.OnHpChanged += HandleHit; 
             this.character.OnCharacterDied += HandleDeath; 
             
@@ -161,21 +196,44 @@ public void PlayLootAnimation(string itemName)
             Debug.LogError("[DEBUG ERROR: INIT] EnemyDisplay failed to subscribe: CharacterBase object is null.");
         }
     }
+    
+    /// <summary>
+    /// ⭐ 新增：增强版初始化，支持 EnemyData ⭐
+    /// </summary>
+    public void Initialize(CharacterBase characterData, EnemyData enemyData)
+    {
+        Debug.Log($"[DEBUG TRACE: INIT] 尝试为 {characterData.characterName} 初始化 Display (带 EnemyData)...");
+        
+        // 存储 EnemyData 引用
+        _enemyData = enemyData;
+        
+        // 调用基础初始化
+        Initialize(characterData);
+        
+        // ⭐ 设置精灵图（关键修复）⭐
+        if (_enemyData != null && _enemyData.artwork != null)
+        {
+            SetArtwork(_enemyData.artwork);
+            Debug.Log($"[DEBUG SETUP] 已为 {characterData.characterName} 设置精灵图: {_enemyData.artwork.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[DEBUG WARNING] 没有找到 EnemyData 或 artwork");
+        }
+        
+        // ⭐ 不再在EnemyDisplay中设置动画控制器 ⭐
+    }
 
     /// <summary>
     /// 当死亡动画播放完毕后，由 NotifyDeathAnimationCompleted() 调用的最终处理方法。
-    /// 此方法通知 BattleManager 执行销毁操作，并销毁自身 GameObject。
     /// </summary>
     private void OnActualDeathAnimationComplete()
     {
         Debug.Log($"[DEBUG FINAL CLEANUP] {_dyingCharacterName} 死亡动画完成，通知 BattleManager 销毁。");
         
-        // 1. 通知 BattleManager 死亡流程结束 (BattleManager 会移除等待列表中的角色，并调用 CheckBattleEnd)
-        // 关键：即使 this.character 引用已经被外部脚本破坏，我们仍然发送通知，
-        // BattleManager 应该处理这个 null/destroyed 的引用，并解除等待状态。
+        // 1. 通知 BattleManager 死亡流程结束
         if (BattleManager.Instance != null)
         {
-            // 传递 this.character，即使它可能已经被 Unity 标记为 destroyed/null
             BattleManager.Instance.HandleDeathAnimationComplete(this.character.gameObject);
             Debug.Log($"[DEBUG SEND: FINAL CLEANUP] 已强制尝试通知 BattleManager 死亡动画流程结束。");
         }
@@ -188,42 +246,19 @@ public void PlayLootAnimation(string itemName)
         Debug.Log($"[DEBUG FINAL CLEANUP] {_dyingCharacterName} 的 GameObject 已被销毁。");
     }
     
-    // === External Active Call (Called by EnemyAI in PerformAction) ===
-
-    /// <summary>
-    /// 由 EnemyAI 在执行攻击意图时调用。
-    /// </summary>
-    public void TriggerAttackAnimation()
-    {
-        if (character == null) return;
-        Debug.Log($"[DEBUG RECEIVE: ATTACK] {character.characterName} 收到攻击指令。");
-        
-        // 委托给角色模型控制器
-        if (characterAnimController != null && !character.IsDead)
-        {
-            characterAnimController.TriggerAttackAnimation();
-            Debug.Log($"[DEBUG SEND: ATTACK] Animator Trigger: Attack 已发送。");
-        }
-        // 处理错误（保持不变）
-        else if (characterAnimController == null)
-        {
-            Debug.LogWarning($"[DEBUG WARNING: ATTACK] 无法触发攻击动画，控制器为空！");
-        }
-        else if (character.IsDead)
-        {
-             Debug.LogWarning($"[DEBUG WARNING: ATTACK] 无法触发攻击动画，角色已死亡。");
-        }
-    }
-
     // === Internal Event Response (Subscribed to CharacterBase Events) ===
 
     /// <summary>
     /// Responds to CharacterBase.OnHpChanged event (damage or healing).
-    /// damageTaken > 0: damage; damageTaken < 0: heal.
+    /// ⭐ 修改：不再触发受伤动画，只做UI反馈 ⭐
     /// </summary>
-    private void HandleHit(int currentHp, int maxHp, int damageTaken)
+    private void HandleHit(int currentHp, int maxHp)
     {
-        Debug.Log($"[DEBUG RECEIVE: HIT] HandleHit 方法被调用！实际伤害值: {damageTaken}。");
+        // ⭐ 计算HP变化量 ⭐
+        int hpChange = _previousHp - currentHp;
+        _previousHp = currentHp; // 更新记录的HP值
+        
+        Debug.Log($"[DEBUG RECEIVE: HIT] HandleHit 方法被调用！HP变化: {hpChange}，当前HP: {currentHp}/{maxHp}。");
         
         if (character == null)
         {
@@ -231,45 +266,57 @@ public void PlayLootAnimation(string itemName)
             return;
         }
         
-        if (damageTaken > 0)
+        if (hpChange > 0)
         {
             // 收到伤害
             
-            // 1. 触发角色模型受伤动画
-            if (characterAnimController != null)
-            {
-                characterAnimController.TriggerHitAnimation();
-                Debug.Log($"[DEBUG SEND: HIT] 触发 Animator Trigger: Hit。");
-            }
-
-            // 2. 触发 UI 动画（例如：血条闪烁、伤害数字弹出）
+            // ⭐ 修改：不再触发角色模型受伤动画，由EnemyAI或CharacterAnimatorController处理 ⭐
+            // 只做UI和视觉反馈
+            
+            // 触发 UI 动画
             if (uiAnimator != null)
             {
-                // ⭐ 优化：使用 Hash 值触发 UI 闪烁动画 ⭐
                 uiAnimator.SetTrigger(UI_FLASH_HASH); 
             }
+            
+            // 精灵图闪烁效果
+            if (characterImage != null)
+            {
+                StartCoroutine(FlashSprite(Color.red, 0.1f));
+            }
         }
-        else if (damageTaken < 0)
+        else if (hpChange < 0)
         {
-            // 收到治疗 (damageTaken 为负数)
-            Debug.Log($"[DEBUG RECEIVE: HEAL] 收到治疗指令。治疗量: {-damageTaken}。");
+            // 收到治疗
+            int healAmount = -hpChange;
+            Debug.Log($"[DEBUG RECEIVE: HEAL] 收到治疗指令。治疗量: {healAmount}。");
 
-            // 1. 触发角色模型治疗动画 (如果有)
-            if (characterAnimController != null) 
-            { 
-                // 示例：characterAnimController.TriggerHealAnimation(); 
-            }
-
-            // 2. 触发 UI 治疗效果
-            if (uiAnimator != null) 
-            { 
-                // 示例：uiAnimator.SetTrigger(Animator.StringToHash("HealEffect")); 
+            // 治疗效果
+            if (characterImage != null)
+            {
+                StartCoroutine(FlashSprite(Color.green, 0.1f));
             }
         }
+    }
+    
+    /// <summary>
+    /// ⭐ 新增：精灵图闪烁效果 ⭐
+    /// </summary>
+    private IEnumerator FlashSprite(Color flashColor, float duration)
+    {
+        if (characterImage == null) yield break;
+        
+        Color originalColor = characterImage.color;
+        characterImage.color = flashColor;
+        
+        yield return new WaitForSeconds(duration);
+        
+        characterImage.color = originalColor;
     }
 
     /// <summary>
     /// Responds to CharacterBase.OnCharacterDied event.
+    /// ⭐ 修改：不再触发死亡动画，只做UI反馈 ⭐
     /// </summary>
     private void HandleDeath()
     {
@@ -288,21 +335,21 @@ public void PlayLootAnimation(string itemName)
             Debug.Log($"[DEBUG SEND: DEATH REG] 已通知 BattleManager {_dyingCharacterName} 开始死亡流程。");
         }
         
-        // 触发角色模型死亡动画
-        if (characterAnimController != null)
-        {
-            characterAnimController.TriggerDieAnimation();
-            Debug.Log($"[DEBUG SEND: DEATH] 触发 Animator Trigger: Die。");
-        }
+        // ⭐ 修改：不再触发角色模型死亡动画，由EnemyAI处理 ⭐
         
-        // 触发 UI 死亡/隐藏动画 (如果有)
+        // 触发 UI 死亡/隐藏动画
         if (uiAnimator != null)
         {
-            // ⭐ 优化：使用 Hash 值触发 UI 隐藏动画 ⭐
             uiAnimator.SetTrigger(UI_HIDE_HASH); 
         }
+        
+        // 精灵图淡出效果
+        if (characterImage != null)
+        {
+            StartCoroutine(FadeOutSprite(1.0f));
+        }
 
-        // 追踪日志: 取消订阅 CharacterBase 事件 (防止重复触发动画)
+        // 追踪日志: 取消订阅 CharacterBase 事件
         if (this.character != null)
         {
             this.character.OnHpChanged -= HandleHit; 
@@ -320,6 +367,25 @@ public void PlayLootAnimation(string itemName)
             intentUIRoot.SetActive(false);
         }
     }
+    
+    /// <summary>
+    /// ⭐ 新增：精灵图淡出效果 ⭐
+    /// </summary>
+    private IEnumerator FadeOutSprite(float duration)
+    {
+        if (characterImage == null) yield break;
+        
+        float elapsedTime = 0f;
+        Color originalColor = characterImage.color;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
+            characterImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+            yield return null;
+        }
+    }
 
     /// <summary>
     /// Public wrapper method called by DeathRelay.cs (or directly by Unity Animation Event)
@@ -329,11 +395,7 @@ public void PlayLootAnimation(string itemName)
     {
         Debug.Log($"[DEBUG RECEIVE: DEATH RELAY] 收到死亡动画完成通知。追踪角色: {_dyingCharacterName}");
         
-        // ⭐ 关键修正 2：移除导致卡死的 null 检查！强制执行清理事件。 ⭐
-        // 即使 character 引用失效，也必须让 BattleManager 收到通知以解除战斗等待。
-        // 原来的行：if (character == null) return; 已移除
-        
-        // Invoke the event for subscribers (BattleManager is the ultimate subscriber via OnActualDeathAnimationComplete)
+        // Invoke the event for subscribers
         OnDeathAnimationComplete?.Invoke();
         Debug.Log($"[DEBUG SEND: DEATH RELAY] OnDeathAnimationComplete 事件已触发，准备最终清理。");
     }
@@ -342,12 +404,13 @@ public void PlayLootAnimation(string itemName)
     
     /// <summary>
     /// 刷新敌人的意图UI，并更新Animator中的IsVisible Bool。
+    /// ⭐ 修改：只设置UI，不控制动画 ⭐
     /// </summary>
     public void RefreshIntent(IntentType type, int value)
     {
         Debug.Log($"[DEBUG RECEIVE: INTENT] 收到意图刷新指令。Type: {type}, Value: {value}");
         
-        if (intentConfig == null || intentUIRoot == null || characterAnimController == null) return;
+        if (intentConfig == null || intentUIRoot == null) return;
         if (character != null && character.IsDead) return; // 死亡后不再刷新意图
 
         // 确保清除上一个 Sequence，防止冲突
@@ -358,40 +421,44 @@ public void PlayLootAnimation(string itemName)
 
         if (type == IntentType.NONE)
         {
-            // 1. 通知角色模型隐藏意图姿态
-            characterAnimController.SetIntentVisibility(false);
-
-            // 2. 触发 UI 自身的淡出动画（如果需要）
-            if (uiAnimator != null)
-            {
-                // 示例：uiAnimator.SetTrigger(Animator.StringToHash("FadeOut")); 
-            }
-            
-            // 3. 使用 DOTween 确保 UI 物体最终被禁用
+            // 使用 DOTween 确保 UI 物体最终被禁用
             intentFadeSequence = DOTween.Sequence()
                 .AppendInterval(fadeDuration)
                 .AppendCallback(() => intentUIRoot.SetActive(false));
             Debug.Log("[DEBUG SEND: INTENT] 意图设置为NONE，触发淡出逻辑。");
-
         }
         else
         {
-            // 1. 通知角色模型显示意图姿态
-            characterAnimController.SetIntentVisibility(true);
-            
-            // 2. 更新 UI 文本和图标
+            // 更新 UI 文本和图标
             intentIcon.sprite = intentConfig.GetIcon(type);
             intentValueText.text = value.ToString();
-
             intentUIRoot.SetActive(true);
-            
-            // 3. 触发 UI 自身的淡入动画（如果需要）
-            if (uiAnimator != null)
-            {
-                // 示例：uiAnimator.SetTrigger(Animator.StringToHash("FadeIn")); 
-            }
             
             Debug.Log($"[DEBUG SEND: INTENT] 意图刷新完成。");
         }
+    }
+    
+    // ⭐ 新增：获取敌人数据 ⭐
+    public EnemyData GetEnemyData()
+    {
+        return _enemyData;
+    }
+    
+    // ⭐ 新增：获取精灵图 ⭐
+    public Sprite GetArtwork()
+    {
+        return characterImage?.sprite;
+    }
+    
+    // ⭐ 新增：获取角色名称 ⭐
+    public string GetCharacterName()
+    {
+        return character?.characterName ?? _dyingCharacterName;
+    }
+    
+    // ⭐ 新增：获取动画控制器（给外部使用）⭐
+    public CharacterAnimatorController GetAnimatorController()
+    {
+        return _characterAnimController;
     }
 }
