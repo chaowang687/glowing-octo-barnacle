@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: B_STRENG
   m_EditorClassIdentifier: 
   cardID: B_STRENG
-  cardName: New Card
-  description: "\u83B7\u5F97 2 \u5C42\u529B\u91CF"
+  cardName: Power
+  description: Gain Level 2 power
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 1
   requiredClass: 0

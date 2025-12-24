@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: B_PREP
   m_EditorClassIdentifier: 
   cardID: B_PREP
-  cardName: New Card
-  description: "\u83B7\u5F97 6 \u70B9\u683C\u6321\u4E0B\u56DE\u5408\u5F00\u59CB\u65F6\u83B7\u5F97
-    1 \u70B9\u80FD\u91CF"
+  cardName: Prep
+  description: When you get 6 blocks, you will gain 1 energy at the start of the
+    next round
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 0
   requiredClass: 0

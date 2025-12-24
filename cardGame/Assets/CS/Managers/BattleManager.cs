@@ -243,26 +243,11 @@ public class BattleManager : MonoBehaviour
     }
     
     // 战斗结束时调用（胜利或失败）
-    public void EndBattle(bool isVictory)
-    {
-        List<ItemData> rewards = new List<ItemData>();
-        
-        if (isVictory)
-        {
-            // 生成战利品
-            // rewards = GenerateBattleRewards();
-        }
-        
-        // 通知GameStateManager战斗结束
-        if (GameStateManager.Instance != null)
-        {
-            GameStateManager.Instance.EndBattle(isVictory, rewards);
-        }
-        else
-        {
-            Debug.LogError("GameStateManager.Instance 为 null，无法结束战斗");
-        }
-    }
+    /// <summary>
+/// 统一的战斗结束入口
+/// </summary>
+/// <param name="isVictory">是否胜利</param>
+
     
     public void RegisterDyingCharacter(CharacterBase character)
     {
@@ -443,7 +428,11 @@ public class BattleManager : MonoBehaviour
     {
         // Key: Check battle end immediately before starting the turn
         if (CheckBattleEnd()) return;
-
+        // 调用 GameFlowManager 显示弹窗
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.ShowPopup("Player round"); 
+        }
         if (characterManager != null)
         {
             characterManager.AtStartOfTurn(); 
@@ -468,80 +457,69 @@ public class BattleManager : MonoBehaviour
     /// 结束玩家回合，确保在下一阶段开始前，卡牌飞到弃牌区的动画已完成。
     /// </summary>
     public void EndPlayerTurn()
-    {
-        // VITAL GUARD: 如果回合正在进行中，则忽略后续点击
-        if (isTurnInProgress)
-        {
-            Debug.LogWarning("Turn is already in progress. Ignoring EndPlayerTurn call.");
-            return;
-        }
-        
-        // VITAL GUARD: 如果正在打牌动画中，也需要等待
-        if (isCardBeingPlayed)
-        {
-             Debug.LogWarning("Card animation is currently in progress. Ignoring EndPlayerTurn call.");
-             return;
-        }
-        
-        isTurnInProgress = true; // VITAL LOCK: 立即设置回合锁
-
-        Debug.Log("--- Player Turn End ---");
-        
-        float discardDuration = 0.2f;
-        
-        // 1. 确保在迭代时手牌列表稳定，并检查是否有卡牌需要弃掉
-        List<CardDisplay> cardsToDiscard = handDisplays.ToList(); 
-        bool cardsWereDiscarded = cardsToDiscard.Count > 0;
-
-        // 2. 设置卡牌飞往弃牌区的动画
-        foreach (var display in cardsToDiscard) 
-        {
-            if (display != null && discardPileLocationTransform != null)
-            {
-                // Animate to discard pile before destroying
-                display.transform.DOMove(discardPileLocationTransform.position, discardDuration)
-                    .SetEase(playToDiscardEaseType)
-                    .OnComplete(() => Destroy(display.gameObject));
-            }
-        }
-        
-        // 3. 立即更新游戏逻辑状态：清空手牌
-        DiscardHandDisplays();
-        if (cardSystem != null) cardSystem.DiscardHand(); 
-        
-        // 4. 计算总等待时间：如果弃牌了，需要等待动画时长 + 缓冲；否则只等待缓冲。
-        float totalWaitTime = cardsWereDiscarded ? discardDuration + postExecutionDelay : postExecutionDelay;
-
-        // 5. 延迟调用，等待动画完成
-        DOVirtual.DelayedCall(totalWaitTime, () => 
-        {
-            if (characterManager != null)
-            {
-                // 此时视觉动画已完成，可以执行回合结束的逻辑清理
-                
-                // Decrement duration for enemy blocks and states
-                Debug.Log("LOG FLOW: Decrementing enemy block and status durations.");
-                characterManager.DecrementSpecificGroupBlockDurations(characterManager.allEnemies);
-                
-                // Execute AtEndOfTurn logic for enemies only
-                foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0))
-                {
-                    enemy.AtEndOfTurn(); 
-                }
-            }
-            
-            // 6. 启动敌方回合
-            DOVirtual.DelayedCall(postExecutionDelay, StartEnemyTurn);
-        });
-    }
-
-private void StartEnemyTurn()
 {
+    // VITAL GUARD: 如果回合正在进行中或正在打牌，则忽略
+    if (isTurnInProgress || isCardBeingPlayed)
+    {
+        Debug.LogWarning("Action in progress. Ignoring EndPlayerTurn.");
+        return;
+    }
+    
+    isTurnInProgress = true; // 立即加锁
+
+    Debug.Log("--- Player Turn End ---");
+    
+    float discardDuration = 0.2f;
+    List<CardDisplay> cardsToDiscard = handDisplays.ToList(); 
+    bool cardsWereDiscarded = cardsToDiscard.Count > 0;
+
+    // 1. 弃牌动画
+    foreach (var display in cardsToDiscard) 
+    {
+        if (display != null && discardPileLocationTransform != null)
+        {
+            display.transform.DOMove(discardPileLocationTransform.position, discardDuration)
+                .SetEase(playToDiscardEaseType)
+                .OnComplete(() => Destroy(display.gameObject));
+        }
+    }
+    
+    DiscardHandDisplays();
+    if (cardSystem != null) cardSystem.DiscardHand(); 
+    
+    float totalWaitTime = cardsWereDiscarded ? discardDuration + postExecutionDelay : postExecutionDelay;
+
+    // 2. 动画完成后执行逻辑切换
+    DOVirtual.DelayedCall(totalWaitTime, () => 
+    {
+        if (characterManager != null)
+        {
+            characterManager.DecrementSpecificGroupBlockDurations(characterManager.allEnemies);
+            foreach (var enemy in characterManager.GetAllEnemies().ToList().Where(e => e.currentHp > 0))
+            {
+                enemy.AtEndOfTurn(); 
+            }
+        }
+        
+        // --- 核心修复点 1: CS1503 错误 ---
+        // 错误原因：不能直接把 StartCoroutine(...) 传给 OnComplete 或 DelayedCall
+        // 修复方法：使用 Lambda 表达式 () => StartCoroutine(...)
+        DOVirtual.DelayedCall(postExecutionDelay, () => StartCoroutine(StartEnemyTurn()));
+    });
+}
+
+private IEnumerator StartEnemyTurn()
+{
+    if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.ShowPopup("Enemy Turn");
+        }
+        yield return new WaitForSeconds(1.0f); // 给弹窗一点显示时间
     // Key: Check battle end immediately before starting the turn
     if (CheckBattleEnd()) 
     {
         isTurnInProgress = false; // VITAL: If battle ends here, release lock immediately
-        return;
+        yield break;
     }
 
     Debug.Log($"--- Enemy Turn Start (Round {CurrentRound}) ---");
@@ -550,7 +528,7 @@ private void StartEnemyTurn()
     {
         Debug.LogError("StartEnemyTurn: characterManager is null");
         isTurnInProgress = false;
-        return;
+        yield break;
     }
     
     CharacterBase activeHero = characterManager.GetActiveHero();
@@ -558,7 +536,7 @@ private void StartEnemyTurn()
     {
         CheckBattleEnd();
         isTurnInProgress = false; // VITAL: If hero dies, release lock
-        return;
+        yield break;
     }
     
     if (characterManager != null)
@@ -625,19 +603,7 @@ private void StartEnemyTurn()
     /// <summary>
     /// Central cleanup point for when the battle ends.
     /// </summary>
-    public void EndBattle()
-    {
-        if (IsBattleOver) return; // Prevent double call
-
-        IsBattleOver = true;
-        isTurnInProgress = false; // VITAL: Release lock upon final battle end
-        isCardBeingPlayed = false; // VITAL: Release card play lock upon final battle end
-        
-        // Add all end-of-battle logic here (rewards, UI change, scene loading).
-        Debug.Log("[Battle State] Battle logic ended. IsBattleOver = true");
-        
-        // Example: Disable all card interaction and turn buttons
-    }
+    
 
     private void CalculateAllEnemyIntents()
     {
@@ -1228,39 +1194,65 @@ private IEnumerator ExecuteEnemyTurnSequentially()
     OnEnemyTurnCleanupComplete();
 }
 
-  
-    public bool CheckBattleEnd()
+  // 替换掉之前所有的 EndBattle 和 CheckBattleOver
+public void EndBattle(bool isVictory)
+{
+    // 1. 防止重复进入逻辑
+    if (IsBattleOver) return;
+    IsBattleOver = true;
+
+    // 2. 锁定操作：防止弹窗时还能点结束回合或出牌
+    isTurnInProgress = false;
+    isCardBeingPlayed = false;
+    this.StopAllCoroutines(); 
+
+    Debug.Log($"[战斗结束] 结果: {(isVictory ? "胜利" : "失败")}");
+
+    // 3. UI 表现：触发弹窗
+    if (GameFlowManager.Instance != null)
     {
-        if (IsBattleOver) return true; // Battle already over
-
-        if (characterManager == null) 
-        {
-            Debug.LogError("CheckBattleEnd: characterManager is null");
-            return false;
-        }
-        
-        // Victory Condition: All enemies in the ActiveEnemies list are dead
-        bool allEnemiesDead = characterManager.ActiveEnemies.Count == 0;
-        
-        // Defeat Condition: Hero is dead
-        bool heroDead = characterManager.GetActiveHero() == null || characterManager.GetActiveHero().currentHp <= 0;
-
-        if (allEnemiesDead)
-        {
-            Debug.Log("[Battle End] VICTORY!");
-            EndBattle(); 
-            // TODO: Trigger victory handling logic
-            return true;
-        }
-        else if (heroDead)
-        {
-             Debug.Log("[Battle End] DEFEAT!");
-             EndBattle(); 
-             // TODO: Trigger defeat handling logic
-             return true;
-        }
-        
-        // Battle continues
-        return false;
+        string msg = isVictory ? "Player Win" : "fail";
+        GameFlowManager.Instance.ShowPopup(msg, 3.0f);
     }
+
+    // 4. 数据结算：发放奖励并通知全局管理器
+    List<ItemData> rewards = new List<ItemData>();
+    if (isVictory)
+    {
+        // 这里可以执行你的奖励生成逻辑
+        // rewards = GenerateBattleRewards();
+    }
+
+    if (GameStateManager.Instance != null)
+    {
+        GameStateManager.Instance.EndBattle(isVictory, rewards);
+    }
+}
+
+public bool CheckBattleEnd()
+{
+    if (IsBattleOver) return true;
+    if (characterManager == null) return false;
+
+    // 根据存活情况计算结果
+    bool allEnemiesDead = characterManager.ActiveEnemies.Count == 0;
+    bool heroDead = characterManager.GetActiveHero() == null || characterManager.GetActiveHero().currentHp <= 0;
+
+    if (allEnemiesDead)
+    {
+        EndBattle(true); // 统一调用上面那个带参数的方法
+        return true;
+    }
+    else if (heroDead)
+    {
+        EndBattle(false);
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
 }

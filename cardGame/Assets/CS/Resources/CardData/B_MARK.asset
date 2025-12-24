@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: B_MARK
   m_EditorClassIdentifier: 
   cardID: B_MARK
-  cardName: New Card
-  description: "\u9020\u6210 4 \u70B9\u4F24\u5BB3\u65BD\u52A0 2 \u5C42\u6613\u4F24"
+  cardName: break
+  description: Deal 4 damage and apply 2 layers of vulnerability
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 0
   requiredClass: 0
@@ -27,7 +27,7 @@ MonoBehaviour:
     targetType: 2
     value: 4
     repeatCount: 0
-    scalesWithStatus: 0
+    scalesWithStatus: 1
     statusEffect: 0
     duration: 0
   - effectType: 7

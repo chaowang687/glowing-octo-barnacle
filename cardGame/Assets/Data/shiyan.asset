@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: shiyan
   m_EditorClassIdentifier: 
   enemyName: Slime
-  maxHp: 20
+  maxHp: 15
   artwork: {fileID: -1075089703, guid: 3f0bc0b6f8283434a97ed15c7a363832, type: 3}
   intentStrategy: {fileID: 11400000, guid: 9f82ee2b83b0b4dcfa99727ebd76606c, type: 2}

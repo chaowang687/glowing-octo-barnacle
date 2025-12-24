@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: B_EXECUTE
   m_EditorClassIdentifier: 
   cardID: B_EXECUTE
-  cardName: New Card
-  description: "\u9020\u6210 15 \u70B9\u4F24\u5BB3\u5982\u679C\u76EE\u6807\u6709\u6613\u4F24\u4F24\u5BB3\u5927\u5E45\u63D0\u5347"
+  cardName: Execute
+  description: Deal 15 damage. If the target is vulnerable, the damage will be significantly
+    increased
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 2
   requiredClass: 0
@@ -27,6 +28,6 @@ MonoBehaviour:
     targetType: 2
     value: 15
     repeatCount: 0
-    scalesWithStatus: 0
+    scalesWithStatus: 1
     statusEffect: 0
     duration: 0
