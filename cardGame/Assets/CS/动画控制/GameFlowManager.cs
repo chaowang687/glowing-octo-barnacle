@@ -27,10 +27,19 @@ public class GameFlowManager : MonoBehaviour
     public TextMeshProUGUI popupText;
     public Animator popupAnimator; // 弹窗的动画组件
     
+    [Header("结算页面设置")]
+    public GameObject victoryPanel; // 胜利结算页
+    public GameObject defeatPanel;  // 失败结算页
+    public TextMeshProUGUI victoryTitleText;
+    public TextMeshProUGUI defeatTitleText;
+    public Button victoryContinueButton;
+    public Button defeatRestartButton;
+    public Button defeatMainMenuButton;
+    
     [Header("动画时长设置")]
     public float popupShowDuration = 0.8f;  // 弹窗显示总时长
-    public float showAnimDuration = 2.2f;   // 入场动画时长
-    public float hideAnimDuration = 0.6f;   // 出场动画时长
+    public float showAnimDuration = 0.3f;   // 入场动画时长
+    public float hideAnimDuration = 0.3f;   // 出场动画时长
     
     private CanvasGroup popupCanvasGroup; 
     private CharacterManager characterManager;
@@ -70,6 +79,9 @@ public class GameFlowManager : MonoBehaviour
 
             turnPopup.SetActive(false);
         }
+        
+        // 初始化结算页面
+        InitializeResultPanels();
     }
 
     private void Start()
@@ -81,7 +93,212 @@ public class GameFlowManager : MonoBehaviour
     {
         yield return null; 
         characterManager = CharacterManager.Instance;
+        
+        // 监听战斗结束事件
+        if (characterManager != null)
+        {
+            // 这里假设CharacterManager有战斗结束事件
+            // 如果没有，你需要在其他地方触发结算页面
+        }
     }
+
+    /// <summary>
+    /// 初始化结算页面
+    /// </summary>
+    private void InitializeResultPanels()
+    {
+        // 隐藏所有结算页面
+        if (victoryPanel != null) victoryPanel.SetActive(false);
+        if (defeatPanel != null) defeatPanel.SetActive(false);
+        
+        // 设置按钮事件
+        if (victoryContinueButton != null)
+        {
+            victoryContinueButton.onClick.RemoveAllListeners();
+            victoryContinueButton.onClick.AddListener(OnVictoryContinue);
+        }
+        
+        if (defeatRestartButton != null)
+        {
+            defeatRestartButton.onClick.RemoveAllListeners();
+            defeatRestartButton.onClick.AddListener(OnDefeatRestart);
+        }
+        
+        if (defeatMainMenuButton != null)
+        {
+            defeatMainMenuButton.onClick.RemoveAllListeners();
+            defeatMainMenuButton.onClick.AddListener(OnDefeatMainMenu);
+        }
+    }
+
+    #region 胜利/失败结算
+
+    /// <summary>
+    /// 显示胜利结算页面
+    /// </summary>
+    public void ShowVictoryPanel(string title = "战斗胜利！")
+    {
+        if (victoryPanel == null)
+        {
+            Debug.LogWarning("[GameFlowManager] 胜利结算面板未设置！");
+            return;
+        }
+        
+        StartCoroutine(VictorySequence(title));
+    }
+    
+    private IEnumerator VictorySequence(string title)
+    {
+        // 等待一小段时间，让战斗动画播放完成
+        yield return new WaitForSeconds(1f);
+        
+        // 显示胜利标题
+        if (victoryTitleText != null) victoryTitleText.text = title;
+        
+        // 激活面板并播放入场动画
+        victoryPanel.SetActive(true);
+        
+        // 如果有动画组件，播放动画
+        Animator victoryAnimator = victoryPanel.GetComponent<Animator>();
+        if (victoryAnimator != null)
+        {
+            victoryAnimator.SetTrigger("Show");
+            yield return new WaitForSeconds(0.5f);
+        }
+        else
+        {
+            // 使用DOTween作为备用
+            CanvasGroup victoryCanvas = victoryPanel.GetComponent<CanvasGroup>();
+            if (victoryCanvas == null) victoryCanvas = victoryPanel.AddComponent<CanvasGroup>();
+            
+            victoryCanvas.alpha = 0f;
+            victoryCanvas.DOFade(1f, 0.5f).SetEase(Ease.OutQuad);
+            yield return new WaitForSeconds(0.5f);
+        }
+        
+        // 暂停游戏或阻止其他输入
+        Time.timeScale = 0f;
+    }
+    
+    /// <summary>
+    /// 显示失败结算页面
+    /// </summary>
+    public void ShowDefeatPanel(string title = "战斗失败...")
+    {
+        if (defeatPanel == null)
+        {
+            Debug.LogWarning("[GameFlowManager] 失败结算面板未设置！");
+            return;
+        }
+        
+        StartCoroutine(DefeatSequence(title));
+    }
+    
+    private IEnumerator DefeatSequence(string title)
+    {
+        // 等待一小段时间，让战斗动画播放完成
+        yield return new WaitForSeconds(1f);
+        
+        // 显示失败标题
+        if (defeatTitleText != null) defeatTitleText.text = title;
+        
+        // 激活面板并播放入场动画
+        defeatPanel.SetActive(true);
+        
+        // 如果有动画组件，播放动画
+        Animator defeatAnimator = defeatPanel.GetComponent<Animator>();
+        if (defeatAnimator != null)
+        {
+            defeatAnimator.SetTrigger("Show");
+            yield return new WaitForSeconds(0.5f);
+        }
+        else
+        {
+            // 使用DOTween作为备用
+            CanvasGroup defeatCanvas = defeatPanel.GetComponent<CanvasGroup>();
+            if (defeatCanvas == null) defeatCanvas = defeatPanel.AddComponent<CanvasGroup>();
+            
+            defeatCanvas.alpha = 0f;
+            defeatCanvas.DOFade(1f, 0.5f).SetEase(Ease.OutQuad);
+            yield return new WaitForSeconds(0.5f);
+        }
+        
+        // 暂停游戏或阻止其他输入
+        Time.timeScale = 0f;
+    }
+    
+    /// <summary>
+    /// 胜利后继续游戏
+    /// </summary>
+    private void OnVictoryContinue()
+    {
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        // 隐藏胜利面板
+        if (victoryPanel != null) victoryPanel.SetActive(false);
+        
+        // 触发胜利后的事件（例如：加载下一个关卡、显示奖励等）
+        Debug.Log("玩家选择继续游戏");
+        
+        // 这里可以添加更多逻辑，例如：
+        // 1. 显示奖励界面
+        // 2. 加载下一个关卡
+        // 3. 返回地图界面
+    }
+    
+    /// <summary>
+    /// 失败后重新开始
+    /// </summary>
+    private void OnDefeatRestart()
+    {
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        // 隐藏失败面板
+        if (defeatPanel != null) defeatPanel.SetActive(false);
+        
+        // 重新开始当前关卡
+        Debug.Log("玩家选择重新开始");
+        
+        // 这里可以添加重新开始游戏的逻辑，例如：
+        // 1. 重新加载当前场景
+        // 2. 重置玩家状态
+        // 3. 重新生成敌人
+    }
+    
+    /// <summary>
+    /// 返回主菜单
+    /// </summary>
+    private void OnDefeatMainMenu()
+    {
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        // 隐藏失败面板
+        if (defeatPanel != null) defeatPanel.SetActive(false);
+        
+        // 返回主菜单
+        Debug.Log("玩家选择返回主菜单");
+        
+        // 这里可以添加返回主菜单的逻辑，例如：
+        // 1. 加载主菜单场景
+        // 2. 重置游戏状态
+    }
+    
+    /// <summary>
+    /// 隐藏所有结算页面（用于重新开始等情况）
+    /// </summary>
+    public void HideAllResultPanels()
+    {
+        if (victoryPanel != null) victoryPanel.SetActive(false);
+        if (defeatPanel != null) defeatPanel.SetActive(false);
+        
+        // 确保时间恢复正常
+        Time.timeScale = 1f;
+    }
+
+    #endregion
 
     #region 弹窗逻辑 (优化版)
 
@@ -141,7 +358,6 @@ public class GameFlowManager : MonoBehaviour
             
             // 触发入场动画
             popupAnimator.SetTrigger(ShowHash);
-            Debug.Log($"[UI动画] 显示: {popupText.text}");
             
             // 等待入场动画完成
             yield return new WaitForSeconds(showAnimDuration);
@@ -160,7 +376,6 @@ public class GameFlowManager : MonoBehaviour
         if (popupAnimator != null && popupAnimator.runtimeAnimatorController != null)
         {
             popupAnimator.SetTrigger(HideHash);
-            Debug.Log($"[UI动画] 隐藏");
             
             // 等待出场动画完成
             yield return new WaitForSeconds(hideAnimDuration);

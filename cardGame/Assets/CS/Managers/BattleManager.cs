@@ -1,4 +1,3 @@
-
 using UnityEngine.UI;
 using UnityEngine;
 using System.Collections.Generic;
@@ -586,18 +585,62 @@ private IEnumerator StartEnemyTurn()
     /// Responsible for final object destruction.
     /// </summary>
     public void HandleDeathAnimationComplete(GameObject deadCharacterObject)
+{
+    // List removal and state cleanup done in HandleDyingCharacterCleanup.
+    // This method handles the final destruction of the GameObject.
+    
+    if (deadCharacterObject == null)
     {
-        // List removal and state cleanup done in HandleDyingCharacterCleanup.
-        // This method handles the final destruction of the GameObject.
+        Debug.LogWarning("HandleDeathAnimationComplete: deadCharacterObject is null");
+        return;
+    }
+    
+    Debug.Log($"[Death Animation Complete] Destroying object: {deadCharacterObject.name}");
+    
+    // 获取角色组件
+    CharacterBase deadCharacter = deadCharacterObject.GetComponent<CharacterBase>();
+    if (deadCharacter != null)
+    {
+        Debug.Log($"[死亡动画完成] {deadCharacter.characterName} 的动画播放完毕");
         
-        if (deadCharacterObject == null)
+        // 从管理器中移除角色
+        if (characterManager != null)
         {
-            Debug.LogWarning("HandleDeathAnimationComplete: deadCharacterObject is null");
-            return;
+            characterManager.UnregisterCharacter(deadCharacter);
         }
         
-        Debug.Log($"[Death Animation Complete] Destroying object: {deadCharacterObject.name}");
-        Destroy(deadCharacterObject);
+        // ⭐⭐ 关键修改：在死亡动画完成后检查战斗是否结束
+        // 延迟一小段时间，确保角色完全移除
+        StartCoroutine(CheckBattleEndAfterDeathAnimation());
+    }
+    
+    // 销毁游戏对象
+    Destroy(deadCharacterObject);
+}
+   private IEnumerator CheckBattleEndAfterDeathAnimation()
+    {
+        // 等待一帧，确保角色已经正确从管理器中移除
+        yield return null;
+        
+        // 现在检查战斗是否结束
+        CheckBattleEndDelayed();
+    }
+
+
+    public void CheckBattleEndDelayed()
+    {
+        if (IsBattleOver) return;
+        
+        StartCoroutine(CheckBattleEndDelayedCoroutine());
+    }
+
+    private IEnumerator CheckBattleEndDelayedCoroutine()
+    {
+        // 等待一小段时间，确保所有死亡动画都开始播放
+        yield return new WaitForSeconds(0.5f);
+        
+        // 然后检查战斗是否结束
+        CheckBattleEnd();
     }
     
     /// <summary>
@@ -951,6 +994,19 @@ private IEnumerator StartEnemyTurn()
 
     public void AnimatePlayCard(CardData card, Transform cardTransform, Transform targetTransform, Transform discardPileTransform)
     {
+        if (CheckBattleEnd())
+        {
+            // 如果战斗结束，直接返回，不执行后续动画
+            // 销毁卡牌对象
+            if (cardTransform != null && cardTransform.gameObject != null)
+            {
+                Destroy(cardTransform.gameObject);
+            }
+            
+            // 解锁并直接返回
+            isCardBeingPlayed = false;
+            return;
+        }
         if (cardTransform == null || discardPileTransform == null)
         {
             Debug.LogError("AnimatePlayCard: cardTransform or discardPileTransform is null");
@@ -1208,11 +1264,17 @@ public void EndBattle(bool isVictory)
 
     Debug.Log($"[战斗结束] 结果: {(isVictory ? "胜利" : "失败")}");
 
-    // 3. UI 表现：触发弹窗
+    // 3. UI 表现：触发结算页面
     if (GameFlowManager.Instance != null)
     {
-        string msg = isVictory ? "Player Win" : "fail";
-        GameFlowManager.Instance.ShowPopup(msg, 3.0f);
+        if (isVictory)
+        {
+            GameFlowManager.Instance.ShowVictoryPanel("Victory");
+        }
+        else
+        {
+            GameFlowManager.Instance.ShowDefeatPanel("The battle failed");
+        }
     }
 
     // 4. 数据结算：发放奖励并通知全局管理器
