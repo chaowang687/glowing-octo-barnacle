@@ -82,6 +82,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/RewardManager.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/DeathRelay.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryDragDetector.cs" />
+    <Compile Include="Assets/Map/UILineRenderer.cs" />
     <Compile Include="Assets/CS/对战AI/AI蓝图接口/IEnemyIntentStrategy.cs" />
     <Compile Include="Assets/CS/CardSystem/CardAction.cs" />
     <Compile Include="Assets/CS/EnemyEncounterData.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Assets/CS/CardSystem/CardDataEnums.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/InventoryInfoManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/ItemSlotUI.cs" />
+    <Compile Include="Assets/Map/MapNode.cs" />
     <Compile Include="Assets/CS2/PlayerPiece.cs" />
     <Compile Include="Assets/CS3/FollowCamer.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAI.cs" />
@@ -104,6 +106,7 @@
     <Compile Include="Assets/CS/CardSystem/CardVisualManager.cs" />
     <Compile Include="Assets/CS/动画控制/AnimationDebugger.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
+    <Compile Include="Assets/Map/SceneController.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootItemData.cs" />
     <Compile Include="Assets/CS/Managers/SimpleInventory.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
@@ -111,6 +114,7 @@
     <Compile Include="Assets/CS4/InfiniteCarouselController.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/CharacterBase.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
+    <Compile Include="Assets/Map/EncounterData.cs" />
     <Compile Include="Assets/CS/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
     <Compile Include="Assets/CS/动画控制/CharacterAnimatorController.cs" />
@@ -123,6 +127,7 @@
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Enemy.cs" />
     <Compile Include="Assets/CS2/PlayerStats.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Hero.cs" />
+    <Compile Include="Assets/Map/NodeType.cs" />
     <Compile Include="Assets/CS/Managers/BattleManager.cs" />
     <Compile Include="Assets/CS3/ClockUIController.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/EquipmentData.cs" />
@@ -138,7 +143,10 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryEquipmentManager.cs" />
     <Compile Include="Assets/CS3/TimeOfDaySystem.cs" />
     <Compile Include="Assets/CS4/WorldSegmentItem.cs" />
+    <Compile Include="Assets/Map/StraightLineRenderer.cs" />
+    <Compile Include="Assets/Map/SceneManager.cs" />
     <Compile Include="Assets/CS2/MapGridManager.cs" />
+    <Compile Include="Assets/Map/MapManager.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryTester.cs" />
     <Compile Include="Assets/CS2/DiceController.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyDisplay.cs" />
@@ -146,6 +154,7 @@
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootAnimationManager.cs" />
+    <Compile Include="Assets/Map/ContinueButtonUI.cs" />
     <Compile Include="Assets/CS/DestroyListener.cs" />
     <Compile Include="Assets/CS/LootPopup.cs" />
     <Compile Include="Assets/CS3/WorldTileEditor.cs" />

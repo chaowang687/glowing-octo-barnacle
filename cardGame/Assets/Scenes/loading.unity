@@ -673,7 +673,7 @@ MonoBehaviour:
   totalSegments: 30
   radius: 19
   overlapFactor: 1.02
-  degreesPerSecond: 45
+  degreesPerSecond: 8
 --- !u!114 &830848084802275268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1297,8 +1297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   segmentPrefab: {fileID: 4624993865942725934, guid: de3586079aeeb47019b59885c2255fe1, type: 3}
   themeSO: {fileID: 11400000, guid: 241b8e466aae94f33a96b77af2b799ea, type: 2}
-  totalSegments: 30
-  radius: 19
+  controller: {fileID: 0}
 --- !u!1 &4244503691219415035
 GameObject:
   m_ObjectHideFlags: 0
