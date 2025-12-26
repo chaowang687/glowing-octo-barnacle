@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb77a09f6ccf749918fbf7af79eee231, type: 3}
+  m_Name: DefaultMapConfig
+  m_EditorClassIdentifier: 
+  mapName: chapter one
+  totalLayers: 5
+  layers: 5
+  nodesPerLayer: 3
+  nodeSpacing: {x: 200, y: 150}
+  nodeStartOffset: {x: -200, y: 0}
+  nodeWeights:
+  - nodeType: 0
+    weight: 60
+  - nodeType: 2
+    weight: 15
+  - nodeType: 3
+    weight: 10
+  - nodeType: 4
+    weight: 10
+  - nodeType: 1
+    weight: 5
+  combatGoldReward: 10
+  eliteGoldReward: 25
+  bossGoldReward: 100
+  restHealPercentage: 30
+  eventMinGold: -5
+  eventMaxGold: 20
+  healthLossPercentage: 0.25
+  startHealth: 30
+  startMaxHealth: 30
+  startGold: 100
+  startDeck:
+    cardIds:
+    - Strike
+    - Defend
+    - Strike
+    - Defend
+    - Strike
+    maxSize: 20
+    currentSize: 5
+  mapSceneName: Map
+  battleSceneName: BattleScene
+  shopSceneName: ShopScene
+  eventSceneName: EventScene
+  normalEnemies:
+  - {fileID: 11400000, guid: 53d7366cb3a464337a69241d1da4f5d9, type: 2}
+  eliteEnemies:
+  - {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
+  bossEnemies:
+  - {fileID: 11400000, guid: b4c07e31a9ba049769d6b39fa146348f, type: 2}
+  connectToAllNextLayer: 1
+  maxConnectionsPerNode: 3

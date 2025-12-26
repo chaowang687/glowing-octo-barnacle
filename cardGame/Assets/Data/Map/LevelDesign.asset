@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baaf132d4d1c54b3ab105968796df82f, type: 3}
+  m_Name: LevelDesign
+  m_EditorClassIdentifier: 
+  levelName: 
+  levelNumber: 0
+  totalNodes: 10
+  presetNodes: []
+  randomNodePool:
+    minRandomNodes: 3
+    maxRandomNodes: 6
+    nodeWeights: []
+  bossNode:
+    nodeId: 
+    nodeType: 0
+    fixedEncounterData:
+      nodeType: 0
+      currentLayer: 1
+      totalLayers: 16
+      isElite: 0
+      isBoss: 0
+      encounterIndex: 0
+      enemyConfigs: []
+      goldReward: 0
+      healthReward: 0
+      cardRewards: []
+      relicReward: 
+    isElite: 0
+    guaranteedPosition: -1
+    isRequired: 1
+  forceBossAtEnd: 1
+  forceStartNodeType: 1
+  startNodeType: 0
+  minConnectionsPerNode: 1
+  maxConnectionsPerNode: 3
+  allowBackwardConnections: 0

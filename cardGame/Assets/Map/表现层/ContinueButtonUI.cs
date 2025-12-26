@@ -31,28 +31,51 @@ namespace SlayTheSpireMap
             }
         }
         
-        void Update()
+       
+        void OnEnable()
         {
-            UpdateButtonUI();
+            // 订阅事件：当玩家移动到新节点时刷新按钮
+            MapManager.OnCurrentNodeChanged += HandleCurrentNodeChanged;
         }
-        
-        void UpdateButtonUI()
+
+        void OnDisable()
         {
-            if (MapManager.Instance == null) return;
-            
-            // 更新节点信息文本
-            if (nodeInfoText != null)
+            MapManager.OnCurrentNodeChanged -= HandleCurrentNodeChanged;
+        }
+
+        
+        private void HandleCurrentNodeChanged(MapNodeData newNode)
+        {
+            RefreshButtonUI(newNode);
+        }
+
+        private void RefreshButtonUI(MapNodeData node)
+        {
+            if (node == null) 
             {
-                nodeInfoText.text = MapManager.Instance.GetCurrentNodeInfo();
+                // 如果没有当前节点，可能需要隐藏按钮或显示默认文本
+                if (nodeInfoText != null) nodeInfoText.text = "请选择起点";
+                return;
             }
-            
-            // 根据当前节点类型更新按钮文本
+
+            // 更新节点信息
+            if (nodeInfoText != null)
+                nodeInfoText.text = MapManager.Instance.GetCurrentNodeInfo();
+
+            // 更新按钮文本
             if (buttonText != null)
             {
-                // 这里可以根据需要自定义不同节点类型的按钮文本
-                buttonText.text = defaultText;
+                switch(node.nodeType)
+                {
+                    case NodeType.Boss: buttonText.text = bossText; break;
+                    case NodeType.Combat: buttonText.text = combatText; break;
+                    case NodeType.Elite: buttonText.text = eliteText; break;
+                    default: buttonText.text = defaultText; break;
+                }
             }
+            
         }
+        
         
         // 设置按钮交互状态
         public void SetInteractable(bool interactable)

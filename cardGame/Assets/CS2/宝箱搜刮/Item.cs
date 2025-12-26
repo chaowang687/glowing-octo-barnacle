@@ -125,7 +125,7 @@ namespace ScavengingGame
             }
             
             // 查找库存管理器
-            InventoryManager inventory = FindObjectOfType<InventoryManager>();
+            InventoryManager inventory = FindFirstObjectByType<InventoryManager>();
             if (inventory == null)
             {
                 Debug.LogError("找不到 InventoryManager！");

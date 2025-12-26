@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d5ff74d3b9734c86b442b3bca05d74e, type: 3}
+  m_Name: NewMapNode
+  m_EditorClassIdentifier: 
+  nodeId: 
+  nodeName: 
+  nodeType: 0
+  position: {x: 0, y: 0}
+  useRandomEnemy: 1
+  fixedEncounterData:
+    nodeType: 0
+    currentLayer: 1
+    totalLayers: 16
+    isElite: 0
+    isBoss: 0
+    encounterIndex: 0
+    enemyConfigs: []
+    goldReward: 0
+    healthReward: 0
+    cardRewards: []
+    relicReward: 
+  baseGoldReward: 10
+  eliteGoldReward: 25
+  bossGoldReward: 100
+  shopInventory: {fileID: 0}
+  eventData: {fileID: 0}

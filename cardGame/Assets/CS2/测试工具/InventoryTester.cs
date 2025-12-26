@@ -247,7 +247,7 @@ namespace ScavengingGame.Tests
             }
             
             // 尝试从场景中查找
-            var inventoryManager = FindObjectOfType<InventoryManager>();
+            var inventoryManager = FindFirstObjectByType<InventoryManager>();
             if (inventoryManager != null)
             {
                 _service = inventoryManager as IInventoryService;
