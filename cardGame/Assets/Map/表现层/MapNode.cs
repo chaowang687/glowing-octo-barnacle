@@ -50,6 +50,9 @@ namespace SlayTheSpireMap
         /// </summary>
         public void Initialize(MapNodeData data)
         {
+            this.linkedNodeData = data;
+            this.nodeType = data.nodeType; // 确保这一行存在
+            UpdateVisuals(); // 换图
             if (data == null)
             {
                 Debug.LogError("UIMapNode: 初始化数据为空");
@@ -118,47 +121,43 @@ namespace SlayTheSpireMap
         
         // 更新节点外观
         public void UpdateVisuals()
-        {
-            // 设置图标
-            switch(nodeType)
-            {
-                case NodeType.Combat:
-                    if (combatIcon != null) nodeIcon.sprite = combatIcon;
-                    break;
-                case NodeType.Elite:
-                    if (eliteIcon != null) nodeIcon.sprite = eliteIcon;
-                    break;
-                case NodeType.Event:
-                    if (eventIcon != null) nodeIcon.sprite = eventIcon;
-                    break;
-                case NodeType.Shop:
-                    if (shopIcon != null) nodeIcon.sprite = shopIcon;
-                    break;
-                case NodeType.Rest:
-                    if (restIcon != null) nodeIcon.sprite = restIcon;
-                    break;
-                case NodeType.Boss:
-                    if (bossIcon != null) nodeIcon.sprite = bossIcon;
-                    break;
-            }
-            
-            // 设置高亮和访问状态
-            if (selectableHighlight != null)
-                selectableHighlight.SetActive(isSelectable && !isVisited);
-            
-            if (visitedOverlay != null)
-                visitedOverlay.SetActive(isVisited);
-            
-            // 调整颜色
-            if (nodeIcon != null)
-                nodeIcon.color = isVisited ? Color.gray : Color.white;
-            
-            // 如果是当前节点且有动画，确保动画运行
-            if (isCurrentNode && currentAnimation == null)
-            {
-                StartCurrentNodeAnimation();
-            }
-        }
+{
+    if (nodeIcon == null) return;
+
+    // 1. 统一处理图标切换
+    Sprite targetSprite = combatIcon; // 默认为战斗图
+    switch (nodeType)
+    {
+        case NodeType.Elite: targetSprite = eliteIcon; break;
+        case NodeType.Event: targetSprite = eventIcon; break;
+        case NodeType.Shop:  targetSprite = shopIcon;  break;
+        case NodeType.Rest:  targetSprite = restIcon;  break;
+        case NodeType.Boss:  targetSprite = bossIcon;  break;
+    }
+    
+    // 如果对应的图标没在面板里配置，给出警告
+    if (targetSprite == null) {
+        Debug.LogWarning($"{gameObject.name} 的 {nodeType} 图标未在 Inspector 中分配！");
+    } else {
+        nodeIcon.sprite = targetSprite;
+    }
+
+    // 2. 设置高亮和访问状态
+    if (selectableHighlight != null)
+        selectableHighlight.SetActive(isSelectable && !isVisited);
+    
+    if (visitedOverlay != null)
+        visitedOverlay.SetActive(isVisited);
+    
+    // 3. 视觉状态：变灰表示已访问，半透明表示不可选
+    if (isVisited) {
+        nodeIcon.color = new Color(0.5f, 0.5f, 0.5f, 1f); // 变灰
+    } else if (isSelectable) {
+        nodeIcon.color = Color.white; // 正常高亮
+    } else {
+        nodeIcon.color = new Color(1f, 1f, 1f, 0.4f); // 半透明（不可选）
+    }
+}
         
         // 设置节点可选择
         public void SetSelectable(bool selectable)

@@ -8,38 +8,51 @@ namespace SlayTheSpireMap
     {
         public MapNodeData[] GenerateMap(MapLayoutSO layout)
         {
-            if (layout == null || layout.nodePositions.Count == 0)
-            {
-                Debug.LogError("地图布局无效！");
-                return new MapNodeData[0];
-            }
+            List<MapNodeData> nodesResult = new List<MapNodeData>();
             
-            List<MapNodeData> nodes = new List<MapNodeData>();
-            
-            // 1. 创建节点
+            // 1. 创建所有节点
             for (int i = 0; i < layout.nodePositions.Count; i++)
             {
-                var nodePos = layout.nodePositions[i];
-                MapNodeData node = CreateNode(i, nodePos, layout);
-                nodes.Add(node);
+                MapNodeData newNode = CreateNode(i, layout.nodePositions[i], layout);
+                nodesResult.Add(newNode);
             }
             
-            // 2. 创建连接
-            LinkDataNodes(nodes, layout);
+            // 2. 关键：连接节点
+            LinkDataNodes(nodesResult, layout);
             
-            return nodes.ToArray();
+            // 3. 解锁起始节点
+            foreach (var node in nodesResult)
+            {
+                if (node.isStartNode)
+                {
+                    node.isUnlocked = true;
+                    Debug.Log($"[MapGenerator] 已解锁起始节点: {node.nodeId}");
+                }
+            }
+            
+            return nodesResult.ToArray();
         }
+
         
        // MapGenerator.cs 优化
         private MapNodeData CreateNode(int index, MapLayoutSO.ManualNodePosition nodePos, MapLayoutSO layout)
         {
             MapNodeData node = new MapNodeData();
-            node.nodeId = $"node_{index}"; // 稳定的ID用于存档
+            node.nodeId = $"node_{index}";
             node.position = nodePos.position;
-            // 优先使用预设的战斗数据，如果没有，再动态创建一个基础的
-            node.encounterData = nodePos.presetEncounter != null ? 
-                                nodePos.presetEncounter : 
-                                CreateEncounterData(node);
+            node.nodeName = GetNodeName(index, nodePos, layout); // 添加节点名称
+            
+            // 关键：设置节点类型
+            node.nodeType = GetNodeType(index, nodePos, layout);
+            
+            // 设置精英/Boss标记
+            node.isElite = nodePos.isElite;
+            node.isBoss = nodePos.isBoss;
+            node.isStartNode = nodePos.isStartNode;
+            
+            // 设置战斗数据
+            node.encounterData = nodePos.presetEncounter ?? CreateEncounterData(node);
+            
             return node;
         }
         
@@ -128,15 +141,21 @@ namespace SlayTheSpireMap
         
         private NodeType GetNodeType(int index, MapLayoutSO.ManualNodePosition nodePos, MapLayoutSO layout)
         {
+            // 1. 如果有固定类型，使用固定类型
             if (nodePos.isFixedType) return nodePos.nodeType;
+            
+            // 2. 如果是Boss或精英，返回对应类型
             if (nodePos.isBoss) return NodeType.Boss;
             if (nodePos.isElite) return NodeType.Elite;
+            if (nodePos.isStartNode) return NodeType.Combat; // 起始点通常是战斗
+            
+            // 3. 如果没有预设，使用layout中的类型分布
             return layout.GetNodeType(index);
         }
         
         private EncounterData CreateEncounterData(MapNodeData node)
         {
-            EncounterData data = new EncounterData();
+            EncounterData data = ScriptableObject.CreateInstance<EncounterData>();
             data.nodeType = node.nodeType;
             data.isElite = node.isElite;
             data.isBoss = node.isBoss;

@@ -18,6 +18,7 @@ namespace SlayTheSpireMap
 
         [Header("连接关系")]
         // 该节点指向的下游节点列表
+        [System.NonSerialized] 
         public List<MapNodeData> connectedNodes = new List<MapNodeData>();
 
         [Header("实时状态")]
@@ -38,9 +39,7 @@ namespace SlayTheSpireMap
         /// </summary>
         public MapNodeData() { }
 
-        /// <summary>
-        /// 添加下游连接
-        /// </summary>
+       
         public void AddConnectedNode(MapNodeData targetNode)
         {
             if (targetNode != null && !connectedNodes.Contains(targetNode))
@@ -49,12 +48,6 @@ namespace SlayTheSpireMap
             }
         }
         
-        /// <summary>
-        /// 检查某个节点是否是本节点的下游
-        /// </summary>
-        public bool IsConnectedTo(MapNodeData other)
-        {
-            return connectedNodes.Contains(other);
-        }
+        
     }
 }

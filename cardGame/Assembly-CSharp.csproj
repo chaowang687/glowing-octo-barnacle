@@ -75,6 +75,7 @@
     <Compile Include="Assets/CS2/ScriptableObject/EnemyEncounterData_q.cs" />
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
+    <Compile Include="Assets/Map/工具类/MapScrollController.cs" />
     <Compile Include="Assets/CS/动画控制/GameFlowManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Assets/Map/逻辑层/MapManager.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/CharacterBase.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
+    <Compile Include="Assets/Map/逻辑层/PlayerStateManager.cs" />
     <Compile Include="Assets/CS/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
     <Compile Include="Assets/CS/动画控制/CharacterAnimatorController.cs" />
@@ -163,7 +165,6 @@
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/Map/数据层/EncounterData.cs" />
-    <Compile Include="Assets/Map/数据层/PlayerStateManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootAnimationManager.cs" />
     <Compile Include="Assets/CS/DestroyListener.cs" />
     <Compile Include="Assets/CS/LootPopup.cs" />
