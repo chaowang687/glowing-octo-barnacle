@@ -22,22 +22,8 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 1
-  - position: {x: 0, y: 200}
-    nodeType: 4
-    isFixedType: 0
-    presetEncounter: {fileID: 0}
-    isBoss: 0
-    isElite: 0
-    isStartNode: 0
   - position: {x: 0, y: 300}
-    nodeType: 1
-    isFixedType: 0
-    presetEncounter: {fileID: 0}
-    isBoss: 0
-    isElite: 0
-    isStartNode: 0
-  - position: {x: 0, y: 400}
-    nodeType: 2
+    nodeType: 4
     isFixedType: 0
     presetEncounter: {fileID: 0}
     isBoss: 0
@@ -50,14 +36,28 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 600}
+  - position: {x: 0, y: 700}
+    nodeType: 2
+    isFixedType: 0
+    presetEncounter: {fileID: 0}
+    isBoss: 0
+    isElite: 0
+    isStartNode: 0
+  - position: {x: 0, y: 900}
+    nodeType: 1
+    isFixedType: 0
+    presetEncounter: {fileID: 0}
+    isBoss: 0
+    isElite: 0
+    isStartNode: 0
+  - position: {x: 0, y: 1100}
     nodeType: 4
     isFixedType: 0
     presetEncounter: {fileID: 0}
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 600}
+  - position: {x: 0, y: 1300}
     nodeType: 4
     isFixedType: 0
     presetEncounter: {fileID: 0}

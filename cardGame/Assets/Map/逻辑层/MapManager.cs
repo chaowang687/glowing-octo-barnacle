@@ -173,7 +173,11 @@ namespace SlayTheSpireMap
         }
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            sceneTransition.OnSceneLoaded(scene, ui);
+            if (scene.name == "MapScene")
+            {
+                // 重新生成地图？或者刷新UI？
+                // 但是注意，MapManager的Start也会执行，所以这里可能需要避免重复初始化
+            }
         }
         
         // 公共接口

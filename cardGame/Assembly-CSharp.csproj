@@ -70,6 +70,7 @@
     <Compile Include="Assets/CS2/宝箱搜刮/ChestLootData.cs" />
     <Compile Include="Assets/CS3/资源/LampController.cs" />
     <Compile Include="Assets/Map/逻辑层/UIManager.cs" />
+    <Compile Include="Assets/玩家/GameDataManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestInteractable.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
     <Compile Include="Assets/CS2/ScriptableObject/EnemyEncounterData_q.cs" />
@@ -105,7 +106,7 @@
     <Compile Include="Assets/CS4/ThemeSequenceSO.cs" />
     <Compile Include="Assets/Map/逻辑层/SaveLoadManager.cs" />
     <Compile Include="Assets/Map/数据层/PlayerDeck.cs" />
-    <Compile Include="Assets/Map/LevelDesignSO.cs" />
+    <Compile Include="Assets/Map/数据层/LevelDesignSO.cs" />
     <Compile Include="Assets/Map/数据层/MapNodeDataSO.cs" />
     <Compile Include="Assets/CS4/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS/CardSystem/Enums.cs" />

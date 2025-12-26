@@ -70,8 +70,6 @@ namespace SlayTheSpireMap
 
         private void HandleNodeEffect(MapNodeData node, MapManager mapManager)
         {
-            Debug.Log($"[Map] 进入节点类型: {node.nodeType}");
-
             switch (node.nodeType)
             {
                 case NodeType.Combat:
@@ -81,15 +79,15 @@ namespace SlayTheSpireMap
                     break;
 
                 case NodeType.Rest:
-                    ExecuteRest(node, mapManager);
+                    SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
                     break;
 
                 case NodeType.Shop:
-                    // 逻辑略：跳转商店界面
+                    SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
                     break;
 
                 case NodeType.Event:
-                    // 逻辑略：触发随机事件
+                    SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
                     break;
             }
         }
@@ -104,7 +102,7 @@ namespace SlayTheSpireMap
             };
             
             mapManager.saveLoad.SaveBattleData(battleData);
-            mapManager.sceneTransition.GoToBattleScene();
+            SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
         }
 
         private void ExecuteRest(MapNodeData node, MapManager mapManager)
