@@ -120,42 +120,59 @@ namespace SlayTheSpireMap
         }
         
         // 更新节点外观
-        public void UpdateVisuals()
+   public void UpdateVisuals()
 {
-    if (nodeIcon == null) return;
+    if (linkedNodeData == null || GameDataManager.Instance == null) return;
+    // 【新增】强制同步状态，否则 isSelectable 永远是 false
+    isSelectable = linkedNodeData.isUnlocked;
+    isVisited = linkedNodeData.isCompleted;
 
-    // 1. 统一处理图标切换
-    Sprite targetSprite = combatIcon; // 默认为战斗图
-    switch (nodeType)
+    // 只要解锁了或者是打过的，图标就不能是置灰的（保留你之前的图标逻辑）
+    if (nodeIcon != null)
     {
-        case NodeType.Elite: targetSprite = eliteIcon; break;
-        case NodeType.Event: targetSprite = eventIcon; break;
-        case NodeType.Shop:  targetSprite = shopIcon;  break;
-        case NodeType.Rest:  targetSprite = restIcon;  break;
-        case NodeType.Boss:  targetSprite = bossIcon;  break;
+        nodeIcon.color = (isSelectable || isVisited) ? Color.white : Color.gray;
     }
-    
-    // 如果对应的图标没在面板里配置，给出警告
-    if (targetSprite == null) {
-        Debug.LogWarning($"{gameObject.name} 的 {nodeType} 图标未在 Inspector 中分配！");
-    } else {
-        nodeIcon.sprite = targetSprite;
+    // 1. 【核心修复】从全局数据同步状态
+    // 确保 UI 上的 isSelectable 永远跟随全局解锁列表
+    if (GameDataManager.Instance != null)
+    {
+        isSelectable = GameDataManager.Instance.unlockedNodeIds.Contains(linkedNodeData.nodeId);
+        isVisited = GameDataManager.Instance.completedNodeIds.Contains(linkedNodeData.nodeId);
+        
+        // 同时更新数据对象的值，保持一致性
+        linkedNodeData.isUnlocked = isSelectable;
+        linkedNodeData.isCompleted = isVisited;
     }
 
-    // 2. 设置高亮和访问状态
+    // 2. 【状态图标逻辑】根据节点类型设置对应的图标（保留你原本的图标）
+    if (nodeIcon != null)
+    {
+        // 根据类型选择你 Inspector 里赋值的 Sprite
+        switch (nodeType)
+        {
+            case NodeType.Combat: nodeIcon.sprite = combatIcon; break;
+            case NodeType.Elite:  nodeIcon.sprite = eliteIcon; break;
+            case NodeType.Shop:   nodeIcon.sprite = shopIcon; break;
+            case NodeType.Rest:   nodeIcon.sprite = restIcon; break;
+            case NodeType.Event:  nodeIcon.sprite = eventIcon; break;
+            case NodeType.Boss:   nodeIcon.sprite = bossIcon; break;
+        }
+
+        // 3. 【颜色逻辑】仅对 Sprite 进行变色处理
+        // 如果节点已解锁或已访问，显示原色；如果还没轮到，置灰
+        nodeIcon.color = (isSelectable || isVisited) ? Color.white : new Color(0.2f, 0.2f, 0.2f, 0.8f);
+    }
+
+    // 4. 更新高亮框（通常是当前可点的节点在闪烁）
     if (selectableHighlight != null)
+    {
         selectableHighlight.SetActive(isSelectable && !isVisited);
-    
+    }
+
+    // 5. 更新已访问遮罩（打过的节点变暗或打勾）
     if (visitedOverlay != null)
+    {
         visitedOverlay.SetActive(isVisited);
-    
-    // 3. 视觉状态：变灰表示已访问，半透明表示不可选
-    if (isVisited) {
-        nodeIcon.color = new Color(0.5f, 0.5f, 0.5f, 1f); // 变灰
-    } else if (isSelectable) {
-        nodeIcon.color = Color.white; // 正常高亮
-    } else {
-        nodeIcon.color = new Color(1f, 1f, 1f, 0.4f); // 半透明（不可选）
     }
 }
         

@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;  // 添加这一行
 
+using System.Collections.Generic; // 如果需要使用List，添加这行
 namespace SlayTheSpireMap
 {
     public class NodeInteractionManager : MonoBehaviour
@@ -7,27 +9,54 @@ namespace SlayTheSpireMap
         /// <summary>
         /// 当节点在UI上被点击时调用
         /// </summary>
-        public void OnNodeClicked(MapNodeData node, MapManager mapManager)
-        {
-            // 1. 路径与状态校验（核心准入逻辑）
-            if (!IsMoveValid(node, mapManager))
-            {
-                Debug.Log($"[Map] 节点 {node.nodeName} 当前不可访问。");
-                return;
-            }
-            mapManager.ui.UpdateAllUI();
-            // 2. 状态同步：锁定位置并存盘
-            // 只要点击成功，玩家的当前位置就固定了，防止“悔棋”
-            mapManager.currentNode = node;
-            SyncProgressToDisk(mapManager);
+       // NodeInteractionManager.cs
 
-            // 3. 逻辑分发
-            HandleNodeEffect(node, mapManager);
-            
-           
-        
-        }
+// NodeInteractionManager.cs
+public void OnNodeClicked(MapNodeData node, MapManager mapManager)
+{
+    var dataManager = GameDataManager.Instance;
+    
+    // 判定逻辑
+    bool isUnlockedInList = dataManager.unlockedNodeIds.Contains(node.nodeId);
+    bool canAccess = isUnlockedInList || (node.isStartNode && string.IsNullOrEmpty(dataManager.currentNodeId));
 
+    if (!canAccess)
+    {
+        Debug.Log($"[Map] 节点 {node.nodeName} 不可访问。");
+        return; 
+    }
+
+    // --- 执行进入和场景跳转 ---
+    Debug.Log($"[Map] 正在进入: {node.nodeName}");
+
+    // 1. 设置当前节点数据
+    dataManager.currentNodeId = node.nodeId;
+    dataManager.battleNodeId = node.nodeId;
+    dataManager.battleEncounterData = node.encounterData;
+    dataManager.SaveGameData(); // 必须保存，否则跳回来数据就丢了
+
+    // 2. 场景跳转
+    if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
+    {
+        SceneManager.LoadScene("BattleScene"); // 确保你的场景名叫这个
+    }
+}
+private void EnterActualNode(MapNodeData node, MapManager mapManager)
+{
+    Debug.Log($"[Map] 成功进入节点: {node.nodeName}");
+
+    // 设置全局数据，让系统知道我们“正在”打这一关
+    GameDataManager.Instance.currentNodeId = node.nodeId;
+    GameDataManager.Instance.battleNodeId = node.nodeId;
+    GameDataManager.Instance.battleEncounterData = node.encounterData;
+
+    // 跳转场景
+    if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("BattleScene");
+    }
+    // ... 其他节点跳转逻辑
+}
         /// <summary>
         /// 简化的合法性判定：只关心“是不是下一步”
         /// </summary>
@@ -60,7 +89,7 @@ namespace SlayTheSpireMap
             if (mapManager.saveLoad != null)
             {
                 // 保存玩家位置，即便不保存血量，也要保证重进游戏时停在地图的这个点上
-                mapManager.saveLoad.LoadMapProgress(
+                mapManager.saveLoad.SaveMapProgress(
                     mapManager.playerState, 
                     mapManager.currentNode, 
                     mapManager.allNodes
@@ -94,15 +123,18 @@ namespace SlayTheSpireMap
 
         private void EnterBattle(MapNodeData node, MapManager mapManager)
         {
-            // 封装最简战斗数据：ID + 具体的遭遇配置
-            var battleData = new BattleData
-            {
-                nodeId = node.nodeId,
-                encounter = node.encounterData 
-            };
+            Debug.Log($"进入战斗: {node.nodeName}");
             
-            mapManager.saveLoad.SaveBattleData(battleData);
-            SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
+            // 保存当前节点到GameDataManager
+            if (GameDataManager.Instance != null)
+            {
+                GameDataManager.Instance.SetCurrentNode(node.nodeId);
+                GameDataManager.Instance.SetBattleData(node.nodeId, node.encounterData);
+                GameDataManager.Instance.SaveGameData(); // 立即保存
+            }
+            
+            // 跳转到战斗场景
+            SceneManager.LoadScene("BattleScene");
         }
 
         private void ExecuteRest(MapNodeData node, MapManager mapManager)

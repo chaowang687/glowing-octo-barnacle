@@ -6,65 +6,65 @@ namespace SlayTheSpireMap
 {
     public class SaveLoadManager : MonoBehaviour
     {
-        // 存档键名
+        // 存档键名 - 必须要有这些常量
         private const string SAVE_KEY_PLAYER = "PlayerState";
         private const string SAVE_KEY_COMPLETED_NODES = "CompletedNodes";
         private const string SAVE_KEY_CURRENT_NODE = "CurrentNodeId";
 
         /// <summary>
-        /// 保存游戏进度
+        /// 保存战斗数据
         /// </summary>
         public void SaveBattleData(BattleData data)
         {
-            // 将战斗数据转为 Json 存入 PlayerPrefs
             string json = JsonUtility.ToJson(data);
             PlayerPrefs.SetString("MapBattle_Data", json);
             PlayerPrefs.Save();
             Debug.Log("[SaveLoad] 战斗数据已临时缓存");
         }
 
-
-
+        /// <summary>
+        /// 加载玩家进度
+        /// </summary>
         public void LoadPlayerProgress(PlayerStateManager playerState, ref MapNodeData currentNode, MapNodeData[] allNodes)
-{
-    // 1. 加载玩家数值和卡组
-    if (PlayerPrefs.HasKey(SAVE_KEY_PLAYER))
-    {
-        string playerJson = PlayerPrefs.GetString(SAVE_KEY_PLAYER);
-        // 这里假设 PlayerStateManager 有一个用于从数据结构恢复的方法
-        JsonUtility.FromJsonOverwrite(playerJson, playerState.GetPlayerState());
-    }
-
-    // 2. 恢复节点完成状态
-    string completedNodesData = PlayerPrefs.GetString(SAVE_KEY_COMPLETED_NODES, "");
-    // 将存储的 ID 字符串转回集合以便快速查询
-    HashSet<string> completedIds = new HashSet<string>(completedNodesData.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries));
-
-    // 3. 恢复当前位置 ID
-    string currentNodeId = PlayerPrefs.GetString(SAVE_KEY_CURRENT_NODE, "");
-
-    foreach (var node in allNodes)
-    {
-        // 如果 ID 在已完成列表中，标记为完成
-        if (completedIds.Contains(node.nodeId))
         {
-            node.isCompleted = true;
-            node.isUnlocked = true;
+            // 1. 加载玩家数值和卡组
+            if (PlayerPrefs.HasKey(SAVE_KEY_PLAYER))
+            {
+                string playerJson = PlayerPrefs.GetString(SAVE_KEY_PLAYER);
+                JsonUtility.FromJsonOverwrite(playerJson, playerState.GetPlayerState());
+            }
+
+            // 2. 恢复节点完成状态
+            string completedNodesData = PlayerPrefs.GetString(SAVE_KEY_COMPLETED_NODES, "");
+            HashSet<string> completedIds = new HashSet<string>(completedNodesData.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries));
+
+            // 3. 恢复当前位置 ID
+            string currentNodeId = PlayerPrefs.GetString(SAVE_KEY_CURRENT_NODE, "");
+
+            foreach (var node in allNodes)
+            {
+                if (completedIds.Contains(node.nodeId))
+                {
+                    node.isCompleted = true;
+                    node.isUnlocked = true;
+                }
+
+                if (node.nodeId == currentNodeId)
+                {
+                    currentNode = node;
+                }
+            }
+
+            // 4. 重新刷新哪些后续节点是可点击的
+            RefreshUnlocks(allNodes);
+
+            Debug.Log("[SaveLoad] 进度加载成功");
         }
 
-        // 匹配当前玩家站立的节点
-        if (node.nodeId == currentNodeId)
-        {
-            currentNode = node;
-        }
-    }
-
-    // 4. 关键：根据已完成节点的状态，重新刷新哪些后续节点是可点击的（Unlocked）
-    RefreshUnlocks(allNodes);
-
-    Debug.Log("[SaveLoad] 进度加载成功");
-}
-        public void LoadMapProgress(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
+        /// <summary>
+        /// 保存地图进度到PlayerPrefs
+        /// </summary>
+        public void SaveMapProgress(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
         {
             // 1. 保存玩家基础数值和卡组
             string playerJson = JsonUtility.ToJson(playerState.GetPlayerState());
@@ -76,13 +76,12 @@ namespace SlayTheSpireMap
                 PlayerPrefs.SetString(SAVE_KEY_CURRENT_NODE, currentNode.nodeId);
             }
 
-            // 3. 核心：只保存已完成节点的 ID 列表
+            // 3. 保存已完成节点的 ID 列表
             List<string> completedIds = allNodes
                 .Where(n => n.isCompleted)
                 .Select(n => n.nodeId)
                 .ToList();
             
-            // 将列表转为逗号分隔的字符串存储
             string completedNodesData = string.Join(",", completedIds);
             PlayerPrefs.SetString(SAVE_KEY_COMPLETED_NODES, completedNodesData);
 
@@ -104,7 +103,7 @@ namespace SlayTheSpireMap
                 JsonUtility.FromJsonOverwrite(playerJson, playerState.GetPlayerState());
             }
 
-            // 2. 恢复地图节点的“完成”和“解锁”状态
+            // 2. 恢复地图节点的"完成"和"解锁"状态
             string completedNodesData = PlayerPrefs.GetString(SAVE_KEY_COMPLETED_NODES, "");
             HashSet<string> completedIds = new HashSet<string>(completedNodesData.Split(','));
 
@@ -112,21 +111,19 @@ namespace SlayTheSpireMap
 
             foreach (var node in allNodes)
             {
-                // 恢复完成状态
                 if (completedIds.Contains(node.nodeId))
                 {
                     node.isCompleted = true;
-                    node.isUnlocked = true; // 已完成的节点必然是解锁过的
+                    node.isUnlocked = true;
                 }
 
-                // 恢复当前位置
                 if (node.nodeId == currentNodeId)
                 {
                     currentNode = node;
                 }
             }
 
-            // 3. 这里的逻辑很关键：根据已完成的节点，重新计算哪些后续节点应该被解锁
+            // 3. 根据已完成的节点，重新计算哪些后续节点应该被解锁
             RefreshUnlocks(allNodes);
 
             Debug.Log("读档完成");
@@ -140,7 +137,7 @@ namespace SlayTheSpireMap
                 node.isUnlocked = true;
             }
 
-            // 如果一个节点的前置节点中有任何一个是“已完成”，则该节点解锁
+            // 如果一个节点的前置节点中有任何一个是"已完成"，则该节点解锁
             foreach (var node in allNodes)
             {
                 if (node.isCompleted)
@@ -150,6 +147,103 @@ namespace SlayTheSpireMap
                         next.isUnlocked = true;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 保存到GameDataManager（新增方法）
+        /// </summary>
+        public void SaveToGameDataManager(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
+        {
+            if (GameDataManager.Instance == null)
+            {
+                Debug.LogWarning("GameDataManager不存在，无法保存地图进度");
+                return;
+            }
+            
+            Debug.Log("保存地图进度到GameDataManager");
+            
+            // 保存当前节点
+            if (currentNode != null)
+            {
+                GameDataManager.Instance.SetCurrentNode(currentNode.nodeId);
+            }
+            
+            // 保存所有节点的完成状态
+            foreach (var node in allNodes)
+            {
+                if (node.isCompleted && !GameDataManager.Instance.IsNodeCompleted(node.nodeId))
+                {
+                    GameDataManager.Instance.CompleteNode(node.nodeId);
+                }
+                
+                if (node.isUnlocked && !GameDataManager.Instance.IsNodeUnlocked(node.nodeId))
+                {
+                    GameDataManager.Instance.UnlockNode(node.nodeId);
+                }
+            }
+            
+            // 保存数据
+            GameDataManager.Instance.SaveGameData();
+        }
+
+        /// <summary>
+        /// 从GameDataManager加载地图进度
+        /// </summary>
+        public void LoadMapProgressFromGameData(PlayerStateManager playerState, MapNodeData[] allNodes, out MapNodeData currentNode)
+        {
+            currentNode = null;
+            
+            if (GameDataManager.Instance == null)
+            {
+                Debug.LogError("GameDataManager不存在，无法加载地图进度");
+                return;
+            }
+            
+            Debug.Log("从GameDataManager加载地图进度");
+            
+            // 恢复所有节点的状态
+            foreach (var node in allNodes)
+            {
+                string nodeId = node.nodeId;
+                
+                // 从GameDataManager获取完成状态
+                node.isCompleted = GameDataManager.Instance.IsNodeCompleted(nodeId);
+                
+                // 从GameDataManager获取解锁状态
+                node.isUnlocked = GameDataManager.Instance.IsNodeUnlocked(nodeId);
+                
+                // 恢复当前节点
+                if (nodeId == GameDataManager.Instance.currentNodeId)
+                {
+                    currentNode = node;
+                    Debug.Log($"设置当前节点: {node.nodeName}");
+                }
+            }
+            
+            // 确保起始节点解锁
+            foreach (var node in allNodes.Where(n => n.isStartNode))
+            {
+                node.isUnlocked = true;
+                if (!GameDataManager.Instance.IsNodeUnlocked(node.nodeId))
+                {
+                    GameDataManager.Instance.UnlockNode(node.nodeId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 统一的保存方法，根据情况选择保存方式
+        /// </summary>
+        public void SaveGameProgress(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes, bool useGameDataManager = true)
+        {
+            if (useGameDataManager && GameDataManager.Instance != null)
+            {
+                SaveToGameDataManager(playerState, currentNode, allNodes);
+            }
+            else
+            {
+                SaveMapProgress(playerState, currentNode, allNodes);
             }
         }
     }

@@ -182,11 +182,17 @@ Transform:
   - {fileID: 1931825473}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &209665400 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9147845123988507517, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
+--- !u!114 &62620616 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1564003513708298050, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
   m_PrefabInstance: {fileID: 332987478}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1588,12 +1594,16 @@ MonoBehaviour:
   popupText: {fileID: 491071486}
   popupAnimator: {fileID: 1389535221}
   victoryPanel: {fileID: 1097824038}
-  defeatPanel: {fileID: 209665400}
+  defeatPanel: {fileID: 1097824038}
   victoryTitleText: {fileID: 1485918322}
   defeatTitleText: {fileID: 1485918322}
   victoryContinueButton: {fileID: 1526809232}
-  defeatRestartButton: {fileID: 1526809232}
+  defeatRestartButton: {fileID: 62620616}
   defeatMainMenuButton: {fileID: 0}
+  rewardPanel: {fileID: 0}
+  goldRewardText: {fileID: 0}
+  cardRewardDisplay: {fileID: 0}
+  relicRewardDisplay: {fileID: 0}
   popupShowDuration: 0.8
   showAnimDuration: 0.3
   hideAnimDuration: 0.3
@@ -2031,6 +2041,80 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2094937419
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2094937422}
+  - component: {fileID: 2094937421}
+  - component: {fileID: 2094937420}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2094937420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094937419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40ebc188983ae4d01a43fb7ac69267be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerData:
+    health: 30
+    maxHealth: 30
+    gold: 100
+    cardIds: []
+    relicIds: []
+  currentNodeId: 
+  completedNodeIds: []
+  unlockedNodeIds: []
+  battleNodeId: 
+  battleEncounterData: {fileID: 0}
+--- !u!114 &2094937421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094937419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8c01f3815e524278a86e1b55ef557f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  battleNodeId: 
+  battleEncounter: {fileID: 0}
+  isVictory: 0
+  goldEarned: 0
+  cardEarned: 
+  relicEarned: 
+--- !u!4 &2094937422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094937419}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 953.9799, y: 536.3476, z: 14.293056}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2043,3 +2127,4 @@ SceneRoots:
   - {fileID: 889373303}
   - {fileID: 1584536395}
   - {fileID: 2004134098}
+  - {fileID: 2094937422}

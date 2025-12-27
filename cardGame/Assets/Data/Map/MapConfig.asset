@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb77a09f6ccf749918fbf7af79eee231, type: 3}
-  m_Name: DefaultMapConfig
+  m_Name: MapConfig
   m_EditorClassIdentifier: 
   mapName: chapter one
   totalLayers: 5

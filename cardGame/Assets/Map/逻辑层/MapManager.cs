@@ -1,20 +1,26 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System; // 引入命名空间
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SlayTheSpireMap
 {
     public class MapManager : MonoBehaviour
     {
         public static MapManager Instance { get; private set; }
-        public static event Action<MapNodeData> OnCurrentNodeChanged; // 新增事件
-        // 定义事件：参数为受影响的节点数据
+        public static event Action<MapNodeData> OnCurrentNodeChanged;
         public static event Action<MapNodeData> OnNodeStatusChanged;
+        // 添加这些常量定义
+        private const string SAVE_KEY_PLAYER = "PlayerState";
+        private const string SAVE_KEY_COMPLETED_NODES = "CompletedNodes";
+        private const string SAVE_KEY_CURRENT_NODE = "CurrentNodeId";
+        
+     
         [Header("管理器引用")]
         public MapGenerator mapGenerator;
         public PlayerStateManager playerState;
         public NodeInteractionManager nodeInteraction;
-        public SceneTransitionManager sceneTransition;
         public SaveLoadManager saveLoad;
         public UIManager ui;
         
@@ -23,9 +29,11 @@ namespace SlayTheSpireMap
         public MapNodeData currentNode;
         public MapNodeData[] allNodes;
         [SerializeField] private StraightLineRenderer lineRenderer;
+        
         private void Awake()
         {
             if(lineRenderer == null) lineRenderer = GetComponent<StraightLineRenderer>();
+    
             // 单例初始化
             if (Instance == null)
             {
@@ -34,6 +42,9 @@ namespace SlayTheSpireMap
                 
                 // 自动查找或创建组件
                 InitializeComponents();
+                
+                // 重要：只在这里生成一次地图
+                GenerateMapOnce();
             }
             else if (Instance != this)
             {
@@ -41,14 +52,29 @@ namespace SlayTheSpireMap
                 return;
             }
         }
-        
+        private void GenerateMapOnce()
+{
+    // 如果还没有生成过地图，就生成一次
+    if (allNodes == null || allNodes.Length == 0)
+    {
+        if (currentMapLayout != null)
+        {
+            allNodes = mapGenerator.GenerateMap(currentMapLayout);
+            Debug.Log($"首次生成地图，共 {allNodes?.Length ?? 0} 个节点");
+        }
+        else
+        {
+            Debug.LogError("currentMapLayout 未设置，无法生成地图");
+        }
+    }
+}
+
         private void InitializeComponents()
         {
             // 确保所有管理器存在
             if (mapGenerator == null) mapGenerator = GetComponent<MapGenerator>();
             if (playerState == null) playerState = GetComponent<PlayerStateManager>();
             if (nodeInteraction == null) nodeInteraction = GetComponent<NodeInteractionManager>();
-            if (sceneTransition == null) sceneTransition = GetComponent<SceneTransitionManager>();
             if (saveLoad == null) saveLoad = GetComponent<SaveLoadManager>();
             if (ui == null) ui = GetComponent<UIManager>();
             
@@ -56,57 +82,371 @@ namespace SlayTheSpireMap
             if (mapGenerator == null) mapGenerator = gameObject.AddComponent<MapGenerator>();
             if (playerState == null) playerState = gameObject.AddComponent<PlayerStateManager>();
             if (nodeInteraction == null) nodeInteraction = gameObject.AddComponent<NodeInteractionManager>();
-            if (sceneTransition == null) sceneTransition = gameObject.AddComponent<SceneTransitionManager>();
             if (saveLoad == null) saveLoad = gameObject.AddComponent<SaveLoadManager>();
             if (ui == null) ui = gameObject.AddComponent<UIManager>();
         }
         
-        private void Start()
-            {
-                // 1. 生成基础地图数据 (MapGenerator)
-                allNodes = mapGenerator.GenerateMap(currentMapLayout);
-                
-                // 2. 尝试加载存档并恢复状态 (SaveLoadManager)
-                // 这一步会修改 allNodes 里的 isCompleted 和 isUnlocked
-                saveLoad.LoadProgress(playerState, allNodes, out currentNode);
-                
-                // 3. 渲染视觉表现 (MapLineRenderer & UIManager)
-               
-                ui.UpdateAllUI();
-            }
-      public void ResetMapProgress()
+        private void LoadFromGameDataManagerDirectly()
+{
+    if (GameDataManager.Instance == null)
     {
-        currentNode = null;
-        allNodes = null;
-        // 如果有UI，也清空UI
-        if(ui != null) ui.UpdateAllUI();
+        Debug.LogError("GameDataManager不存在！");
+        return;
     }
+    
+    // 打印GameDataManager的当前状态
+    Debug.Log("=== GameDataManager状态 ===");
+    Debug.Log($"当前节点ID: {GameDataManager.Instance.currentNodeId}");
+    Debug.Log($"已完成节点: {string.Join(", ", GameDataManager.Instance.completedNodeIds)}");
+    Debug.Log($"已解锁节点: {string.Join(", ", GameDataManager.Instance.unlockedNodeIds)}");
+    
+    // 遍历所有节点，从GameDataManager恢复状态
+    foreach (var node in allNodes)
+    {
+        string nodeId = node.nodeId;
+        
+        // 完成状态
+        node.isCompleted = GameDataManager.Instance.IsNodeCompleted(nodeId);
+        
+        // 解锁状态
+        node.isUnlocked = GameDataManager.Instance.IsNodeUnlocked(nodeId);
+        
+        // 如果这是当前节点
+        if (nodeId == GameDataManager.Instance.currentNodeId)
+        {
+            currentNode = node;
+            Debug.Log($"找到当前节点: {node.nodeName}");
+        }
+        
+        // 如果是起始节点，确保解锁
+        if (node.isStartNode)
+        {
+            node.isUnlocked = true;
+            if (!GameDataManager.Instance.IsNodeUnlocked(nodeId))
+            {
+                GameDataManager.Instance.UnlockNode(nodeId);
+            }
+        }
+    }
+}
+
+private void PrintNodeStates()
+{
+    if (allNodes == null) return;
+    
+    Debug.Log("=== 节点状态 ===");
+    foreach (var node in allNodes)
+    {
+        Debug.Log($"节点: {node.nodeName}, ID: {node.nodeId}, 完成: {node.isCompleted}, 解锁: {node.isUnlocked}");
+    }
+}
+
+
+     private void Start()
+{
+    Debug.Log("=== MapManager 初始化开始 ===");
+    
+    // 1. 生成基础地图数据
+    allNodes = mapGenerator.GenerateMap(currentMapLayout);
+    Debug.Log($"生成 {allNodes?.Length ?? 0} 个节点");
+    
+    // 2. 直接从GameDataManager加载，不使用SaveLoadManager
+    LoadFromGameDataManagerDirectly();
+    
+    // 3. 如果没有当前节点，设置起始节点
+    if (currentNode == null && allNodes != null)
+    {
+        foreach (var node in allNodes)
+        {
+            if (node.isStartNode)
+            {
+                currentNode = node;
+                node.isUnlocked = true;
+                
+                // 确保在GameDataManager中也设置
+                if (GameDataManager.Instance != null)
+                {
+                    GameDataManager.Instance.SetCurrentNode(node.nodeId);
+                    GameDataManager.Instance.UnlockNode(node.nodeId);
+                }
+                
+                Debug.Log($"设置起始节点: {node.nodeName}");
+                break;
+            }
+        }
+    }
+    
+    // 4. 打印节点状态（调试用）
+    PrintNodeStates();
+    RefreshAllMapNodesUI();
+    // 5. 渲染视觉表现
+    ui.UpdateAllUI();
+    
+    Debug.Log("=== MapManager 初始化完成 ===");
+}
+
+
+public void RefreshAllMapNodesUI()
+{
+    // 这里的 allNodesUI 是你生成地图时保存的 UIMapNode 列表
+    foreach (var uiNode in FindObjectsOfType<UIMapNode>()) 
+    {
+        // 确保 UI 节点里的数据是最新的
+        if (uiNode.linkedNodeData != null)
+        {
+            // 从全局数据管理器同步最新状态
+            uiNode.linkedNodeData.isUnlocked = GameDataManager.Instance.unlockedNodeIds.Contains(uiNode.linkedNodeData.nodeId);
+            uiNode.linkedNodeData.isCompleted = GameDataManager.Instance.completedNodeIds.Contains(uiNode.linkedNodeData.nodeId);
+        }
+        uiNode.UpdateVisuals();
+    }
+}
+                private void LoadSavedProgress()
+{
+    if (GameDataManager.Instance == null)
+    {
+        Debug.LogWarning("GameDataManager未找到，无法加载存档");
+        return;
+    }
+    
+    // 如果GameDataManager中有当前节点，恢复它
+    if (!string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
+    {
+        // 查找对应的节点
+        foreach (var node in allNodes)
+        {
+            if (node.nodeId == GameDataManager.Instance.currentNodeId)
+            {
+                currentNode = node;
+                break;
+            }
+        }
+    }
+    
+    // 恢复节点状态
+    foreach (var node in allNodes)
+    {
+        if (GameDataManager.Instance.IsNodeCompleted(node.nodeId))
+        {
+            node.isCompleted = true;
+            node.isUnlocked = false;
+        }
+        else if (GameDataManager.Instance.IsNodeUnlocked(node.nodeId))
+        {
+            node.isUnlocked = true;
+        }
+    }
+    
+    // 如果没有当前节点，设置起始节点
+    if (currentNode == null)
+    {
+        currentNode = mapGenerator.FindStartNode(allNodes);
+        if (currentNode != null)
+        {
+            currentNode.isUnlocked = true;
+            GameDataManager.Instance.SetCurrentNode(currentNode.nodeId);
+        }
+    }
+    
+    Debug.Log($"地图进度已加载，当前节点: {currentNode?.nodeName}");
+}
+        
+        /// <summary>
+        /// 处理场景加载事件 - 重命名以避免冲突
+        /// </summary>
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // 当加载到地图场景时，执行必要的初始化
+            if (scene.name == "MapScene")
+            {
+                Debug.Log("地图场景加载完成，刷新状态");
+                
+                // 如果是从战斗场景返回，可能需要更新地图状态
+                if (GameDataManager.Instance != null)
+                {
+                    RestoreMapStateFromGameData();
+                }
+                
+                // 更新UI
+                if (ui != null)
+                {
+                    ui.UpdateAllUI();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 从GameDataManager恢复地图状态
+        /// </summary>
+        private void RestoreMapStateFromGameData()
+        {
+            if (allNodes == null) return;
+            
+            foreach (var node in allNodes)
+            {
+                if (GameDataManager.Instance != null)
+                {
+                    node.isCompleted = GameDataManager.Instance.IsNodeCompleted(node.nodeId);
+                    node.isUnlocked = GameDataManager.Instance.IsNodeUnlocked(node.nodeId);
+                }
+            }
+            
+            // 设置当前节点
+            if (GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
+            {
+                foreach (var node in allNodes)
+                {
+                    if (node.nodeId == GameDataManager.Instance.currentNodeId)
+                    {
+                        currentNode = node;
+                        break;
+                    }
+                }
+            }
+        }
+        private void SaveToGameDataManager(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
+{
+    Debug.Log("保存地图进度到GameDataManager");
+    
+    // 保存当前节点
+    if (currentNode != null)
+    {
+        GameDataManager.Instance.SetCurrentNode(currentNode.nodeId);
+    }
+    
+    // 保存所有节点的完成状态
+    foreach (var node in allNodes)
+    {
+        if (node.isCompleted && !GameDataManager.Instance.IsNodeCompleted(node.nodeId))
+        {
+            GameDataManager.Instance.CompleteNode(node.nodeId);
+        }
+        
+        if (node.isUnlocked && !GameDataManager.Instance.IsNodeUnlocked(node.nodeId))
+        {
+            GameDataManager.Instance.UnlockNode(node.nodeId);
+        }
+    }
+    
+    // 保存数据
+    GameDataManager.Instance.SaveGameData();
+}
+
+private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
+{
+    // 1. 保存玩家基础数值和卡组
+    string playerJson = JsonUtility.ToJson(playerState.GetPlayerState());
+    PlayerPrefs.SetString(SAVE_KEY_PLAYER, playerJson);
+
+    // 2. 保存当前所在位置
+    if (currentNode != null)
+    {
+        PlayerPrefs.SetString(SAVE_KEY_CURRENT_NODE, currentNode.nodeId);
+    }
+
+    // 3. 保存已完成节点的ID列表
+    List<string> completedIds = allNodes
+        .Where(n => n.isCompleted)
+        .Select(n => n.nodeId)
+        .ToList();
+    
+    string completedNodesData = string.Join(",", completedIds);
+    PlayerPrefs.SetString(SAVE_KEY_COMPLETED_NODES, completedNodesData);
+
+    PlayerPrefs.Save();
+    Debug.Log("存档成功：保存了 " + completedIds.Count + " 个节点的进度");
+}
+
+        public void SaveMapProgress(PlayerStateManager playerState, MapNodeData currentNode, MapNodeData[] allNodes)
+        {
+            // 如果有GameDataManager，优先使用它
+            if (GameDataManager.Instance != null)
+            {
+                SaveToGameDataManager(playerState, currentNode, allNodes);
+            }
+            else
+            {
+                // 否则使用旧的PlayerPrefs方法
+                SaveToPlayerPrefs(playerState, currentNode, allNodes);
+            }
+        }
+        public void ResetMapProgress()
+        {
+            currentNode = null;
+            allNodes = null;
+            if(ui != null) ui.UpdateAllUI();
+        }
+        
         public void SetCurrentNode(MapNodeData node)
         {
             currentNode = node;
-            // 触发当前节点变更事件
             OnCurrentNodeChanged?.Invoke(node);
         }
-        public void CompleteNode(MapNodeData node)
-        {
-            if (node == null) return;
-            node.isCompleted = true;
-            OnNodeStatusChanged?.Invoke(node); // 通知UI变灰/打勾
+        
+   public void CompleteNode(MapNodeData node)
+{
+    if (node == null) return;
+    
+    node.isCompleted = true;
+    OnNodeStatusChanged?.Invoke(node);
 
-            foreach (var nextNode in node.connectedNodes)
+    // 解锁连接的节点
+    foreach (var nextNode in node.connectedNodes)
+    {
+        if (nextNode != null)
+        {
+            nextNode.isUnlocked = true;
+            OnNodeStatusChanged?.Invoke(nextNode);
+            
+            // 自动设置第一个解锁的节点为当前节点
+            if (currentNode == node)
             {
-                nextNode.isUnlocked = true;
-                OnNodeStatusChanged?.Invoke(nextNode); // 通知下游节点亮起
+                currentNode = nextNode;
+                Debug.Log($"自动设置当前节点为: {nextNode.nodeName}");
             }
-            saveLoad?.LoadMapProgress(playerState, currentNode, allNodes);
+        }
+    }
+    
+    // 保存到GameDataManager
+    if (GameDataManager.Instance != null)
+    {
+        GameDataManager.Instance.CompleteNode(node.nodeId);
+        
+        // 解锁连接的节点
+        foreach (var nextNode in node.connectedNodes)
+        {
+            if (nextNode != null)
+            {
+                GameDataManager.Instance.UnlockNode(nextNode.nodeId);
+            }
         }
         
-// 补齐缺失的方法
+        // 设置新的当前节点（使用第一个连接的节点）
+        if (node.connectedNodes.Count > 0 && node.connectedNodes[0] != null)
+        {
+            GameDataManager.Instance.SetCurrentNode(node.connectedNodes[0].nodeId);
+            Debug.Log($"GameDataManager 当前节点更新为: {node.connectedNodes[0].nodeId}");
+        }
+        
+        GameDataManager.Instance.SaveGameData();
+    }
+    
+    // 调用SaveLoadManager的保存方法（现在这个方法存在了）
+    if (saveLoad != null)
+    {
+        // 使用新的统一保存方法，优先使用GameDataManager
+        saveLoad.SaveGameProgress(playerState, currentNode, allNodes, true);
+    }
+    else
+    {
+        Debug.LogWarning("SaveLoadManager 为空，无法保存地图进度");
+    }
+}
+        
         public string GetCurrentNodeInfo() => currentNode != null ? currentNode.nodeName : "未选择节点";
 
         public void OnUINodeClicked(UIMapNode uiNode)
         {
-            // 处理点击UI逻辑
             OnNodeClicked(uiNode.linkedNodeData);
         }
         
@@ -134,9 +474,7 @@ namespace SlayTheSpireMap
             
             Debug.Log("游戏加载完成");
         }
-        /// <summary>
-        /// 外部调用的便捷方法：完成当前玩家所在的节点
-        /// </summary>
+        
         public void CompleteCurrentNode()
         {
             if (currentNode != null)
@@ -149,15 +487,6 @@ namespace SlayTheSpireMap
             }
         }
 
-        /// <summary>
-        /// 核心统一处理逻辑：标记完成 -> 解锁下游 -> 存盘 -> 更新UI
-        /// </summary>
-        /// <param name="node">要标记完成的节点</param>
-        
-
-        /// <summary>
-        /// 内部辅助：解锁当前节点连接的所有后续节点
-        /// </summary>
         private void UnlockNextSteps(MapNodeData node)
         {
             if (node.connectedNodes == null) return;
@@ -169,14 +498,6 @@ namespace SlayTheSpireMap
                     nextNode.isUnlocked = true;
                     Debug.Log($"[MapManager] 已解锁下游节点: {nextNode.nodeName}");
                 }
-            }
-        }
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name == "MapScene")
-            {
-                // 重新生成地图？或者刷新UI？
-                // 但是注意，MapManager的Start也会执行，所以这里可能需要避免重复初始化
             }
         }
         
@@ -194,10 +515,10 @@ namespace SlayTheSpireMap
             }
         }
         
-        
         private void OnDestroy()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            // 取消订阅场景加载事件
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
         }
         
         // 获取游戏状态（供其他系统使用）

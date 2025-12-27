@@ -8,6 +8,7 @@ using System.Collections;
 using TMPro; 
 using System; 
 using ScavengingGame;
+using SlayTheSpireMap;
 
 public class BattleManager : MonoBehaviour
 {
@@ -1288,6 +1289,19 @@ public void EndBattle(bool isVictory)
     if (GameStateManager.Instance != null)
     {
         GameStateManager.Instance.EndBattle(isVictory, rewards);
+    }
+    if (isVictory)
+    {
+        // 建议在这里生成奖励数据
+        int gold = 50; // 示例
+        string card = "RandomCardID"; 
+        
+        // 关键：通知 BattleDataManager 保存结果
+        if (BattleDataManager.Instance != null)
+        {
+            BattleDataManager.Instance.SaveBattleResult(true, gold, card);
+        }
+        GameFlowManager.Instance.ShowVictoryPanel("胜利");
     }
 }
 
