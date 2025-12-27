@@ -12,6 +12,11 @@ public class RoundBasedStrategy : ScriptableObject, IEnemyIntentStrategy
     public EnemyAction GetNextAction(CharacterBase hero, int currentRound)
     {
         // 确保回合数从 1 开始
+        if (currentRound < 1) 
+        {
+            Debug.LogWarning($"RoundBasedStrategy received invalid round {currentRound}. Clamping to 1.");
+            currentRound = 1;
+        }
         
         if (roundActions.Count == 0)
         {

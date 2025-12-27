@@ -6,12 +6,19 @@ namespace SlayTheSpireMap
 {
     public class GameDataManager : MonoBehaviour
     {
+
+
+
+        public string characterName = "勇者"; // 添加这个字段
         public static GameDataManager Instance { get; private set; }
         
+
+
         // 玩家状态数据
         [System.Serializable]
         public class PlayerStateData
         {
+            public string characterName = "铁甲卫士"; // 添加这一行
             public int health = 30;
             public int maxHealth = 30;
             public int gold = 100;
@@ -20,7 +27,7 @@ namespace SlayTheSpireMap
         }
         
         [Header("玩家数据")]
-        [SerializeField] private PlayerStateData playerData = new PlayerStateData();
+        public PlayerStateData playerData = new PlayerStateData(); // 改为 public
         
         [Header("地图进度")]
         public string currentNodeId = "";
@@ -39,6 +46,23 @@ namespace SlayTheSpireMap
             // 假设你的起始节点 ID 是 "StartNode"
             // 你需要确保在游戏开始时，第一层的节点是默认解锁的
             // 或者在 MapManager 生成地图时执行这个逻辑
+
+            // 重置基础属性
+                playerData.health = 80;
+                playerData.maxHealth = 80;
+                playerData.gold = 99;
+                playerData.characterName = "铁甲卫士";
+
+                // 配置初始卡包 (添加卡牌 ID)
+                playerData.cardIds.Clear();
+                for(int i = 0; i < 5; i++) playerData.cardIds.Add("Strike_R"); // 5张打击
+                for(int i = 0; i < 4; i++) playerData.cardIds.Add("Defend_R"); // 4张防御
+                playerData.cardIds.Add("Bash"); // 1张重击
+
+                completedNodeIds.Clear();
+                unlockedNodeIds.Clear();
+                
+                SaveGameData();
         }
         // 属性访问器
         public int Health 

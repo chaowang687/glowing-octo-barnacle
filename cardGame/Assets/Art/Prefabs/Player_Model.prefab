@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6768965999123574859}
   - component: {fileID: 6924892168261538396}
+  - component: {fileID: 1521188465818095341}
   - component: {fileID: 1847863206526611932}
   - component: {fileID: 8315614108976450875}
   m_Layer: 5
@@ -48,6 +49,29 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 982906025956945015}
   m_CullTransparentMesh: 1
+--- !u!114 &1521188465818095341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982906025956945015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f32b8217107a54ce38b65f6324bd02dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _characterName: 
+  _maxHp: 50
+  _currentHp: 50
+  _currentBlock: 2
+  baseEnergy: 5
+  currentEnergy: 5
+  hasShieldAbility: 0
+  hasDoubleAttack: 0
+  deathEffectPrefab: {fileID: 0}
+  deathSound: {fileID: 0}
+  attackSound: {fileID: 0}
 --- !u!114 &1847863206526611932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,11 +84,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f68c2a1cfa38a45c3ac59e43ec5e1c28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  artwork: {fileID: 0}
-  characterName: Character
-  maxHp: 100
-  currentHp: 0
-  isDead: 0
+  _characterName: 
+  _maxHp: 60
+  _currentHp: 60
+  _currentBlock: 0
 --- !u!114 &8315614108976450875
 MonoBehaviour:
   m_ObjectHideFlags: 0

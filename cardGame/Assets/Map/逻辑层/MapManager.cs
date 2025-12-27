@@ -68,7 +68,24 @@ namespace SlayTheSpireMap
         }
     }
 }
-
+public void InitializeFirstRun()
+{
+    if (string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
+    {
+        // 找到所有标记为 StartNode 的节点并加入解锁列表
+        foreach (var node in allNodes)
+        {
+            if (node.isStartNode)
+            {
+                if (!GameDataManager.Instance.unlockedNodeIds.Contains(node.nodeId))
+                {
+                    GameDataManager.Instance.unlockedNodeIds.Add(node.nodeId);
+                }
+            }
+        }
+        GameDataManager.Instance.SaveGameData();
+    }
+}
         private void InitializeComponents()
         {
             // 确保所有管理器存在

@@ -408,10 +408,28 @@ public class EnemyDisplay : MonoBehaviour
     /// </summary>
     public void RefreshIntent(IntentType type, int value)
     {
-        Debug.Log($"[DEBUG RECEIVE: INTENT] 收到意图刷新指令。Type: {type}, Value: {value}");
+        // Debug.Log($"[DEBUG RECEIVE: INTENT] 收到意图刷新指令。Type: {type}, Value: {value}");
         
-        if (intentConfig == null || intentUIRoot == null) return;
+        if (intentConfig == null)
+        {
+             Debug.LogError($"[EnemyDisplay] intentConfig is MISSING on {gameObject.name}!");
+             return;
+        }
+        if (intentUIRoot == null)
+        {
+             Debug.LogError($"[EnemyDisplay] intentUIRoot is MISSING on {gameObject.name}!");
+             return;
+        }
+
         if (character != null && character.IsDead) return; // 死亡后不再刷新意图
+
+        // 防止重复刷新导致的闪烁：如果意图类型和数值没有变化，且UI已经是激活状态，则跳过
+        if (intentUIRoot.activeSelf && 
+            intentIcon.sprite == intentConfig.GetIcon(type) && 
+            intentValueText.text == value.ToString())
+        {
+            return;
+        }
 
         // 确保清除上一个 Sequence，防止冲突
         if (intentFadeSequence != null)
@@ -422,9 +440,14 @@ public class EnemyDisplay : MonoBehaviour
         if (type == IntentType.NONE)
         {
             // 使用 DOTween 确保 UI 物体最终被禁用
+            // 确保有一个 CanvasGroup 用于控制透明度
+            CanvasGroup cg = intentUIRoot.GetComponent<CanvasGroup>();
+            if (cg == null) cg = intentUIRoot.AddComponent<CanvasGroup>();
+
             intentFadeSequence = DOTween.Sequence()
-                .AppendInterval(fadeDuration)
+                .Append(cg.DOFade(0f, fadeDuration)) // 淡出
                 .AppendCallback(() => intentUIRoot.SetActive(false));
+            
             Debug.Log("[DEBUG SEND: INTENT] 意图设置为NONE，触发淡出逻辑。");
         }
         else
@@ -432,7 +455,21 @@ public class EnemyDisplay : MonoBehaviour
             // 更新 UI 文本和图标
             intentIcon.sprite = intentConfig.GetIcon(type);
             intentValueText.text = value.ToString();
+            
+            // 确保 UI 激活并可见
             intentUIRoot.SetActive(true);
+            
+            // 重置状态
+            CanvasGroup cg = intentUIRoot.GetComponent<CanvasGroup>();
+            if (cg == null) cg = intentUIRoot.AddComponent<CanvasGroup>();
+            
+            cg.alpha = 0f; // 先设为透明
+            intentUIRoot.transform.localScale = Vector3.one * 0.5f; // 稍微缩小一点
+            
+            // 播放淡入和弹跳动画
+            intentFadeSequence = DOTween.Sequence()
+                .Append(cg.DOFade(1f, fadeDuration))
+                .Join(intentUIRoot.transform.DOScale(Vector3.one, fadeDuration).SetEase(Ease.OutBack));
             
             Debug.Log($"[DEBUG SEND: INTENT] 意图刷新完成。");
         }

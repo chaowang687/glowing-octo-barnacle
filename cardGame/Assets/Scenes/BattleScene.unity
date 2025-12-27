@@ -1589,7 +1589,7 @@ MonoBehaviour:
   heroVisualContainer: {fileID: 387213812}
   enemyVisualContainer: {fileID: 613252133}
   heroPrefab: {fileID: 982906025956945015, guid: f5cfa05c22004426ba104dbe88edddc9, type: 3}
-  enemyPrefab: {fileID: 1909562342051364970, guid: 431693f0806274841aed6bfde376e494, type: 3}
+  enemyPrefab: {fileID: -3130790655238769915, guid: 431693f0806274841aed6bfde376e494, type: 3}
   turnPopup: {fileID: 1650215040385561246, guid: 49a6922b9e0f7433692951157d9d8625, type: 3}
   popupText: {fileID: 491071486}
   popupAnimator: {fileID: 1389535221}
@@ -2071,7 +2071,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40ebc188983ae4d01a43fb7ac69267be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterName: "\u52C7\u8005"
   playerData:
+    characterName: "\u94C1\u7532\u536B\u58EB"
     health: 30
     maxHealth: 30
     gold: 100

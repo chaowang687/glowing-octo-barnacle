@@ -99,13 +99,11 @@ public class CharacterManager : MonoBehaviour
     /// <summary>
     /// 添加英雄到管理列表
     /// </summary>
-    public void RegisterHero(CharacterBase hero)
+    public void RegisterHero(Hero hero)
     {
-        if (hero != null && !allHeroes.Contains(hero))
-        {
-            allHeroes.Add(hero);
-            Debug.Log($"注册英雄: {hero.characterName}");
-        }
+       if (hero == null) return;
+    this.activeHero = hero; // 确保这里赋值了
+    Debug.Log("英雄已注册到 CharacterManager");
     }
     
     /// <summary>

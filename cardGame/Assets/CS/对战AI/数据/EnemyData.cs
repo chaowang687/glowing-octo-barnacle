@@ -9,9 +9,8 @@ public class EnemyData : ScriptableObject
     public int maxHp = 50;
     public Sprite artwork;
 
-   // public object intentStrategy;
+    //public object intentStrategy;
 
-  //  [Header("AI")]
-    // 解决 CS0246 错误: IEnemyIntentStrategy 接口
+   [Header("AI")]
    public ScriptableObject intentStrategy; 
 }

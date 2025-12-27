@@ -130,10 +130,11 @@ public class EnemyAI : MonoBehaviour
         if (intentStrategy is IEnemyIntentStrategy strategyImpl)
         {
             this.strategy = strategyImpl;
+            Debug.Log($"[EnemyAI] Strategy loaded successfully for {enemyData.enemyName}: {strategyImpl.GetType().Name}");
         }
         else
         {
-            Debug.LogError($"Enemy {enemyData.enemyName} 的 intentStrategy 无法转换为 IEnemyIntentStrategy。");
+            Debug.LogError($"Enemy {enemyData.enemyName} 的 intentStrategy 无法转换为 IEnemyIntentStrategy。Actual type: {intentStrategy?.GetType().Name ?? "null"}");
             // 创建默认策略
             this.strategy = CreateDefaultStrategy();
         }
@@ -326,7 +327,7 @@ public class EnemyAI : MonoBehaviour
     {
         if (strategy == null)
         {
-            Debug.LogWarning($"{self?.characterName} has no valid intent strategy.");
+            Debug.LogError($"{self?.characterName} has no valid intent strategy (strategy is null).");
             return;
         }
 
@@ -337,6 +338,11 @@ public class EnemyAI : MonoBehaviour
         }
 
         EnemyAction nextAction = strategy.GetNextAction(hero, currentRound);
+        
+        if (nextAction.intentType == IntentType.NONE && nextAction.value == 0)
+        {
+             Debug.LogWarning($"[EnemyAI] Strategy returned NONE intent for round {currentRound}. This might be unintended.");
+        }
 
         // 更新意图显示数据
         nextIntent = nextAction.intentType;

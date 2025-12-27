@@ -161,31 +161,71 @@ public class BattleManager : MonoBehaviour
 
 
 
-    void Start()
+    // BattleManager.cs
+private IEnumerator Start()
     {
-        // 只有开启自动战斗模式时才会自动开始
-        if (autoStartTestBattle)
+        Debug.Log("[Battle] 正在初始化战斗场景...");
+
+        // 1. 【核心修复】不再使用 Mock Hero，而是从全局数据生成真正的英雄
+        if (GameFlowManager.Instance != null)
         {
-            // 优先使用配置的遭遇战数据
-            if (testEncounterData != null)
+            GameFlowManager.Instance.SpawnHeroFromData(); 
+            
+            // 生成敌人
+            var baseEncounter = GameDataManager.Instance.battleEncounterData;
+            var encounter = baseEncounter as EnemyEncounterData;
+            
+            if (encounter != null)
             {
-                Debug.Log($"自动开始遭遇战: {testEncounterData.encounterName}");
-                InitializeBattle(testEncounterData);
+                GameFlowManager.Instance.InitializeBattleFromData(encounter);
             }
-            else if (defaultEnemyDataAsset != null) 
+            else
             {
-                Debug.Log("自动开始测试战斗（单个敌人）...");
-                EnemyEncounterData testEncounter = ScriptableObject.CreateInstance<EnemyEncounterData>();
-                testEncounter.enemyList = new List<EnemyData> { defaultEnemyDataAsset };
-                testEncounter.encounterName = "测试遭遇战";
-                InitializeBattle(testEncounter);
+                if (baseEncounter == null)
+                    Debug.LogError("[Battle] GameDataManager.battleEncounterData 为空！请检查地图节点点击逻辑。");
+                else
+                    Debug.LogError($"[Battle] 遭遇战数据类型不匹配！期望 EnemyEncounterData，实际是 {baseEncounter.GetType().Name}。请确保 MapNodeData 配置的是 EnemyEncounterData 类型的资产。");
             }
         }
         else
         {
-            Debug.Log("BattleManager: 自动战斗已禁用，等待外部调用");
+             Debug.LogError("[Battle] 找不到 GameFlowManager 实例！");
         }
+
+        // 2. 等待一帧，让注册和实例化完成
+        yield return new WaitForEndOfFrame();
+
+    // 3. 【修正类型转换】获取真正的 Hero 实例
+    // 这里使用 (Hero) 或 as Hero 强转，因为现在生成的是真正的英雄 Prefab
+    Hero hero = characterManager.GetActiveHero() as Hero;
+    
+    if (hero != null)
+    {
+        hero.SyncFromGlobal(); // 此时同步 30 血量
+        hero.GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(hero);
+        Debug.Log($"[Battle] 英雄 {hero.characterName} 加载成功，当前血量: {hero.currentHp}");
     }
+    else
+    {
+        Debug.LogError("[Battle] 严重错误：未能找到英雄实例！请检查 SpawnHeroFromData 是否正常运行。");
+    }
+
+    // 4. 加载卡组
+    cardSystem.LoadDeckFromGlobal();
+
+    // Ensure round starts at 1 if not initialized
+    if (CurrentRound <= 0) CurrentRound = 1;
+
+    // 5. 开启回合
+    yield return new WaitForSeconds(0.5f);
+    
+    // Ensure intents are calculated for the first round
+    CalculateAllEnemyIntents();
+    
+    StartPlayerTurn(); 
+}
+
+
 
     // 由GameStateManager调用以初始化战斗
     public void InitializeBattle(EnemyEncounterData encounterData)
@@ -347,24 +387,9 @@ public class BattleManager : MonoBehaviour
     
     private void SetupMockCharactersIfNecessary()
     {
-        if (characterManager == null) return;
+   
         
-        // Hero Mock Setup
-        if (characterManager.GetActiveHero() == null)
-        {
-             GameObject heroObj = new GameObject("Mock Hero", typeof(CharacterBase));
-             heroObj.hideFlags = HideFlags.DontSave; 
-             
-             CharacterBase heroChar = heroObj.GetComponent<CharacterBase>();
-             heroChar.characterName = "Player Hero";
-             heroChar.maxHp = 100;
-             heroChar.currentHp = heroChar.maxHp;
-             
-             characterManager.activeHero = heroChar;
-             characterManager.RegisterHero(heroChar);
-             
-             Debug.Log("Created Mock Hero for testing.");
-        }
+      
 
         // Enemy Mock Setup
         if (characterManager.GetAllEnemies().Count == 0 && defaultEnemyDataAsset != null)
@@ -507,6 +532,7 @@ public class BattleManager : MonoBehaviour
         DOVirtual.DelayedCall(postExecutionDelay, () => StartCoroutine(StartEnemyTurn()));
     });
 }
+// BattleManager.cs
 
 private IEnumerator StartEnemyTurn()
 {

@@ -65,6 +65,7 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.29f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/CS2/ScriptableObject/ceEnemyEncounterData_q.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAnimationManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootSlot.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestLootData.cs" />
@@ -73,7 +74,6 @@
     <Compile Include="Assets/玩家/GameDataManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestInteractable.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
-    <Compile Include="Assets/CS2/ScriptableObject/EnemyEncounterData_q.cs" />
     <Compile Include="Assets/CS/对战AI/意图系统/EnemyAction.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
     <Compile Include="Assets/Map/工具类/MapScrollController.cs" />

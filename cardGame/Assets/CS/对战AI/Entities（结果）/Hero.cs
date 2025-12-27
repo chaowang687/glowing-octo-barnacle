@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using DG.Tweening;
 using System.Collections;
+using SlayTheSpireMap;
 
 // Hero.cs - 玩家英雄类
 public class Hero : CharacterBase
@@ -36,6 +37,24 @@ public class Hero : CharacterBase
     /// <summary>
     /// 英雄初始化
     /// </summary>
+
+ // Hero.cs
+public void SyncFromGlobal()
+{
+    if (GameDataManager.Instance == null) return;
+    
+    var data = GameDataManager.Instance.playerData;
+    
+    // 强制赋值给私有变量以确保安全
+    this.maxHp = data.maxHealth;
+    this.currentHp = data.health;
+    
+    Debug.Log($"[Hero] 同步成功: HP {currentHp}/{maxHp}");
+
+    // 必须手动触发一次 UI 刷新
+    GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(this);
+}
+
     public void InitializeHero(string name, int maxHp, int energy = 3)
     {
         Initialize(name, maxHp);
@@ -44,7 +63,10 @@ public class Hero : CharacterBase
         
         Debug.Log($"Hero {characterName} initialized with {maxHp} HP and {energy} energy");
     }
-    
+
+
+
+
     /// <summary>
     /// 英雄死亡处理 - 现在正确重写 HandleDeath
     /// </summary>

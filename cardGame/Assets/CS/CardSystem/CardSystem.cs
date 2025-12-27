@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using CardDataEnums;
+using SlayTheSpireMap;
 
 /// <summary>
 /// 卡牌系统核心组件。负责能量管理、卡牌堆栈（抽牌、手牌、弃牌）操作以及卡牌的打出。
@@ -38,20 +39,73 @@ public class CardSystem : MonoBehaviour
     {
         Debug.Log("--- DEBUG: SetupDeck 开始初始化 ---");
         
-        masterDeck.Clear();
+        // 修复：如果 masterDeck 已经被外部（如 LoadDeckFromGlobal）填充，则不要用 startingDeck 覆盖它
+        if (masterDeck.Count == 0)
+        {
+            if (startingDeck.Count > 0)
+            {
+                masterDeck.Clear();
+                masterDeck.AddRange(startingDeck);
+                Debug.Log($"DEBUG: 使用默认 Starting Deck 初始化. Size: {masterDeck.Count}");
+            }
+            else
+            {
+                Debug.LogWarning("DEBUG: Master Deck 为空且 Starting Deck 为空！");
+            }
+        }
+        else
+        {
+            Debug.Log($"DEBUG: 保留现有 Master Deck. Size: {masterDeck.Count}");
+        }
+        
         drawPile.Clear();
         discardPile.Clear();
         hand.Clear();
-
-        masterDeck.AddRange(startingDeck);
-        Debug.Log($"DEBUG: 初始牌组加载完成，Master Deck size: {masterDeck.Count}");
         
         // 将主牌库洗牌并放入抽牌堆
         ShuffleMasterDeckIntoDrawPile();
         CurrentEnergy = maxEnergy;
         Debug.Log($"DEBUG: SetupDeck 完成. Draw Pile size: {drawPile.Count}. Max Energy: {maxEnergy}");
     }
+    // CardSystem.cs 内部
+        public void LoadDeckFromGlobal()
+        {
+            masterDeck.Clear();
+            
+            if (GameDataManager.Instance == null)
+            {
+                Debug.LogWarning("GameDataManager Instance 为空，无法加载全局卡组。将使用默认卡组。");
+                SetupDeck();
+                return;
+            }
 
+            List<string> cardIds = GameDataManager.Instance.playerData.cardIds;
+            Debug.Log($"LoadDeckFromGlobal: 尝试加载 {cardIds.Count} 张卡牌");
+
+            foreach (string id in cardIds)
+            {
+                // 尝试路径 1: Resources/Cards/ID
+                CardData card = Resources.Load<CardData>($"Cards/{id}");
+                
+                // 尝试路径 2: Resources/CardData/ID (Importer 默认路径)
+                if (card == null)
+                {
+                    card = Resources.Load<CardData>($"CardData/{id}");
+                }
+
+                if (card != null)
+                {
+                    masterDeck.Add(card);
+                }
+                else
+                {
+                    Debug.LogWarning($"找不到卡牌资源: {id}. 请确保卡牌在 Resources/Cards 或 Resources/CardData 目录下");
+                }
+            }
+            
+            // 初始化抽牌堆等逻辑
+            SetupDeck(); 
+        }
     /// <summary>
     /// 将主牌库洗牌并放入抽牌堆。
     /// </summary>

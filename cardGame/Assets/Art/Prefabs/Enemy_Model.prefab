@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4084416967028881286}
   - component: {fileID: 5858533590108859611}
+  - component: {fileID: -3130790655238769915}
   - component: {fileID: 3039470121456602501}
   - component: {fileID: 7628308126797349609}
   - component: {fileID: 1909562342051364970}
@@ -52,6 +53,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2693954326760863213}
   m_CullTransparentMesh: 1
+--- !u!114 &-3130790655238769915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2693954326760863213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f52cf468ad4052a08cef8611fd746, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _characterName: 
+  _maxHp: 3
+  _currentHp: 3
+  _currentBlock: 3
+  enemyLevel: 1
+  baseDamage: 10
+  experienceReward: 50
+  goldReward: 25
+  hasSpecialAbility: 0
+  specialAbilityName: 
+  specialAbilityCooldown: 0
+  deathEffectPrefab: {fileID: 0}
+  deathSound: {fileID: 0}
+  attackSound: {fileID: 0}
 --- !u!114 &3039470121456602501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,6 +191,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterAnimator: {fileID: 7631047046508539496}
+  attackAnimationDuration: 1
+  hitAnimationDuration: 0.5
+  dieAnimationDuration: 1.5
 --- !u!225 &6802242689237347289
 CanvasGroup:
   m_ObjectHideFlags: 0

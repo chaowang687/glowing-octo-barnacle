@@ -97,6 +97,60 @@ public class GameFlowManager : MonoBehaviour
         StartCoroutine(InitializeCharacterManager());
     }
 
+
+
+    // GameFlowManager.cs
+    // 提供给 BattleManager 调用的统一接口
+    public void InitializeBattleFromData(EnemyEncounterData encounter)
+    {
+        if (encounter == null)
+        {
+            Debug.LogError("InitializeBattleFromData: 传入的 encounter 数据为空！");
+            return;
+        }
+        
+        if (encounter.enemyList == null || encounter.enemyList.Count == 0)
+        {
+             Debug.LogWarning("InitializeBattleFromData: 敌人列表为空！");
+             return;
+        }
+
+        // 清理容器中已有的测试敌人
+        foreach (Transform child in enemyVisualContainer)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // 循环生成敌人
+        for (int i = 0; i < encounter.enemyList.Count; i++)
+        {
+            // 调用类内部已有的 SpawnEnemy 方法
+            SpawnEnemy(encounter.enemyList[i], i);
+        }
+        
+        Debug.Log($"[GameFlow] 已根据数据生成遭遇战：{encounter.encounterName} (敌人数量: {encounter.enemyList.Count})");
+    }
+    public void SetupBattlefield()
+{
+    // 1. 获取当前节点对应的遭遇战数据
+    var encounter = GameDataManager.Instance.battleEncounterData as EnemyEncounterData;
+    if (encounter == null) return;
+
+    // 2. 遍历敌人列表，动态生成
+    for (int i = 0; i < encounter.enemyList.Count; i++)
+    {
+        EnemyData data = encounter.enemyList[i];
+        
+        // 生成敌人预制体
+        CharacterBase enemy = Instantiate(enemyPrefab, enemyVisualContainer);
+        
+        // 关键：将 SO 里的数据注入到实例中
+        enemy.Initialize(data.enemyName, data.maxHp, data.artwork);
+        
+        // 如果有 AI 或显示逻辑，也在这里初始化
+        enemy.GetComponent<EnemyAI>().Initialize(data, data.intentStrategy);
+    }
+}
     private IEnumerator InitializeCharacterManager()
     {
         yield return null; 
@@ -109,7 +163,29 @@ public class GameFlowManager : MonoBehaviour
             // 这需要根据你的CharacterManager实际实现来调整
         }
     }
+    // GameFlowManager.cs 约 125 行左右
+        public void InitializeBattle() 
+        {
+            // 1. 获取基础数据
+            var baseEncounter = GameDataManager.Instance.battleEncounterData;
+            if (baseEncounter == null) return;
 
+            // 2. 关键修复：将其强制转换为你的敌人遭遇战类型
+            EnemyEncounterData encounter = baseEncounter as EnemyEncounterData;
+            
+            if (encounter != null)
+            {
+                // 现在可以访问 enemyList 了
+                for (int i = 0; i < encounter.enemyList.Count; i++)
+                {
+                    SpawnEnemy(encounter.enemyList[i], i);
+                }
+            }
+            else
+            {
+                Debug.LogError("当前遭遇战数据不是 EnemyEncounterData 类型！");
+            }
+        }
     /// <summary>
     /// 初始化结算页面
     /// </summary>
@@ -141,7 +217,7 @@ public class GameFlowManager : MonoBehaviour
     }
 
     #region 胜利/失败结算
-
+    
     /// <summary>
     /// 显示胜利结算页面
     /// </summary>
@@ -753,21 +829,93 @@ private string GetNextNodeId(string currentId)
     }
 
     private void SetupHero()
+{
+    if (heroPrefab == null || heroVisualContainer == null) return;
+
+    // 1. 生成英雄
+    GameObject heroObj = Instantiate(heroPrefab, heroVisualContainer);
+    
+    // 2. 关键修复：获取 Hero 子类脚本，而不是 CharacterBase
+    Hero heroScript = heroObj.GetComponent<Hero>();
+
+    if (heroScript != null)
     {
-        if (heroPrefab == null || heroVisualContainer == null) return;
+        // 3. 核心修复：先同步数据（血量从存档里读出 30）
+        heroScript.SyncFromGlobal();
+
+        // 4. 注册到管理器
+        characterManager.RegisterHero(heroScript);
+        
+        // 5. 最后初始化 UI（此时 UI 能读到正确的 30 血量）
+        heroObj.GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(heroScript);
+        
+        Debug.Log($"[SetupHero] 英雄生成并同步完成，当前血量: {heroScript.currentHp}");
+    }
+    else
+    {
+        Debug.LogError("预制体上没挂 Hero 脚本！");
+    }
+}
+    // GameFlowManager.cs 内部
+    // 添加这个公共方法供 BattleManager 调用
+    public void SpawnHeroFromData()
+    {
+        if (heroPrefab == null)
+        {
+            Debug.LogError("SpawnHeroFromData: heroPrefab 为空！请在 Inspector 中赋值。");
+            return;
+        }
+        if (heroVisualContainer == null)
+        {
+            Debug.LogError("SpawnHeroFromData: heroVisualContainer 为空！请在 Inspector 中赋值。");
+            return;
+        }
+
+        // 1. 生成英雄实例
         GameObject heroObj = Instantiate(heroPrefab, heroVisualContainer);
-        CharacterBase heroScript = heroObj.GetComponent<CharacterBase>();
+        Hero heroScript = heroObj.GetComponent<Hero>();
+
         if (heroScript != null)
         {
-            characterManager.activeHero = heroScript;
-            characterManager.RegisterHero(heroScript);
+            if (characterManager == null) characterManager = CharacterManager.Instance;
+            if (characterManager != null)
+            {
+                // 2. 注册到角色管理器
+                characterManager.RegisterHero(heroScript);
+            }
+            else
+            {
+                Debug.LogError("SpawnHeroFromData: 找不到 CharacterManager 实例！");
+            }
+
+            // 3. 【关键】先同步数据！！
+            heroScript.SyncFromGlobal();
+
+            // 4. 【关键】最后初始化 UI
             heroObj.GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(heroScript);
+
+            Debug.Log($"[GameFlow] 英雄生成成功，当前血量: {heroScript.currentHp}");
+        }
+        else
+        {
+             Debug.LogError("SpawnHeroFromData: 生成的英雄预制体上没有 Hero 脚本！");
         }
     }
-
     private void SpawnEnemy(EnemyData data, int index)
     {
-        if (enemyPrefab == null || enemyVisualContainer == null) return;
+        // 增加详细的排查日志
+        if (data == null) { Debug.LogError("SpawnEnemy: 传入的 EnemyData 是空的！"); return; }
+        if (enemyPrefab == null) { Debug.LogError("GameFlowManager: Enemy Prefab 引用丢失！"); return; }
+        if (enemyVisualContainer == null) { Debug.LogError("GameFlowManager: Enemy Visual Container 引用丢失！"); return; }
+        if (characterManager == null) { 
+            // 尝试自动找一下，防止没拖拽
+            characterManager = FindObjectOfType<CharacterManager>();
+            if(characterManager == null) {
+                Debug.LogError("GameFlowManager: 找不到 CharacterManager！请在场景中创建并拖入引用。"); 
+                return; 
+            }
+        }
+
         CharacterBase enemyInstance = Instantiate(enemyPrefab, enemyVisualContainer);
         InitializeEnemy(enemyInstance, data, index);
         characterManager.RegisterEnemy(enemyInstance);

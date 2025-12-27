@@ -6,6 +6,7 @@ namespace SlayTheSpireMap
 {
     public class NodeInteractionManager : MonoBehaviour
     {
+        
         /// <summary>
         /// 当节点在UI上被点击时调用
         /// </summary>
@@ -16,9 +17,18 @@ public void OnNodeClicked(MapNodeData node, MapManager mapManager)
 {
     var dataManager = GameDataManager.Instance;
     
-    // 判定逻辑
+    // --- 关键修复：判定逻辑 ---
+    // 1. 是否是当前已经选中的点（针对继续按钮）
+    bool isCurrentNode = node.nodeId == dataManager.currentNodeId;
+    
+    // 2. 是否在已解锁列表中
     bool isUnlockedInList = dataManager.unlockedNodeIds.Contains(node.nodeId);
-    bool canAccess = isUnlockedInList || (node.isStartNode && string.IsNullOrEmpty(dataManager.currentNodeId));
+    
+    // 3. 是否是起始节点且还没选过任何点
+    bool isInitialStart = node.isStartNode && string.IsNullOrEmpty(dataManager.currentNodeId);
+
+    // 只要满足以上任意一个，就允许进入
+    bool canAccess = isCurrentNode || isUnlockedInList || isInitialStart;
 
     if (!canAccess)
     {
