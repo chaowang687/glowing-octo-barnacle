@@ -1336,6 +1336,7 @@ RectTransform:
   - {fileID: 629862148}
   - {fileID: 1290867192}
   - {fileID: 374203507}
+  - {fileID: 1655021207}
   - {fileID: 969549190}
   - {fileID: 914265450}
   - {fileID: 387213812}
@@ -1559,7 +1560,7 @@ GameObject:
   - component: {fileID: 1047070538}
   - component: {fileID: 1047070537}
   m_Layer: 5
-  m_Name: GameFlow
+  m_Name: _GameFlow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1832,6 +1833,41 @@ MonoBehaviour:
   defeatMainMenuButton: {fileID: 0}
   rewardPanel: {fileID: 0}
   goldRewardText: {fileID: 0}
+--- !u!1 &1655021206
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1655021207}
+  m_Layer: 5
+  m_Name: draw
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1655021207
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1655021206}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 889373303}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -1098, y: -366}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1686353380 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5112347681237895755, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
@@ -1887,6 +1923,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1933791711}
+  - component: {fileID: 1933791715}
   - component: {fileID: 1933791713}
   - component: {fileID: 1933791714}
   - component: {fileID: 1933791712}
@@ -1946,33 +1983,11 @@ MonoBehaviour:
   characterManager: {fileID: 1933791712}
   cardPrefab: {fileID: 1803165658914132338, guid: c22ee2f55ec1c4e9194e0a5d4850fc65, type: 3}
   handContainer: {fileID: 629862148}
-  handContainerRect: {fileID: 0}
   discardPileLocationTransform: {fileID: 374203507}
   drawPileLocationTransform: {fileID: 1931825473}
   playCenterTransform: {fileID: 1290867192}
   handDisplays: []
   cardsToDraw: 5
-  arcBaseWidth: 1000
-  arcHeight: 50
-  cardSpacing: 224
-  repositionDuration: 0.3
-  postPlayRepositionDuration: 0.2
-  drawDuration: 0.183
-  drawCardDelay: 0.089
-  playCardDuration: 0.1
-  centerIdleDuration: 0.12
-  postExecutionDelay: 0.1
-  layoutCardDelay: 0.01
-  centralPileOffset: {x: 0, y: 0, z: -0.1}
-  drawEaseType: 6
-  playToCenterEaseType: 6
-  playToDiscardEaseType: 5
-  hoverDelayDuration: 0.3
-  hoverTranslateY: 70
-  hoverScale: 1.1
-  extraSpacingOnHover: 0
-  hoverToleranceFactor: 0.4
-  hoverToleranceY: 150
   defaultEnemyDataAsset: {fileID: 0}
   defaultEnemyStrategyAsset: {fileID: 0}
   testEncounterData: {fileID: 11400000, guid: 2eca28d19c0714998ba2bf450ae72754, type: 2}
@@ -2008,6 +2023,43 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
   - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+--- !u!114 &1933791715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1933791710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4edde783781964b5fb584fe96fd4873d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  handContainerRect: {fileID: 629862148}
+  arcBaseWidth: 1000
+  arcHeight: 50
+  cardSpacing: 224
+  hoverDelayDuration: 0.3
+  hoverTranslateY: 70
+  hoverScale: 1.1
+  extraSpacingOnHover: 0
+  hoverToleranceFactor: 0.4
+  hoverToleranceY: 150
+  discardPileLocationTransform: {fileID: 374203507}
+  drawPileLocationTransform: {fileID: 1931825473}
+  playCenterTransform: {fileID: 1290867192}
+  repositionDuration: 0.3
+  postPlayRepositionDuration: 0.2
+  drawDuration: 0.18
+  drawCardDelay: 0.089
+  playCardDuration: 0.1
+  centerIdleDuration: 0.12
+  postExecutionDelay: 0.1
+  layoutCardDelay: 0.01
+  centralPileOffset: {x: 0, y: 0, z: -0.1}
+  drawEaseType: 6
+  playToCenterEaseType: 3
+  playToDiscardEaseType: 5
 --- !u!1 &2004134095
 GameObject:
   m_ObjectHideFlags: 0

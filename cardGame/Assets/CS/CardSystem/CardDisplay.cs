@@ -142,7 +142,7 @@ public class CardDisplay : MonoBehaviour,
         }
 
         rectTransform.localRotation = Quaternion.identity;
-        float scale = (BattleManager.Instance.hoverScale > 0) ? BattleManager.Instance.hoverScale : 1.2f;
+        float scale = (BattleVisualizer.Instance != null) ? BattleVisualizer.Instance.hoverScale : 1.2f;
         rectTransform.localScale = Vector3.one * scale;
         
         currentTargetObject = eventData.pointerCurrentRaycast.gameObject;
@@ -191,7 +191,7 @@ public class CardDisplay : MonoBehaviour,
     private void ReturnToHand(Vector3 targetLocalPosition, Quaternion targetLocalRotation)
     {
         if (BattleManager.Instance == null) return;
-        float returnDuration = BattleManager.Instance.repositionDuration; 
+        float returnDuration = (BattleVisualizer.Instance != null) ? BattleVisualizer.Instance.repositionDuration : 0.3f; 
 
         DOTween.Kill(transform);
         

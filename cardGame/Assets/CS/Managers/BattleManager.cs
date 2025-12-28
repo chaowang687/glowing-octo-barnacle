@@ -35,98 +35,29 @@ public class BattleManager : MonoBehaviour
     [Header("UI Config")]
     public GameObject cardPrefab; 
     public Transform handContainer; 
-    [Tooltip("手牌容器的 RectTransform，用于鼠标坐标转换 (必须设置)")]
-    public RectTransform handContainerRect; 
+    // handContainerRect moved to BattleVisualizer
     public Transform discardPileLocationTransform; 
     public Transform drawPileLocationTransform;    
     public Transform playCenterTransform; 
 
     public List<CardDisplay> handDisplays = new List<CardDisplay>(); 
     
-    // 布局参考数据，用于鼠标悬停检测
-    private List<(CardDisplay display, float centerX)> handLayoutReference = new List<(CardDisplay, float)>(); 
-    
-    // 布局数据结构，用于计算目标位置
-    private struct CardLayoutData
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 scale;
-        public float centerX; // 用于碰撞检测
-    }
+    // Layout and Hover Logic moved to BattleVisualizer
 
     [Header("回合状态")]
     public int CurrentRound { get; private set; } = 0; 
     public int cardsToDraw = 5; 
     
-    [Header("手牌布局: 固定的弧度和间距")]
-    [Range(600f, 1500f)]
-    public float arcBaseWidth = 1000f; 
-    
-    [Range(50f, 500f)] 
-    public float arcHeight = 250f; 
-    
-    [Range(100f, 300f)]
-    public float cardSpacing = 175f; 
+    // Layout settings moved to BattleVisualizer
     
     [Header("动画参数")]
-    [Range(0.1f, 1f)]
-    public float repositionDuration = 0.3f; // 整理阶段的动画时长
-    
-    [Range(0.1f, 1f)]
-    [Tooltip("打出卡牌后，剩余卡牌重新布局的动画时长。")]
-    public float postPlayRepositionDuration = 0.2f; // NEW: 打牌后整理时长
-    
-    [Range(0.05f, 1f)]
-    public float drawDuration = 0.5f; // 抽牌阶段单张卡牌的时长
-    
-    [Range(0.001f, 0.2f)]
-    public float drawCardDelay = 0.08f; // 抽牌阶段的卡牌间隔
-    
-    [Range(0.05f, 0.5f)]
-    public float playCardDuration = 0.1f; 
-    
-    [Range(0.05f, 0.5f)]
-    public float centerIdleDuration = 0.12f; 
-    
-    [Range(0.05f, 0.5f)]
-    public float postExecutionDelay = 0.1f; // Delay buffer for turn transition
-    
-    [Header("抽牌整理动画参数")]
-    [Range(0.01f, 0.3f)]
-    public float layoutCardDelay = 0.05f; // 整理阶段单张卡牌的间隔
-    [Tooltip("卡牌在中央堆叠时，每张卡牌的X/Y/Z轴偏移量，用于形成可见的堆叠。")]
-    public Vector3 centralPileOffset = new Vector3(0f, 20f, -0.1f); 
-    
-    [Header("动画缓动类型")]
-    public Ease drawEaseType = Ease.OutQuad; 
-    public Ease playToCenterEaseType = Ease.OutSine; 
-    public Ease playToDiscardEaseType = Ease.InQuad; 
-    
-    [Header("手牌高亮与悬停参数")]
-    [Range(0.1f, 1f)]
-    public float hoverDelayDuration = 0.3f; 
-    
-    [Range(20f, 100f)]
-    public float hoverTranslateY = 50f; 
-    
-    [Range(1f, 1.5f)]
-    public float hoverScale = 1.1f; 
-    
-    [Range(0f, 100f)]
-    public float extraSpacingOnHover = 50f;
-    
-    [Range(0f, 1f)]
-    public float hoverToleranceFactor = 0.4f; 
-
-    [Range(10f, 300f)]
-    public float hoverToleranceY = 150f; 
+    // Animation settings moved to BattleVisualizer
 
     [Header("调试用默认资产")]
     public EnemyData defaultEnemyDataAsset; 
     public RoundBasedStrategy defaultEnemyStrategyAsset; 
 
-    private CardDisplay highlightedCard = null; 
+    private CardDisplay highlightedCard = null; // Deprecated, use BattleVisualizer
 
     private void Awake()
     {
@@ -143,14 +74,27 @@ public class BattleManager : MonoBehaviour
             return;
         }
         
-        if (handContainer != null && handContainerRect == null)
-        {
-            handContainerRect = handContainer.GetComponent<RectTransform>();
-        }
+        // handContainerRect assignment moved to BattleVisualizer
         
         // 确保组件引用
         if (cardSystem == null) cardSystem = GetComponentInChildren<CardSystem>();
         if (characterManager == null) characterManager = CharacterManager.Instance;
+        
+        ConfigureVisualizer();
+    }
+    
+    private void ConfigureVisualizer()
+    {
+        if (BattleVisualizer.Instance != null)
+        {
+            if (handContainer != null) 
+                BattleVisualizer.Instance.handContainerRect = handContainer.GetComponent<RectTransform>();
+            
+            // Assign Transform references to Visualizer
+            BattleVisualizer.Instance.drawPileLocationTransform = drawPileLocationTransform;
+            BattleVisualizer.Instance.discardPileLocationTransform = discardPileLocationTransform;
+            BattleVisualizer.Instance.playCenterTransform = playCenterTransform;
+        }
     }
     
     [Header("调试用遭遇战数据")]
@@ -303,87 +247,33 @@ private IEnumerator Start()
 
     void Update()
     {
-        // 只有当回合和卡牌动画都没有进行时，才处理悬停
-        if (handDisplays.Count > 0 && !isTurnInProgress && !isCardBeingPlayed) 
-        {
-             HandleHoverSelection();
-        }
-        else // VITAL: 如果锁住了，确保没有卡牌是高亮状态
-        {
-            SetHighlightedCard(null); 
-        }
+        // Hover selection moved to BattleVisualizer
     }
     
-    private void HandleHoverSelection()
+    public bool IsInteractionLocked()
     {
-        if (handLayoutReference.Count == 0 || handContainerRect == null)
-        {
-            SetHighlightedCard(null); 
-            return;
-        }
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            handContainerRect, 
-            Input.mousePosition, 
-            null, 
-            out Vector2 localMousePos
-        );
-        
-        float minYThreshold = -hoverToleranceY;
-        float maxYThreshold = arcHeight + hoverTranslateY + 50f; 
-
-        if (localMousePos.y < minYThreshold || localMousePos.y > maxYThreshold)
-        {
-            SetHighlightedCard(null); 
-            return;
-        }
-
-        CardDisplay bestMatch = null;
-        float minDistance = float.MaxValue;
-        float hoverToleranceX = cardSpacing * hoverToleranceFactor;
-
-        foreach (var item in handLayoutReference)
-        {
-            float distanceX = Mathf.Abs(localMousePos.x - item.centerX);
-            
-            if (distanceX < hoverToleranceX && distanceX < minDistance)
-            {
-                minDistance = distanceX;
-                bestMatch = item.display;
-            }
-        }
-        
-        SetHighlightedCard(bestMatch);
+        return isTurnInProgress || isCardBeingPlayed;
     }
 
-    private void SetHighlightedCard(CardDisplay newHighlightedCard)
+    // Proxy methods for CardDisplay compatibility
+    public void UpdateHandLayout(float duration)
     {
-        if (highlightedCard == newHighlightedCard) return;
-
-        highlightedCard = newHighlightedCard;
-        
-        if (highlightedCard != null)
-        {
-            // Set the highlighted card to be the last sibling (on top)
-            highlightedCard.transform.SetAsLastSibling();
-        }
-
-        // Use the default repositionDuration for hover layout animation
-        UpdateHandLayout(repositionDuration); 
+        if (BattleVisualizer.Instance != null)
+            BattleVisualizer.Instance.UpdateHandLayout(duration);
     }
-    
+
     public void UnhighlightCard(CardDisplay card)
     {
-        if (highlightedCard == card)
-        {
-            SetHighlightedCard(null);
-        }
+        if (BattleVisualizer.Instance != null)
+            BattleVisualizer.Instance.UnhighlightCard(card);
     }
-    
+
     public CardDisplay GetHighlightedCard()
     {
-        return highlightedCard;
+        return BattleVisualizer.Instance != null ? BattleVisualizer.Instance.GetHighlightedCard() : null;
     }
+    
+    // Removed local HandleHoverSelection, SetHighlightedCard implementation
     
     private void SetupMockCharactersIfNecessary()
     {
@@ -494,25 +384,28 @@ private IEnumerator Start()
 
     Debug.Log("--- Player Turn End ---");
     
-    float discardDuration = 0.2f;
     List<CardDisplay> cardsToDiscard = handDisplays.ToList(); 
     bool cardsWereDiscarded = cardsToDiscard.Count > 0;
 
-    // 1. 弃牌动画
-    foreach (var display in cardsToDiscard) 
+    // 1. 弃牌动画 (Delegate to Visualizer)
+    if (BattleVisualizer.Instance != null)
     {
-        if (display != null && discardPileLocationTransform != null)
-        {
-            display.transform.DOMove(discardPileLocationTransform.position, discardDuration)
-                .SetEase(playToDiscardEaseType)
-                .OnComplete(() => Destroy(display.gameObject));
-        }
+        BattleVisualizer.Instance.AnimateDiscardHand(cardsToDiscard, () => {
+             // Animation complete logic could be here, but we use DelayedCall below for legacy timing consistency
+        });
+    }
+    else
+    {
+        // Fallback destruction
+        foreach(var c in cardsToDiscard) if(c!=null) Destroy(c.gameObject);
     }
     
     DiscardHandDisplays();
     if (cardSystem != null) cardSystem.DiscardHand(); 
     
-    float totalWaitTime = cardsWereDiscarded ? discardDuration + postExecutionDelay : postExecutionDelay;
+    float discardDuration = 0.2f; // Approximate duration from Visualizer
+    float delay = (BattleVisualizer.Instance != null) ? BattleVisualizer.Instance.postExecutionDelay : 0.1f;
+    float totalWaitTime = cardsWereDiscarded ? discardDuration + delay : delay;
 
     // 2. 动画完成后执行逻辑切换
     DOVirtual.DelayedCall(totalWaitTime, () => 
@@ -529,7 +422,8 @@ private IEnumerator Start()
         // --- 核心修复点 1: CS1503 错误 ---
         // 错误原因：不能直接把 StartCoroutine(...) 传给 OnComplete 或 DelayedCall
         // 修复方法：使用 Lambda 表达式 () => StartCoroutine(...)
-        DOVirtual.DelayedCall(postExecutionDelay, () => StartCoroutine(StartEnemyTurn()));
+        float finalDelay = (BattleVisualizer.Instance != null) ? BattleVisualizer.Instance.postExecutionDelay : 0.1f;
+        DOVirtual.DelayedCall(finalDelay, () => StartCoroutine(StartEnemyTurn()));
     });
 }
 // BattleManager.cs
@@ -756,6 +650,10 @@ private IEnumerator StartEnemyTurn()
             handDisplays.Add(display);
             newlyDrawnDisplays.Add(display); 
             
+            // Register with Visualizer
+            if (BattleVisualizer.Instance != null)
+                BattleVisualizer.Instance.RegisterCard(display);
+
             // 设置起点：卡牌区相对位置
             display.transform.localPosition = drawPileLocalPos;
             display.transform.localRotation = drawPileLocationTransform.localRotation;
@@ -763,179 +661,32 @@ private IEnumerator StartEnemyTurn()
         }
         
         // --- 阶段 1: 抽牌到中央堆叠 (Draw to Center Pile) ---
-        AnimateCardDraw(newlyDrawnDisplays, drawPileLocalPos, receiveCenterLocalPos);
-    }
-
-    /// <summary>
-    /// 执行卡牌抽取的动画序列：从牌堆飞到中央，再整理到手牌弧形布局。
-    /// </summary>
-    private void AnimateCardDraw(List<CardDisplay> newlyDrawnDisplays, Vector3 drawPileLocalPos, Vector3 receiveCenterLocalPos)
-    {
-        Sequence drawSequence = DOTween.Sequence();
-        
-        for (int i = 0; i < newlyDrawnDisplays.Count; i++)
+        if (BattleVisualizer.Instance != null)
         {
-            CardDisplay display = newlyDrawnDisplays[i];
-            float delay = i * drawCardDelay;
-
-            // 聚集时的目标位置：中央点 + 可见X/Y/Z偏移，形成一个有层次的堆
-            Vector3 receiveTargetLocalPos = receiveCenterLocalPos + 
-                new Vector3(centralPileOffset.x * i, centralPileOffset.y * i, centralPileOffset.z * i); 
-
-            // 动画从 drawPileLocalPos 飞到 receiveTargetLocalPos
-            drawSequence.Insert(delay, 
-                display.transform.DOLocalMove(receiveTargetLocalPos, drawDuration)
-                    .SetEase(drawEaseType) 
-            );
-            
-            // 动画旋转到平整
-            drawSequence.Insert(delay, 
-                display.transform.DOLocalRotate(Vector3.zero, drawDuration) 
-                    .SetEase(drawEaseType)
-            );
-        }
-
-        // --- 阶段 2: 依次整理到弧形布局 (Sequential Layout to Arc) ---
-        drawSequence.OnComplete(() => {
-            
-            Debug.Log("[DrawCards] Stage 1 (Draw to Pile) complete. Starting Stage 2 (Tidy: Sequential Layout).");
-            
-            // 1. 计算所有卡牌的最终布局数据
-            List<CardLayoutData> finalLayoutTargets = CalculateAllCurrentLayout(null);
-            
-            // 2. 开始整理序列
-            Sequence layoutSequence = DOTween.Sequence();
-            
-            for (int i = 0; i < handDisplays.Count; i++) // Use all handDisplays for consistent index
-            {
-                CardDisplay display = handDisplays[i];
-                // 找到对应的布局数据（由于此时没有悬停，布局数据就是按索引排列）
-                CardLayoutData targetData = finalLayoutTargets[i]; 
-                
-                float delay = i * layoutCardDelay; // 依次分发的核心
-
-                // 动画从当前位置（中央堆）飞到最终弧形位置
-                layoutSequence.Insert(delay, 
-                    display.transform.DOLocalMove(targetData.position, repositionDuration).SetEase(Ease.OutQuad)
-                );
-                layoutSequence.Insert(delay, 
-                    display.transform.DOLocalRotate(targetData.rotation.eulerAngles, repositionDuration)
-                );
-                layoutSequence.Insert(delay, 
-                    display.transform.DOScale(targetData.scale, repositionDuration)
-                );
-            }
-
-            layoutSequence.OnComplete(() => {
-                 // 3. 整理完成后，必须更新 handLayoutReference for hover
-                 // 此时调用 UpdateHandLayout(0f) 确保悬停检测数据是最新的，但使用 0 确保瞬时（因为动画已经完成）
-                 UpdateHandLayout(0f); 
-                 
-                 // VITAL UNLOCK: 整个回合流程结束，释放锁
-                 isTurnInProgress = false; 
-                 
-                 Debug.Log("[DrawCards] Stage 2 (Sequential Layout) complete. Hand ready. Turn Lock Released.");
+            BattleVisualizer.Instance.AnimateCardDraw(newlyDrawnDisplays, drawPileLocalPos, receiveCenterLocalPos, () => {
+                isTurnInProgress = false; 
+                Debug.Log("[DrawCards] Animation complete. Turn Lock Released.");
             });
-        });
+        }
+        else
+        {
+             isTurnInProgress = false;
+        }
     }
     
-    /// <summary>
-    /// 计算当前手牌中所有卡牌的目标位置、旋转和缩放数据。
-    /// 同时更新 handLayoutReference 用于鼠标悬停检测。
-    /// </summary>
-    private List<CardLayoutData> CalculateAllCurrentLayout(CardDisplay hoverCard)
-    {
-        List<CardLayoutData> layoutDataList = new List<CardLayoutData>();
-        
-        if (handDisplays == null || handDisplays.Count == 0) 
-        {
-            handLayoutReference.Clear();
-            return layoutDataList;
-        }
-        
-        int count = handDisplays.Count;
-        handLayoutReference.Clear(); 
-
-        // 计算当前手牌需要的总宽度
-        float totalCardWidth = (count > 1) ? (count - 1) * cardSpacing : 0f;
-        
-        // 固定的最大弧形宽度
-        float fixedArcWidth = arcBaseWidth; 
-        float fixedArcHeight = arcHeight;
-        
-        int highlightedIndex = -1;
-        if (hoverCard != null)
-        {
-            // IMPORTANT FIX: Ensure IndexOf is used on the current list
-            highlightedIndex = handDisplays.IndexOf(hoverCard);
-        }
-        
-        float gapSize = extraSpacingOnHover;
-        float totalGapOffset = (highlightedIndex != -1) ? gapSize : 0f;
-        
-        // 调整理想宽度以考虑悬停间距
-        float adjustedTotalWidth = totalCardWidth + totalGapOffset;
-        float currentLayoutStart = -adjustedTotalWidth / 2f;
-
-        for (int i = 0; i < count; i++)
-        {
-            CardDisplay display = handDisplays[i];
-            if (display == null) continue;
-
-            float currentXOffset = i * cardSpacing;
-            
-            // 考虑悬停带来的间距扩散
-            if (highlightedIndex != -1 && i > highlightedIndex)
-            {
-                 // 在悬停卡牌右侧的卡牌需要被推开
-                currentXOffset += gapSize;
-            }
-
-            float finalTargetX = currentLayoutStart + currentXOffset;
-            
-            // 实时记录用于碰撞检测的中心X坐标
-            handLayoutReference.Add((display, finalTargetX));
-
-            // 将 X 坐标归一化到 Bezier 曲线的 [0, 1] 范围
-            float t = (finalTargetX + fixedArcWidth / 2f) / fixedArcWidth;
-            t = Mathf.Clamp01(t); 
-
-            // 计算贝塞尔曲线上的位置和切线旋转
-            (Vector3 targetPosition, Quaternion targetRotation) = CalculateBezierPoint(t, fixedArcWidth, fixedArcHeight);
-
-            Vector3 finalTargetPosition = targetPosition;
-            Vector3 finalTargetRotation = targetRotation.eulerAngles;
-            Vector3 finalTargetScale = Vector3.one;
-
-            // Z 轴用于防止卡牌重叠
-            finalTargetPosition.z = i * 0.001f; 
-
-            // 处理悬停抬升和缩放
-            if (i == highlightedIndex)
-            {
-                Vector3 liftDirection = targetRotation * Vector3.up; 
-                finalTargetPosition += liftDirection * hoverTranslateY;
-                finalTargetScale = Vector3.one * hoverScale;
-            } 
-            
-            layoutDataList.Add(new CardLayoutData
-            {
-                position = finalTargetPosition,
-                rotation = targetRotation,
-                scale = finalTargetScale,
-                centerX = finalTargetX // 已经记录到 handLayoutReference，但保留在结构体中方便使用
-            });
-        }
-        
-        return layoutDataList;
-    }
-
+    // CalculateAllCurrentLayout moved to BattleVisualizer
+    
     private void DiscardHandDisplays()
     {
         // Only clear the list and reference, the visual animation (Destroy) is handled in EndPlayerTurn
+        foreach(var display in handDisplays)
+        {
+             if (BattleVisualizer.Instance != null)
+                BattleVisualizer.Instance.UnregisterCard(display);
+        }
         handDisplays.Clear();
-        handLayoutReference.Clear(); 
-        highlightedCard = null;      
+        // handLayoutReference.Clear(); // Moved
+        // highlightedCard = null;      // Moved logic
     }
     
     /// <summary>
@@ -1012,191 +763,84 @@ private IEnumerator StartEnemyTurn()
         
         // 移除手牌列表中的引用 (必须成功，因为是从列表中传递的)
         handDisplays.Remove(displayToRemove);
-        if (highlightedCard == displayToRemove) highlightedCard = null;
-
         
+        // VITAL FIX: 立即通知 Visualizer 移除卡牌，触发剩余卡牌的重新布局填补空缺
+        if (BattleVisualizer.Instance != null)
+        {
+             BattleVisualizer.Instance.UnregisterCard(displayToRemove, true);
+        }
+
         Transform targetTransform = actualTarget != null ? actualTarget.transform : handContainer; 
 
-        AnimatePlayCardSequence(card, displayToRemove.transform, targetTransform, discardPileLocationTransform,
-            // 效果回调
-            () => {
-                Debug.Log($"Card effect {card.cardName} triggered!");
-                try
-                {
-                    CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
-                    CharacterBase source = characterManager.GetActiveHero();
-                    card.ExecuteEffects(source, targetCharacter, cardSystem); 
-                    
-                    cardSystem.PlayCard(card); 
-                    UpdateHandLayout(postPlayRepositionDuration); 
-                    CheckBattleEnd(); 
+        if (BattleVisualizer.Instance != null)
+        {
+            BattleVisualizer.Instance.AnimatePlayCardSequence(card, displayToRemove.transform, targetTransform, 
+                // Effect Callback
+                () => {
+                    Debug.Log($"Card effect {card.cardName} triggered!");
+                    try
+                    {
+                        CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
+                        CharacterBase source = characterManager.GetActiveHero();
+                        card.ExecuteEffects(source, targetCharacter, cardSystem); 
+                        
+                        cardSystem.PlayCard(card); 
+                        
+                        // Use Visualizer duration
+                        float duration = BattleVisualizer.Instance.postPlayRepositionDuration;
+                        UpdateHandLayout(duration); 
+                        CheckBattleEnd(); 
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"Error executing card effect or updating state for {card.cardName}: {ex.Message}");
+                    }
+                },
+                // Completion Callback
+                () => {
+                    isCardBeingPlayed = false;
+                    Debug.Log("Card Play Lock Released.");
                 }
-                catch (System.Exception ex)
-                {
-                    Debug.LogError($"Error executing card effect or updating state for {card.cardName}: {ex.Message}");
-                }
-            },
-            // 完成回调
-            () => {
-                isCardBeingPlayed = false;
-                Debug.Log("Card Play Lock Released.");
-            }
-        );
+            );
+        }
+        else
+        {
+             Debug.LogError("BattleVisualizer instance missing. Cannot animate play card.");
+             isCardBeingPlayed = false;
+        }
         
         return true;
     }
 
-    /// <summary>
-    /// 执行卡牌打出的动画序列：飞向目标/中心 -> 停留触发效果 -> 飞向弃牌堆 -> 销毁。
-    /// </summary>
-    private void AnimatePlayCardSequence(CardData card, Transform cardTransform, Transform targetTransform, Transform discardPileTransform, System.Action onEffectTrigger, System.Action onComplete)
+    // AnimatePlayCardSequence moved to BattleVisualizer
+    
+    // CalculateBezierPoint moved to BattleVisualizer
+    
+    private IEnumerator ExecuteEnemyTurnSequentially()
     {
-        if (CheckBattleEnd())
+        // 获取所有存活的敌人
+        var enemies = characterManager.GetAllEnemies().Where(e => e.currentHp > 0).ToList();
+        
+        Debug.Log($"[战斗流程] 敌人回合开始，存活敌人数量: {enemies.Count}");
+        
+        // 依次执行每个敌人的行动
+        foreach (var enemy in enemies) 
         {
-            if (cardTransform != null) Destroy(cardTransform.gameObject);
-            onComplete?.Invoke();
-            return;
-        }
-
-        if (cardTransform == null || discardPileTransform == null)
-        {
-            Debug.LogError("AnimatePlayCardSequence: Transform references missing");
-            onComplete?.Invoke();
-            return;
-        }
-
-        float discardDuration = 0.2f;
-        Transform centerPos = playCenterTransform != null ? playCenterTransform : handContainer;
-
-        Sequence playSequence = DOTween.Sequence();
-
-        // 1. Move to Center Position (Play Animation)
-        playSequence.Append(
-            cardTransform.DOMove(centerPos.position, playCardDuration)
-                        .SetEase(playToCenterEaseType) 
-        );
-        
-        playSequence.Join(cardTransform.DORotate(Vector3.zero, playCardDuration).SetEase(playToCenterEaseType));
-        playSequence.Join(cardTransform.DOScale(Vector3.one, playCardDuration).SetEase(playToCenterEaseType));
-
-        // 2. Idle for effect trigger
-        playSequence.AppendInterval(centerIdleDuration); 
-        
-        // 3. Execute Card Effect (Callback)
-        playSequence.AppendCallback(() => onEffectTrigger?.Invoke());
-        
-        playSequence.AppendInterval(postExecutionDelay);
-
-        // 4. Move to Discard Pile
-        playSequence.Append(
-            cardTransform.DOMove(discardPileTransform.position, discardDuration) 
-                        .SetEase(playToDiscardEaseType) 
-        );
+            EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
             
-        // 5. Destroy Object and Unlock
-        playSequence.AppendCallback(() => {
-            if (cardTransform != null && cardTransform.gameObject != null)
+            if (enemyAI != null && enemy.currentHp > 0) 
             {
-                Destroy(cardTransform.gameObject);
-            }
-            onComplete?.Invoke();
-        });
-    }
-    
-    private (Vector3 position, Quaternion rotation) CalculateBezierPoint(float t, float width, float height)
-    {
-        Vector3 p0 = new Vector3(-width / 2f, 0f, 0f);
-        Vector3 p1 = new Vector3(0f, height, 0f);
-        Vector3 p2 = new Vector3(width / 2f, 0f, 0f);
-
-        float oneMinusT = 1f - t;
-        
-        // Position on the Quadratic Bezier curve
-        Vector3 position = 
-            (oneMinusT * oneMinusT * p0) + 
-            (2f * oneMinusT * t * p1) + 
-            (t * t * p2);
-
-        // Tangent calculation for rotation
-        Vector3 p0_p1 = p1 - p0; 
-        Vector3 p1_p2 = p2 - p1; 
-
-        Vector3 tangent = 
-            (2f * oneMinusT * p0_p1) + 
-            (2f * t * p1_p2);
-        
-        float angleZ = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg; 
-        
-        Quaternion rotation = Quaternion.Euler(0f, 0f, angleZ);
-
-        return (position, rotation);
-    }
-    
-    /// <summary>
-    /// Updates the layout of the hand cards.
-    /// </summary>
-    /// <param name="duration">The duration of the animation. Use 0 for instant repositioning.</param>
-    public void UpdateHandLayout(float duration) 
-    { 
-        // 1. 预检：如果没有手牌，直接返回
-        if (handDisplays == null || handDisplays.Count == 0) return;
-
-        // 2. 一次性计算出所有卡牌的目标布局数据
-        List<CardLayoutData> layoutData = CalculateAllCurrentLayout(highlightedCard);
-        
-        // 3. 遍历手牌列表，应用布局
-        for (int i = 0; i < handDisplays.Count; i++)
-        {
-            CardDisplay card = handDisplays[i];
-            if (card == null) continue;
-
-            // ⭐ 关键点：如果卡牌正在被拖拽，跳过布局计算，完全交给 CardDisplay 的 OnDrag 处理
-            if (card.IsDragging) 
-            {
-                continue; 
-            }
-
-            // 4. 获取当前卡牌对应的布局目标 (确保索引安全)
-            if (i >= layoutData.Count) break;
-            CardLayoutData targetData = layoutData[i];
-
-            // 5. 执行平滑动画
-            // 使用 SetEase(Ease.OutQuad) 让手牌排列看起来更有弹性
-            card.transform.DOLocalMove(targetData.position, duration).SetEase(Ease.OutQuad);
-            card.transform.DOLocalRotate(targetData.rotation.eulerAngles, duration).SetEase(Ease.OutQuad);
-            card.transform.DOScale(targetData.scale, duration).SetEase(Ease.OutQuad);
-        }
-    }
-
-    /// <summary>
-    /// Checks if the battle has ended. If so, calls EndBattle.
-    /// </summary>
-    // 在 BattleManager.cs 中处理敌人回合
-private IEnumerator ExecuteEnemyTurnSequentially()
-{
-    // 获取所有存活的敌人
-    var enemies = characterManager.GetAllEnemies().Where(e => e.currentHp > 0).ToList();
-    
-    Debug.Log($"[战斗流程] 敌人回合开始，存活敌人数量: {enemies.Count}");
-    
-    // 依次执行每个敌人的行动
-    foreach (var enemy in enemies) 
-    {
-        EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
-        
-        if (enemyAI != null && enemy.currentHp > 0) 
-        {
-            Debug.Log($"[战斗流程] {enemy.characterName} 开始行动...");
-            
-            // 1. 计算意图
-            enemyAI.CalculateIntent(characterManager.GetActiveHero(), CurrentRound); 
-            
-            // 2. 更新UI显示意图
-            EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
-            if (display != null)
-            {
-                display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
-            }
+                Debug.Log($"[战斗流程] {enemy.characterName} 开始行动...");
+                
+                // 1. 计算意图
+                enemyAI.CalculateIntent(characterManager.GetActiveHero(), CurrentRound); 
+                
+                // 2. 更新UI显示意图
+                EnemyDisplay display = enemy.GetComponentInChildren<EnemyDisplay>();
+                if (display != null)
+                {
+                    display.RefreshIntent(enemyAI.nextIntent, enemyAI.intentValue);
+                }
             
             // 3. 短暂延迟，让玩家看到意图
             yield return new WaitForSeconds(0.8f);

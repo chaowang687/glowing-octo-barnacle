@@ -97,6 +97,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/ItemSlotUI.cs" />
     <Compile Include="Assets/CS2/PlayerPiece.cs" />
     <Compile Include="Assets/CS3/FollowCamer.cs" />
+    <Compile Include="Assets/CS/Managers/BattleVisualizer.cs" />
     <Compile Include="Assets/Map/逻辑层/MapGenerator.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAI.cs" />
     <Compile Include="Assets/CS2/ScavengingController.cs" />
