@@ -24,39 +24,10 @@ public class GameFlowManager : MonoBehaviour
     public GameObject heroPrefab;      
     public CharacterBase enemyPrefab;  
 
-    [Header("UI 弹窗设置")]
-    public GameObject turnPopup; 
-    public TextMeshProUGUI popupText;
-    public Animator popupAnimator; // 弹窗的动画组件
+    // UI 组件已迁移至 BattleUIManager
+    // 原有的弹窗和结算面板引用已移除
     
-    [Header("结算页面设置")]
-    public GameObject victoryPanel; // 胜利结算页
-    public GameObject defeatPanel;  // 失败结算页
-    public TextMeshProUGUI victoryTitleText;
-    public TextMeshProUGUI defeatTitleText;
-    public Button victoryContinueButton;
-    public Button defeatRestartButton;
-    public Button defeatMainMenuButton;
-    
-    [Header("胜利奖励设置")]
-    public GameObject rewardPanel; // 奖励面板
-    public TextMeshProUGUI goldRewardText;
-    public GameObject cardRewardDisplay;
-    public GameObject relicRewardDisplay;
-    
-    [Header("动画时长设置")]
-    public float popupShowDuration = 0.8f;  // 弹窗显示总时长
-    public float showAnimDuration = 0.3f;   // 入场动画时长
-    public float hideAnimDuration = 0.3f;   // 出场动画时长
-    
-    private CanvasGroup popupCanvasGroup; 
     private CharacterManager characterManager;
-    
-    // ⭐ 重要：使用独立的协程变量，确保不会被其他脚本意外停止
-    private Coroutine currentPopupCoroutine; 
-
-    private static readonly int ShowHash = Animator.StringToHash("Show");
-    private static readonly int HideHash = Animator.StringToHash("Hide");
 
     private void Awake()
     {
@@ -69,33 +40,24 @@ public class GameFlowManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
-        if (turnPopup != null)
-        {
-            if (popupAnimator == null)
-            {
-                popupAnimator = turnPopup.GetComponent<Animator>();
-                if (popupAnimator == null)
-                {
-                    Debug.LogWarning("[GameFlowManager] 未找到Animator组件！");
-                }
-            }
-            
-            popupCanvasGroup = turnPopup.GetComponent<CanvasGroup>();
-            if (popupCanvasGroup == null) 
-                popupCanvasGroup = turnPopup.AddComponent<CanvasGroup>();
-
-            turnPopup.SetActive(false);
-        }
         
-        // 初始化结算页面
-        InitializeResultPanels();
+        // 确保 BattleUIManager 存在（如果在同一物体上，尝试获取；或者依赖场景中的单例）
+        if (BattleUIManager.Instance == null)
+        {
+            // 如果没有找到，尝试在自身或子物体查找
+            var uiManager = GetComponent<BattleUIManager>();
+            if (uiManager == null)
+            {
+                Debug.LogWarning("[GameFlowManager] 场景中缺少 BattleUIManager，部分UI功能可能无法使用。");
+            }
+        }
     }
 
     private void Start()
     {
         StartCoroutine(InitializeCharacterManager());
     }
+
 
 
 
@@ -187,32 +149,14 @@ public class GameFlowManager : MonoBehaviour
             }
         }
     /// <summary>
-    /// 初始化结算页面
+    /// 初始化结算页面 - 已废弃，逻辑移至 BattleUIManager
     /// </summary>
     private void InitializeResultPanels()
     {
-        // 隐藏所有结算页面
-        if (victoryPanel != null) victoryPanel.SetActive(false);
-        if (defeatPanel != null) defeatPanel.SetActive(false);
-        if (rewardPanel != null) rewardPanel.SetActive(false);
-        
-        // 设置按钮事件
-        if (victoryContinueButton != null)
+        // 委托给 BattleUIManager
+        if (BattleUIManager.Instance != null)
         {
-            victoryContinueButton.onClick.RemoveAllListeners();
-            victoryContinueButton.onClick.AddListener(OnVictoryContinue);
-        }
-        
-        if (defeatRestartButton != null)
-        {
-            defeatRestartButton.onClick.RemoveAllListeners();
-            defeatRestartButton.onClick.AddListener(OnDefeatRestart);
-        }
-        
-        if (defeatMainMenuButton != null)
-        {
-            defeatMainMenuButton.onClick.RemoveAllListeners();
-            defeatMainMenuButton.onClick.AddListener(OnDefeatMainMenu);
+            BattleUIManager.Instance.HideAllResultPanels();
         }
     }
 
@@ -221,51 +165,20 @@ public class GameFlowManager : MonoBehaviour
     /// <summary>
     /// 显示胜利结算页面
     /// </summary>
-    public void ShowVictoryPanel(string title = "战斗胜利！")
+    public void ShowVictoryPanel(string title = "victory！")
     {
-        if (victoryPanel == null)
-        {
-            Debug.LogWarning("[GameFlowManager] 胜利结算面板未设置！");
-            return;
-        }
-        
         // 保存战斗结果
         SaveVictoryResult();
         
-        StartCoroutine(VictorySequence(title));
-    }
-    
-    private IEnumerator VictorySequence(string title)
-    {
-        // 等待一小段时间，让战斗动画播放完成
-        yield return new WaitForSeconds(1f);
-        
-        // 显示胜利标题
-        if (victoryTitleText != null) victoryTitleText.text = title;
-        
-        // 激活面板并播放入场动画
-        victoryPanel.SetActive(true);
-        
-        // 如果有动画组件，播放动画
-        Animator victoryAnimator = victoryPanel.GetComponent<Animator>();
-        if (victoryAnimator != null)
+        // 调用 UI 管理器显示面板
+        if (BattleUIManager.Instance != null)
         {
-            victoryAnimator.SetTrigger("Show");
-            yield return new WaitForSeconds(0.5f);
+            BattleUIManager.Instance.ShowVictoryPanel(title);
         }
         else
         {
-            // 使用DOTween作为备用
-            CanvasGroup victoryCanvas = victoryPanel.GetComponent<CanvasGroup>();
-            if (victoryCanvas == null) victoryCanvas = victoryPanel.AddComponent<CanvasGroup>();
-            
-            victoryCanvas.alpha = 0f;
-            victoryCanvas.DOFade(1f, 0.5f).SetEase(Ease.OutQuad);
-            yield return new WaitForSeconds(0.5f);
+            Debug.LogError("[GameFlowManager] 找不到 BattleUIManager，无法显示胜利面板！");
         }
-        
-        // 暂停游戏或阻止其他输入
-        Time.timeScale = 0f;
     }
     
     /// <summary>
@@ -283,8 +196,11 @@ public class GameFlowManager : MonoBehaviour
             // 保存结果
             BattleDataManager.Instance.SaveBattleResult(true, goldReward, cardReward, relicReward);
             
-            // 显示奖励（可选）
-            ShowRewardDisplay(goldReward, cardReward, relicReward);
+            // 显示奖励（委托给 UI Manager）
+            if (BattleUIManager.Instance != null)
+            {
+                BattleUIManager.Instance.ShowRewardDisplay(goldReward, cardReward, relicReward);
+            }
         }
     }
     
@@ -327,69 +243,35 @@ public class GameFlowManager : MonoBehaviour
         return relicPool[randomIndex];
     }
     
-    /// <summary>
-    /// 显示奖励信息
-    /// </summary>
     private void ShowRewardDisplay(int gold, string card, string relic)
     {
-        if (rewardPanel != null)
+        if (BattleUIManager.Instance != null)
         {
-            if (goldRewardText != null) goldRewardText.text = $"+{gold} 金币";
-            
-            // 这里可以添加卡牌和遗物显示的代码
-            Debug.Log($"胜利奖励: {gold}金币, 卡牌:{card}, 遗物:{relic}");
+            BattleUIManager.Instance.ShowRewardDisplay(gold, card, relic);
         }
     }
     
     /// <summary>
     /// 显示失败结算页面
     /// </summary>
-    public void ShowDefeatPanel(string title = "战斗失败...")
+    public void ShowDefeatPanel(string title = "you fail")
     {
-        if (defeatPanel == null)
-        {
-            Debug.LogWarning("[GameFlowManager] 失败结算面板未设置！");
-            return;
-        }
-        
         // 保存失败结果
         SaveDefeatResult();
         
-        StartCoroutine(DefeatSequence(title));
-    }
-    
-    private IEnumerator DefeatSequence(string title)
-    {
-        // 等待一小段时间，让战斗动画播放完成
-        yield return new WaitForSeconds(1f);
-        
-        // 显示失败标题
-        if (defeatTitleText != null) defeatTitleText.text = title;
-        
-        // 激活面板并播放入场动画
-        defeatPanel.SetActive(true);
-        
-        // 如果有动画组件，播放动画
-        Animator defeatAnimator = defeatPanel.GetComponent<Animator>();
-        if (defeatAnimator != null)
+        // 调用 UI 管理器显示面板
+        if (BattleUIManager.Instance != null)
         {
-            defeatAnimator.SetTrigger("Show");
-            yield return new WaitForSeconds(0.5f);
+            BattleUIManager.Instance.ShowDefeatPanel(title);
         }
         else
         {
-            // 使用DOTween作为备用
-            CanvasGroup defeatCanvas = defeatPanel.GetComponent<CanvasGroup>();
-            if (defeatCanvas == null) defeatCanvas = defeatPanel.AddComponent<CanvasGroup>();
-            
-            defeatCanvas.alpha = 0f;
-            defeatCanvas.DOFade(1f, 0.5f).SetEase(Ease.OutQuad);
-            yield return new WaitForSeconds(0.5f);
+            Debug.LogError("[GameFlowManager] 找不到 BattleUIManager，无法显示失败面板！");
         }
-        
-        // 暂停游戏或阻止其他输入
-        Time.timeScale = 0f;
     }
+    
+    // 移除了具体的 Sequence 协程方法 (VictorySequence, DefeatSequence, DefeatSequence)，
+    // 它们现在是 BattleUIManager 的私有实现。
     
     /// <summary>
     /// 保存失败结果到BattleDataManager
@@ -401,79 +283,24 @@ public class GameFlowManager : MonoBehaviour
             BattleDataManager.Instance.SaveBattleResult(false);
         }
     }
-    
-    /// <summary>
-    /// 胜利后继续游戏
-    /// </summary>
-    /// 
-    private void UnlockNextNode(string currentNodeId)
-{
-    // 假设节点ID格式为：Node1, Node2, Node3...
-    if (currentNodeId.StartsWith("Node"))
+
+    // OnVictoryContinue, OnDefeatRestart, OnDefeatMainMenu 
+    // 这些方法需要保留为 public，供 BattleUIManager 的按钮事件回调调用
+    public void OnVictoryContinue()
     {
-        try
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        // 隐藏所有面板
+        if (BattleUIManager.Instance != null)
         {
-            // 提取数字部分
-            string numberStr = currentNodeId.Substring(4);
-            int currentNumber = int.Parse(numberStr);
-            int nextNumber = currentNumber + 1;
-            string nextNodeId = $"Node{nextNumber}";
-            
-            // 解锁下一个节点
-            GameDataManager.Instance.UnlockNode(nextNodeId);
-            
-            // 设置下一个节点为当前节点
-            GameDataManager.Instance.SetCurrentNode(nextNodeId);
-            
-            Debug.Log($"解锁下一个节点: {nextNodeId}");
+            BattleUIManager.Instance.HideAllResultPanels();
         }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning($"解析节点ID失败: {currentNodeId}, 错误: {e.Message}");
-        }
-    }
-    else
-    {
-        Debug.LogWarning($"不支持的节点ID格式: {currentNodeId}");
-    }
-}
-    private void CompleteCurrentNodeInGameData()
-    {
-        if (GameDataManager.Instance != null)
-        {
-            // 1. 获取当前战斗节点ID
-            string currentNodeId = GameDataManager.Instance.battleNodeId;
-            
-            if (!string.IsNullOrEmpty(currentNodeId))
-            {
-                Debug.Log($"完成节点: {currentNodeId}");
-                
-                // 2. 标记为已完成
-                GameDataManager.Instance.CompleteNode(currentNodeId);
-                
-                // 3. 保存数据
-                GameDataManager.Instance.SaveGameData();
-                
-                Debug.Log("节点状态已更新并保存");
-            }
-            else
-            {
-                Debug.LogWarning("当前战斗节点ID为空");
-            }
-        }
-    }
- private void OnVictoryContinue()
-{
-    // 恢复时间
-    Time.timeScale = 1f;
-    
-    // 隐藏胜利面板
-    if (victoryPanel != null) victoryPanel.SetActive(false);
-    
+        
         // 关键：更新节点状态并移动到下一关
         UpdateMapNodeAfterVictory();
         
-        // 保存数据确保所有更改（包括当前节点推进）都写入磁盘
+        // 保存数据
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.SaveGameData();
@@ -481,289 +308,93 @@ public class GameFlowManager : MonoBehaviour
         
         // 直接加载地图场景
         SceneManager.LoadScene("MapScene");
-}
-
-
-private void UpdateMapNodeAfterVictory()
-{
-    if (GameDataManager.Instance != null)
-    {
-        string battleNodeId = GameDataManager.Instance.battleNodeId;
-        if (!string.IsNullOrEmpty(battleNodeId))
-        {
-            // 关键修复：只调用 CompleteNode，由它负责根据地图连接关系解锁邻居
-            // 移除了错误的 GetNextNodeId 线性推测逻辑
-            GameDataManager.Instance.CompleteNode(battleNodeId);
-            
-            GameDataManager.Instance.SaveGameData();
-            GameDataManager.Instance.ClearBattleData();
-        }
-    }
-}
-private string GetNextNodeId(string currentId)
-{
-    // 根据你的节点ID命名规则来获取下一个
-    // 例如：Node1 -> Node2, Node2 -> Node3
-    
-    if (string.IsNullOrEmpty(currentId)) return "";
-    
-    // 提取数字部分
-    string prefix = "Node";
-    if (currentId.StartsWith(prefix))
-    {
-        string numberStr = currentId.Substring(prefix.Length);
-        if (int.TryParse(numberStr, out int currentNumber))
-        {
-            int nextNumber = currentNumber + 1;
-            return $"{prefix}{nextNumber}";
-        }
     }
     
-    // 如果不是标准格式，尝试其他逻辑
-    // 例如：Boss1 -> Boss2 等
+    private void UpdateMapNodeAfterVictory()
+    {
+        if (GameDataManager.Instance != null)
+        {
+            string battleNodeId = GameDataManager.Instance.battleNodeId;
+            if (!string.IsNullOrEmpty(battleNodeId))
+            {
+                // 关键修复：只调用 CompleteNode，由它负责根据地图连接关系解锁邻居
+                // 移除了错误的 GetNextNodeId 线性推测逻辑
+                GameDataManager.Instance.CompleteNode(battleNodeId);
+                
+                GameDataManager.Instance.SaveGameData();
+                GameDataManager.Instance.ClearBattleData();
+            }
+        }
+    }
+
+    public void OnDefeatRestart()
+    {
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.HideAllResultPanels();
+        }
+        
+        // 重新加载当前战斗场景
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
     
-    return "";
-}
+    public void OnDefeatMainMenu()
+    {
+        // 恢复时间
+        Time.timeScale = 1f;
+        
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.HideAllResultPanels();
+        }
+        
+        // 返回主菜单
+        SceneManager.LoadScene("MainMenu"); 
+    }
     
-    /// <summary>
-    /// 失败后重新开始
-    /// </summary>
-    private void OnDefeatRestart()
-{
-    // 恢复时间
-    Time.timeScale = 1f;
-    
-    // 隐藏失败面板
-    if (defeatPanel != null) defeatPanel.SetActive(false);
-    
-    // 重新加载当前战斗场景
-    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-}
-    
-    /// <summary>
-    /// 返回主菜单
-    /// </summary>
-    private void OnDefeatMainMenu()
-{
-    // 恢复时间
-    Time.timeScale = 1f;
-    
-    // 隐藏失败面板
-    if (defeatPanel != null) defeatPanel.SetActive(false);
-    
-    // 返回主菜单
-    SceneManager.LoadScene("MainMenu"); // 确保你的主菜单场景叫这个名字
-}
-    
-    /// <summary>
-    /// 隐藏所有结算页面（用于重新开始等情况）
-    /// </summary>
     public void HideAllResultPanels()
     {
-        if (victoryPanel != null) victoryPanel.SetActive(false);
-        if (defeatPanel != null) defeatPanel.SetActive(false);
-        if (rewardPanel != null) rewardPanel.SetActive(false);
-        
-        // 确保时间恢复正常
-        Time.timeScale = 1f;
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.HideAllResultPanels();
+        }
     }
 
     #endregion
 
-    #region 弹窗逻辑 (优化版)
+    #region 弹窗逻辑 (委托模式)
 
-    /// <summary>
-    /// 显示回合/结果弹窗 - 简化版，更快消失
-    /// </summary>
     public void ShowPopup(string message)
     {
-        ShowPopup(message, popupShowDuration);
+        if (BattleUIManager.Instance != null)
+            BattleUIManager.Instance.ShowPopup(message);
     }
     
-    /// <summary>
-    /// 显示回合/结果弹窗（可自定义时长）
-    /// </summary>
     public void ShowPopup(string message, float duration)
     {
-        if (turnPopup == null || popupText == null)
-        {
-            Debug.LogWarning("[GameFlowManager] 弹窗相关组件未赋值！");
-            return;
-        }
-
-        // ⭐ 修复：如果当前有弹窗正在播，先强制停止旧的
-        if (currentPopupCoroutine != null)
-        {
-            StopCoroutine(currentPopupCoroutine);
-            // 立即隐藏弹窗
-            if (popupAnimator != null)
-            {
-                popupAnimator.ResetTrigger(ShowHash);
-                popupAnimator.ResetTrigger(HideHash);
-            }
-            turnPopup.SetActive(false);
-        }
-        
-        popupText.text = message;
-        currentPopupCoroutine = StartCoroutine(QuickPopupSequence(duration));
+        if (BattleUIManager.Instance != null)
+            BattleUIManager.Instance.ShowPopup(message, duration);
     }
 
-    /// <summary>
-    /// 快速弹窗序列 - 优化时间控制
-    /// </summary>
-    private IEnumerator QuickPopupSequence(float totalDuration)
-    {
-        // 计算停留时间：总时长减去入场和出场动画时间
-        float stayDuration = Mathf.Max(0.1f, totalDuration - showAnimDuration - hideAnimDuration);
-        
-        // 1. 显示并播放入场动画
-        turnPopup.SetActive(true);
-        turnPopup.transform.SetAsLastSibling();
-        
-        if (popupAnimator != null && popupAnimator.runtimeAnimatorController != null)
-        {
-            // 重置动画状态
-            popupAnimator.Rebind();
-            popupAnimator.Update(0f);
-            
-            // 触发入场动画
-            popupAnimator.SetTrigger(ShowHash);
-            
-            // 等待入场动画完成
-            yield return new WaitForSeconds(showAnimDuration);
-        }
-        else
-        {
-            // 没有动画时的降级处理
-            if (popupCanvasGroup != null) popupCanvasGroup.alpha = 1f;
-            yield return null;
-        }
-
-        // 2. 停留一段时间
-        yield return new WaitForSeconds(stayDuration);
-
-        // 3. 播放出场动画
-        if (popupAnimator != null && popupAnimator.runtimeAnimatorController != null)
-        {
-            popupAnimator.SetTrigger(HideHash);
-            
-            // 等待出场动画完成
-            yield return new WaitForSeconds(hideAnimDuration);
-        }
-        else
-        {
-            // 没有动画时的降级处理
-            if (popupCanvasGroup != null) popupCanvasGroup.alpha = 0f;
-        }
-
-        // 4. 隐藏弹窗
-        turnPopup.SetActive(false);
-        currentPopupCoroutine = null;
-    }
-
-    /// <summary>
-    /// 极速弹窗 - 适合回合切换提示
-    /// </summary>
     public void ShowQuickTurnPopup(string message)
     {
-        if (turnPopup == null || popupText == null)
-        {
-            Debug.LogWarning("[GameFlowManager] 弹窗相关组件未赋值！");
-            return;
-        }
-
-        if (currentPopupCoroutine != null)
-        {
-            StopCoroutine(currentPopupCoroutine);
-            turnPopup.SetActive(false);
-        }
-        
-        popupText.text = message;
-        currentPopupCoroutine = StartCoroutine(VeryQuickPopupSequence());
+        if (BattleUIManager.Instance != null)
+            BattleUIManager.Instance.ShowQuickTurnPopup(message);
     }
 
-    private IEnumerator VeryQuickPopupSequence()
-    {
-        // 极速模式：总时长0.8秒
-        turnPopup.SetActive(true);
-        turnPopup.transform.SetAsLastSibling();
-        
-        if (popupAnimator != null && popupAnimator.runtimeAnimatorController != null)
-        {
-            popupAnimator.Rebind();
-            popupAnimator.Update(0f);
-            popupAnimator.SetTrigger(ShowHash);
-            yield return new WaitForSeconds(0.2f); // 快速入场
-            yield return new WaitForSeconds(0.3f); // 短暂停留
-            popupAnimator.SetTrigger(HideHash);
-            yield return new WaitForSeconds(0.2f); // 快速出场
-        }
-        else
-        {
-            // 没有动画的极速模式
-            if (popupCanvasGroup != null) 
-            {
-                popupCanvasGroup.alpha = 1f;
-                yield return new WaitForSeconds(0.5f);
-                popupCanvasGroup.alpha = 0f;
-            }
-        }
-        
-        turnPopup.SetActive(false);
-        currentPopupCoroutine = null;
-    }
-
-    /// <summary>
-    /// 备选方案：使用DOTween的快速弹窗效果
-    /// </summary>
     public void ShowPopupWithTween(string message, float duration = 0.8f)
     {
-        if (turnPopup == null || popupText == null)
-        {
-            Debug.LogWarning("[GameFlowManager] 弹窗相关组件未赋值！");
-            return;
-        }
-
-        if (currentPopupCoroutine != null)
-        {
-            StopCoroutine(currentPopupCoroutine);
-        }
-        
-        popupText.text = message;
-        currentPopupCoroutine = StartCoroutine(QuickPopupWithTween(duration));
+        // 这里可以直接复用 ShowPopup，或者在 BattleUIManager 里也实现一个 Tween 版本
+        // 目前为了简化，直接调用 ShowPopup
+        if (BattleUIManager.Instance != null)
+            BattleUIManager.Instance.ShowPopup(message, duration);
     }
 
-    private IEnumerator QuickPopupWithTween(float d)
-    {
-        // 极速版本：总时长更短
-        turnPopup.SetActive(true);
-        turnPopup.transform.SetAsLastSibling();
-        popupCanvasGroup.alpha = 0f;
-        turnPopup.transform.localScale = Vector3.one * 0.8f;
-        
-        // 快速入场动画
-        Sequence seq = DOTween.Sequence();
-        seq.Append(popupCanvasGroup.DOFade(1f, 0.15f).SetEase(Ease.OutQuad));
-        seq.Join(turnPopup.transform.DOScale(Vector3.one, 0.15f).SetEase(Ease.OutBack));
-        seq.SetUpdate(true);
-        
-        yield return seq.WaitForCompletion();
-        
-        // 短暂停留
-        yield return new WaitForSeconds(d * 0.5f);
-        
-        // 快速出场动画
-        Sequence seqOut = DOTween.Sequence();
-        seqOut.Append(popupCanvasGroup.DOFade(0f, 0.15f).SetEase(Ease.InQuad));
-        seqOut.Join(turnPopup.transform.DOScale(Vector3.one * 0.8f, 0.15f).SetEase(Ease.InBack));
-        seqOut.SetUpdate(true);
-        seqOut.OnComplete(() => turnPopup.SetActive(false));
-        
-        yield return seqOut.WaitForCompletion();
-        
-        currentPopupCoroutine = null;
-    }
-  
+    // 移除了所有具体的协程实现 (QuickPopupSequence, VeryQuickPopupSequence, QuickPopupWithTween)
+
     #endregion
 
     #region 角色生成与布局

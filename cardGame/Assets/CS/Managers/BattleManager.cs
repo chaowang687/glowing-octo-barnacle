@@ -763,6 +763,14 @@ private IEnumerator StartEnemyTurn()
         }
         
         // --- 阶段 1: 抽牌到中央堆叠 (Draw to Center Pile) ---
+        AnimateCardDraw(newlyDrawnDisplays, drawPileLocalPos, receiveCenterLocalPos);
+    }
+
+    /// <summary>
+    /// 执行卡牌抽取的动画序列：从牌堆飞到中央，再整理到手牌弧形布局。
+    /// </summary>
+    private void AnimateCardDraw(List<CardDisplay> newlyDrawnDisplays, Vector3 drawPileLocalPos, Vector3 receiveCenterLocalPos)
+    {
         Sequence drawSequence = DOTween.Sequence();
         
         for (int i = 0; i < newlyDrawnDisplays.Count; i++)
@@ -1009,38 +1017,54 @@ private IEnumerator StartEnemyTurn()
         
         Transform targetTransform = actualTarget != null ? actualTarget.transform : handContainer; 
 
-        AnimatePlayCard(
-            card, 
-            displayToRemove.transform, // 使用传入的 CardDisplay 对象的 transform
-            targetTransform,            
-            discardPileLocationTransform         
+        AnimatePlayCardSequence(card, displayToRemove.transform, targetTransform, discardPileLocationTransform,
+            // 效果回调
+            () => {
+                Debug.Log($"Card effect {card.cardName} triggered!");
+                try
+                {
+                    CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
+                    CharacterBase source = characterManager.GetActiveHero();
+                    card.ExecuteEffects(source, targetCharacter, cardSystem); 
+                    
+                    cardSystem.PlayCard(card); 
+                    UpdateHandLayout(postPlayRepositionDuration); 
+                    CheckBattleEnd(); 
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error executing card effect or updating state for {card.cardName}: {ex.Message}");
+                }
+            },
+            // 完成回调
+            () => {
+                isCardBeingPlayed = false;
+                Debug.Log("Card Play Lock Released.");
+            }
         );
         
         return true;
     }
 
-    public void AnimatePlayCard(CardData card, Transform cardTransform, Transform targetTransform, Transform discardPileTransform)
+    /// <summary>
+    /// 执行卡牌打出的动画序列：飞向目标/中心 -> 停留触发效果 -> 飞向弃牌堆 -> 销毁。
+    /// </summary>
+    private void AnimatePlayCardSequence(CardData card, Transform cardTransform, Transform targetTransform, Transform discardPileTransform, System.Action onEffectTrigger, System.Action onComplete)
     {
         if (CheckBattleEnd())
         {
-            // 如果战斗结束，直接返回，不执行后续动画
-            // 销毁卡牌对象
-            if (cardTransform != null && cardTransform.gameObject != null)
-            {
-                Destroy(cardTransform.gameObject);
-            }
-            
-            // 解锁并直接返回
-            isCardBeingPlayed = false;
+            if (cardTransform != null) Destroy(cardTransform.gameObject);
+            onComplete?.Invoke();
             return;
         }
+
         if (cardTransform == null || discardPileTransform == null)
         {
-            Debug.LogError("AnimatePlayCard: cardTransform or discardPileTransform is null");
-            isCardBeingPlayed = false; // 释放锁
+            Debug.LogError("AnimatePlayCardSequence: Transform references missing");
+            onComplete?.Invoke();
             return;
         }
-        
+
         float discardDuration = 0.2f;
         Transform centerPos = playCenterTransform != null ? playCenterTransform : handContainer;
 
@@ -1058,31 +1082,8 @@ private IEnumerator StartEnemyTurn()
         // 2. Idle for effect trigger
         playSequence.AppendInterval(centerIdleDuration); 
         
-        // 3. Execute Card Effect
-        playSequence.AppendCallback(() => {
-            Debug.Log($"Card effect {card.cardName} triggered!");
-            
-            try
-            {
-                CharacterBase targetCharacter = targetTransform.GetComponent<CharacterBase>();
-                
-                CharacterBase source = characterManager.GetActiveHero();
-                card.ExecuteEffects(source, targetCharacter, cardSystem); 
-                
-                // Play card system logic
-                cardSystem.PlayCard(card); 
-                
-                // NEW: Use the new postPlayRepositionDuration for an animated layout update
-                UpdateHandLayout(postPlayRepositionDuration); 
-                
-                // Key: Check for immediate death after card effect execution
-                CheckBattleEnd(); 
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"Error executing card effect or updating state for {card.cardName}: {ex.Message}");
-            }
-        });
+        // 3. Execute Card Effect (Callback)
+        playSequence.AppendCallback(() => onEffectTrigger?.Invoke());
         
         playSequence.AppendInterval(postExecutionDelay);
 
@@ -1098,10 +1099,7 @@ private IEnumerator StartEnemyTurn()
             {
                 Destroy(cardTransform.gameObject);
             }
-            
-            // VITAL UNLOCK: 释放卡牌播放锁，必须在动画和销毁后
-            isCardBeingPlayed = false;
-            Debug.Log("Card Play Lock Released.");
+            onComplete?.Invoke();
         });
     }
     

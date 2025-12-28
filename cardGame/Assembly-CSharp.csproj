@@ -70,7 +70,6 @@
     <Compile Include="Assets/CS2/宝箱搜刮/LootSlot.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestLootData.cs" />
     <Compile Include="Assets/CS3/资源/LampController.cs" />
-    <Compile Include="Assets/Map/逻辑层/UIManager.cs" />
     <Compile Include="Assets/玩家/GameDataManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestInteractable.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
@@ -118,12 +117,12 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
     <Compile Include="Assets/Map/表现层/ContinueButtonUI.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootItemData.cs" />
-    <Compile Include="Assets/CS/Managers/SimpleInventory.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
     <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
     <Compile Include="Assets/Map/表现层/MapUI.cs" />
     <Compile Include="Assets/CS4/InfiniteCarouselController.cs" />
     <Compile Include="Assets/Map/逻辑层/MapManager.cs" />
+    <Compile Include="Assets/CS/Managers/BattleUIManager.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/CharacterBase.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
     <Compile Include="Assets/Map/逻辑层/PlayerStateManager.cs" />
@@ -148,6 +147,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryScrollRect.cs" />
     <Compile Include="Assets/场景跳转/BattleDataManager.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryUIDebugger.cs" />
+    <Compile Include="Assets/Map/逻辑层/MapUIManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ServiceLocator.cs" />
     <Compile Include="Assets/Map/表现层/MapNode.cs" />
     <Compile Include="Assets/CS/CardSystem/CardDisplay.cs" />

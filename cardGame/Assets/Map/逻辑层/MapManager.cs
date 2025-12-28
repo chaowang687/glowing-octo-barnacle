@@ -24,7 +24,7 @@ namespace SlayTheSpireMap
         public NodeInteractionManager nodeInteraction;
         public MapUI mapUI; // 将原来的 UIManager ui 改为 MapUI mapUI，或者新增这个
         public SaveLoadManager saveLoad;
-        public UIManager ui;
+        public MapUIManager ui;
         
         [Header("地图数据")]
         public MapLayoutSO currentMapLayout;
@@ -151,14 +151,14 @@ public void InitializeFirstRun()
             if (playerState == null) playerState = GetComponent<PlayerStateManager>();
             if (nodeInteraction == null) nodeInteraction = GetComponent<NodeInteractionManager>();
             if (saveLoad == null) saveLoad = GetComponent<SaveLoadManager>();
-            if (ui == null) ui = GetComponent<UIManager>();
+            if (ui == null) ui = GetComponent<MapUIManager>();
             
             // 如果还没有，创建它们
             if (mapGenerator == null) mapGenerator = gameObject.AddComponent<MapGenerator>();
             if (playerState == null) playerState = gameObject.AddComponent<PlayerStateManager>();
             if (nodeInteraction == null) nodeInteraction = gameObject.AddComponent<NodeInteractionManager>();
             if (saveLoad == null) saveLoad = gameObject.AddComponent<SaveLoadManager>();
-            if (ui == null) ui = gameObject.AddComponent<UIManager>();
+            if (ui == null) ui = gameObject.AddComponent<MapUIManager>();
         }
         
         private void LoadFromGameDataManagerDirectly()

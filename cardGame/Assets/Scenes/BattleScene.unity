@@ -193,6 +193,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &112414929 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1650215040385561246, guid: 49a6922b9e0f7433692951157d9d8625, type: 3}
+  m_PrefabInstance: {fileID: 628891917}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1225,6 +1230,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &834183973 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1804306527089968611, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
+  m_PrefabInstance: {fileID: 332987478}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &889373299
 GameObject:
   m_ObjectHideFlags: 0
@@ -1590,23 +1600,6 @@ MonoBehaviour:
   enemyVisualContainer: {fileID: 613252133}
   heroPrefab: {fileID: 982906025956945015, guid: f5cfa05c22004426ba104dbe88edddc9, type: 3}
   enemyPrefab: {fileID: -3130790655238769915, guid: 431693f0806274841aed6bfde376e494, type: 3}
-  turnPopup: {fileID: 1650215040385561246, guid: 49a6922b9e0f7433692951157d9d8625, type: 3}
-  popupText: {fileID: 491071486}
-  popupAnimator: {fileID: 1389535221}
-  victoryPanel: {fileID: 1097824038}
-  defeatPanel: {fileID: 1097824038}
-  victoryTitleText: {fileID: 1485918322}
-  defeatTitleText: {fileID: 1485918322}
-  victoryContinueButton: {fileID: 1526809232}
-  defeatRestartButton: {fileID: 62620616}
-  defeatMainMenuButton: {fileID: 0}
-  rewardPanel: {fileID: 0}
-  goldRewardText: {fileID: 0}
-  cardRewardDisplay: {fileID: 0}
-  relicRewardDisplay: {fileID: 0}
-  popupShowDuration: 0.8
-  showAnimDuration: 0.3
-  hideAnimDuration: 0.3
 --- !u!114 &1047070538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1619,11 +1612,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be555507c72fa47b9bc2abb060636dec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &1097824038 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1804306527089968611, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
-  m_PrefabInstance: {fileID: 332987478}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &1097824039 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4153823853022471114, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
@@ -1780,6 +1768,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1611285990}
   - component: {fileID: 1611285991}
+  - component: {fileID: 1611285992}
   m_Layer: 0
   m_Name: _UI
   m_TagString: Untagged
@@ -1816,6 +1805,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   energyDisplay: {fileID: 430553631}
   endTurnButton: {fileID: 914265451}
+--- !u!114 &1611285992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1611285989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a8563759cb8b497bae7b4c8f1ddc3f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  turnPopup: {fileID: 112414929}
+  popupText: {fileID: 491071486}
+  popupAnimator: {fileID: 1389535221}
+  popupShowDuration: 2.1
+  showAnimDuration: 0.6
+  hideAnimDuration: 0.6
+  victoryPanel: {fileID: 834183973}
+  defeatPanel: {fileID: 834183973}
+  victoryTitleText: {fileID: 1485918322}
+  defeatTitleText: {fileID: 1686353380}
+  victoryContinueButton: {fileID: 1526809232}
+  defeatRestartButton: {fileID: 62620616}
+  defeatMainMenuButton: {fileID: 0}
+  rewardPanel: {fileID: 0}
+  goldRewardText: {fileID: 0}
+--- !u!114 &1686353380 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5112347681237895755, guid: 4ee6bebf91df44b0ab77be67d17ffafc, type: 3}
+  m_PrefabInstance: {fileID: 332987478}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1931825472
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace SlayTheSpireMap
 {
-    public class UIManager : MonoBehaviour
+    public class MapUIManager : MonoBehaviour
     {
         [Header("UI引用")]
         public MapUI mapUI;

@@ -18,7 +18,7 @@ MonoBehaviour:
   - position: {x: 0, y: 100}
     nodeType: 0
     isFixedType: 0
-    presetEncounter: {fileID: 11400000, guid: 2eca28d19c0714998ba2bf450ae72754, type: 2}
+    presetEncounter: {fileID: 11400000, guid: 31f5ac0ca17364fcebf3c952b199f0bc, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 1
@@ -30,9 +30,9 @@ MonoBehaviour:
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 500}
-    nodeType: 1
+    nodeType: 0
     isFixedType: 0
-    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
+    presetEncounter: {fileID: 11400000, guid: 2eca28d19c0714998ba2bf450ae72754, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
