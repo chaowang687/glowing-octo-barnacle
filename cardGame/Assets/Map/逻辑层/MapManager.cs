@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,17 +22,27 @@ namespace SlayTheSpireMap
         public MapGenerator mapGenerator;
         public PlayerStateManager playerState;
         public NodeInteractionManager nodeInteraction;
+        public MapUI mapUI; // 将原来的 UIManager ui 改为 MapUI mapUI，或者新增这个
         public SaveLoadManager saveLoad;
         public UIManager ui;
         
         [Header("地图数据")]
         public MapLayoutSO currentMapLayout;
-        public MapNodeData currentNode;
-        public MapNodeData[] allNodes;
+        
+        // 【重要】添加 NonSerialized 防止 Unity 序列化 Inspector 中的脏数据
+        // 之前因为 MapNodeData 类型变更导致序列化不兼容，可能读取到全0数据
+        [System.NonSerialized] public MapNodeData currentNode;
+        [System.NonSerialized] public MapNodeData[] allNodes;
+        
         [SerializeField] private StraightLineRenderer lineRenderer;
         
         private void Awake()
         {
+            // 只要进入地图场景，UI 实例化后立刻告诉 MapManager：“我是新的 UI，请用我！”
+    if (MapManager.Instance != null)
+    {
+       // MapManager.Instance.mapUI = this; 
+    }
             if(lineRenderer == null) lineRenderer = GetComponent<StraightLineRenderer>();
     
             // 单例初始化
@@ -45,6 +56,9 @@ namespace SlayTheSpireMap
                 
                 // 重要：只在这里生成一次地图
                 GenerateMapOnce();
+
+                // 订阅场景加载事件（用于从战斗返回地图时的重建）
+                SceneManager.sceneLoaded += HandleSceneLoaded;
             }
             else if (Instance != this)
             {
@@ -52,22 +66,66 @@ namespace SlayTheSpireMap
                 return;
             }
         }
+
+        
+
+
+
+
         private void GenerateMapOnce()
-{
-    // 如果还没有生成过地图，就生成一次
-    if (allNodes == null || allNodes.Length == 0)
-    {
-        if (currentMapLayout != null)
         {
-            allNodes = mapGenerator.GenerateMap(currentMapLayout);
-            Debug.Log($"首次生成地图，共 {allNodes?.Length ?? 0} 个节点");
+            // 1. 验证现有数据是否有效
+            bool isDataValid = allNodes != null && allNodes.Length > 0;
+            
+            // 额外检查：如果第一个节点位置是 (0,0) 且 ID 为空，说明可能是序列化残留的无效数据
+            if (isDataValid && (allNodes[0] == null || (allNodes[0].position == Vector2.zero && string.IsNullOrEmpty(allNodes[0].nodeId))))
+            {
+                isDataValid = false;
+                Debug.LogWarning("[MapManager] 检测到无效的地图数据（可能是序列化兼容性问题），将重新生成。");
+            }
+
+            if (isDataValid)
+            {
+                // 数据有效，直接使用
+                return;
+            }
+
+            // 2. 如果数据无效或为空，重新生成
+            if (currentMapLayout != null)
+            {
+                allNodes = mapGenerator.GenerateMap(currentMapLayout);
+                Debug.Log($"首次生成地图，共 {allNodes?.Length ?? 0} 个节点");
+            }
+            else
+            {
+                Debug.LogError("currentMapLayout 未设置，无法生成地图");
+            }
+
+            // 3. 刷新 UI（如果有）
+            if (mapUI != null) 
+            {
+                mapUI.GenerateMapUI(); 
+            }
         }
-        else
+
+// 放到 GenerateMap 方法的结束大括号之后
+    private string GetNodeName(int index, MapLayoutSO.ManualNodePosition nodePos)
+    {
+        if (nodePos.isBoss) return "Boss";
+        if (nodePos.isElite) return "精英怪";
+        if (nodePos.isStartNode) return "起点";
+        
+        switch (nodePos.nodeType)
         {
-            Debug.LogError("currentMapLayout 未设置，无法生成地图");
+            case NodeType.Combat: return $"战斗节点 {index}";
+            case NodeType.Elite: return $"精英节点 {index}";
+            case NodeType.Shop: return $"商店 {index}";
+            case NodeType.Rest: return $"休息点 {index}";
+            case NodeType.Event: return $"未知事件 {index}";
+            case NodeType.Boss: return "最终Boss";
+            default: return $"节点 {index}";
         }
     }
-}
 public void InitializeFirstRun()
 {
     if (string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
@@ -135,17 +193,42 @@ public void InitializeFirstRun()
             Debug.Log($"找到当前节点: {node.nodeName}");
         }
         
-        // 如果是起始节点，确保解锁
-        if (node.isStartNode)
-        {
-            node.isUnlocked = true;
-            if (!GameDataManager.Instance.IsNodeUnlocked(nodeId))
+                // 如果是起始节点，确保解锁
+                if (node.isStartNode)
+                {
+                    node.isUnlocked = true;
+                    if (!GameDataManager.Instance.IsNodeUnlocked(nodeId))
+                    {
+                        GameDataManager.Instance.UnlockNode(nodeId);
+                    }
+                }
+            }
+            
+            // 关键修复：当从 GameDataManager 加载完所有节点状态后，
+            // 必须立刻更新 currentNode 指针，否则后续的 UI 刷新（包括 ContinueButton）会读到 null
+            if (!string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
             {
-                GameDataManager.Instance.UnlockNode(nodeId);
+                var targetNode = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
+                if (targetNode != null)
+                {
+                    currentNode = targetNode;
+                    Debug.Log($"[MapManager] 强制同步当前节点指针: {currentNode.nodeName} ({currentNode.nodeId})");
+                    // 触发事件通知 UI 更新
+                    OnCurrentNodeChanged?.Invoke(currentNode);
+                }
+            }
+            else
+            {
+                // 如果没有当前节点（比如新游戏），尝试找到起点
+                var startNode = mapGenerator.FindStartNode(allNodes);
+                if (startNode != null)
+                {
+                    currentNode = startNode;
+                    Debug.Log($"[MapManager] 无存档进度，自动定位到起点: {startNode.nodeName}");
+                    OnCurrentNodeChanged?.Invoke(currentNode);
+                }
             }
         }
-    }
-}
 
 private void PrintNodeStates()
 {
@@ -273,21 +356,60 @@ public void RefreshAllMapNodesUI()
         /// </summary>
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            // 当加载到地图场景时，执行必要的初始化
             if (scene.name == "MapScene")
             {
-                Debug.Log("地图场景加载完成，刷新状态");
-                
-                // 如果是从战斗场景返回，可能需要更新地图状态
-                if (GameDataManager.Instance != null)
+                // 1. 重新获取场景内引用
+                mapUI = FindObjectOfType<MapUI>();
+                lineRenderer = FindObjectOfType<StraightLineRenderer>();
+
+                // 2. 如果上一场景的节点对象已被销毁，allNodes 会包含 null，需重建
+                bool needRebuild = allNodes == null || allNodes.Length == 0;
+                if (!needRebuild)
                 {
-                    RestoreMapStateFromGameData();
+                    for (int i = 0; i < allNodes.Length; i++)
+                    {
+                        if (allNodes[i] == null)
+                        {
+                            needRebuild = true;
+                            break;
+                        }
+                    }
+                }
+
+                // 3. 设置 MapGenerator 的父容器（ScrollRect 的 content）
+                var sr = FindObjectOfType<ScrollRect>();
+                if (sr != null && mapGenerator != null)
+                {
+                    mapGenerator.parentContainer = sr.content;
+                }
+
+                // 4. 需要重建时，重新生成地图数据
+                if (needRebuild)
+                {
+                    if (currentMapLayout != null)
+                    {
+                        Debug.Log("[MapManager] 开始重建地图数据...");
+                        allNodes = mapGenerator.GenerateMap(currentMapLayout);
+                    }
+                    else
+                    {
+                        Debug.LogError("[MapManager] currentMapLayout 未设置，无法重建地图！");
+                    }
                 }
                 
-                // 更新UI
-                if (ui != null)
+                // 关键修复：无论是否重建了地图数据，只要切回地图场景，都必须从 GameDataManager 
+                // 重新同步最新的状态（因为在战斗场景里 currentNodeId 已经变了）
+                RestoreMapStateFromGameData();
+                Debug.Log($"[MapManager] 地图状态已同步，当前节点指针: {currentNode?.nodeId}");
+
+                // 5. 刷新 UI
+                if (mapUI != null)
                 {
-                    ui.UpdateAllUI();
+                    mapUI.GenerateMapUI();
+                }
+                else
+                {
+                    Debug.LogError("[MapManager] 在场景中没找到 MapUI，请检查场景中是否有 MapUI 脚本！");
                 }
             }
         }
@@ -308,16 +430,15 @@ public void RefreshAllMapNodesUI()
                 }
             }
             
-            // 设置当前节点
+            // 设置当前节点（关键逻辑：必须确保恢复指针）
             if (GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
             {
-                foreach (var node in allNodes)
+                var target = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
+                if (target != null)
                 {
-                    if (node.nodeId == GameDataManager.Instance.currentNodeId)
-                    {
-                        currentNode = node;
-                        break;
-                    }
+                    currentNode = target;
+                    // 【关键修复】恢复完状态后，必须立刻通知 UI，否则 ContinueButton 不知道目标变了
+                    OnCurrentNodeChanged?.Invoke(currentNode);
                 }
             }
         }
@@ -528,7 +649,29 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
         {
             if (currentNode != null)
             {
+                Debug.Log($"[MapManager] 继续按钮点击，进入当前节点: {currentNode.nodeName} ({currentNode.nodeId})");
                 OnNodeClicked(currentNode);
+            }
+            else
+            {
+                // 如果当前没有选中节点，尝试找到已解锁但未完成的节点（可能是下一层）
+                // 这种情况发生在刚打完一关，currentNodeId 虽然更新了，但 MapManager.currentNode 指针可能还没刷新
+                // 或者是玩家需要手动选择下一关
+                
+                // 尝试重新同步一下
+                if (GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
+                {
+                    var targetNode = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
+                    if (targetNode != null)
+                    {
+                        currentNode = targetNode;
+                        Debug.Log($"[MapManager] 继续按钮自动修正目标为: {currentNode.nodeName}");
+                        OnNodeClicked(currentNode);
+                        return;
+                    }
+                }
+                
+                Debug.LogWarning("[MapManager] 继续按钮点击无效：当前没有选中的节点。");
             }
         }
         

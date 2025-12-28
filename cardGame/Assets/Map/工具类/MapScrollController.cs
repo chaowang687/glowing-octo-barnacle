@@ -18,6 +18,10 @@ namespace SlayTheSpireMap
         void Awake()
         {
             scrollRect = GetComponent<ScrollRect>();
+            if (content == null && scrollRect != null)
+            {
+                content = scrollRect.content;
+            }
         }
 
         /// <summary>
@@ -26,6 +30,9 @@ namespace SlayTheSpireMap
         public void UpdateContentSize(MapNodeData[] allNodes)
         {
             if (allNodes == null || allNodes.Length == 0) return;
+            if (scrollRect == null) scrollRect = GetComponent<ScrollRect>();
+            if (content == null && scrollRect != null) content = scrollRect.content;
+            if (content == null) return;
 
             float maxY = 0;
             foreach (var node in allNodes)
@@ -37,7 +44,7 @@ namespace SlayTheSpireMap
             content.sizeDelta = new Vector2(content.sizeDelta.x, maxY + topPadding + bottomPadding);
             
             // 初始状态通常滚动到底部（起始点）
-            scrollRect.verticalNormalizedPosition = 0f;
+            if (scrollRect != null) scrollRect.verticalNormalizedPosition = 0f;
         }
 
         /// <summary>
@@ -46,6 +53,9 @@ namespace SlayTheSpireMap
         public void FocusOnNode(MapNodeData targetNode)
         {
             if (targetNode == null) return;
+            if (scrollRect == null) scrollRect = GetComponent<ScrollRect>();
+            if (content == null && scrollRect != null) content = scrollRect.content;
+            if (content == null || scrollRect == null) return;
 
             float contentHeight = content.sizeDelta.y;
             // 计算目标节点在 0-1 之间的归一化位置

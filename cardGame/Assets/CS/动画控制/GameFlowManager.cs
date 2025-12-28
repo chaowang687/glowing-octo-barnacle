@@ -438,33 +438,30 @@ public class GameFlowManager : MonoBehaviour
     }
 }
     private void CompleteCurrentNodeInGameData()
-{
-    if (GameDataManager.Instance != null)
     {
-        // 1. 获取当前战斗节点ID
-        string currentNodeId = GameDataManager.Instance.battleNodeId;
-        
-        if (!string.IsNullOrEmpty(currentNodeId))
+        if (GameDataManager.Instance != null)
         {
-            Debug.Log($"完成节点: {currentNodeId}");
+            // 1. 获取当前战斗节点ID
+            string currentNodeId = GameDataManager.Instance.battleNodeId;
             
-            // 2. 标记为已完成
-            GameDataManager.Instance.CompleteNode(currentNodeId);
-            
-            // 3. 解锁下一个节点（假设线性顺序）
-            UnlockNextNode(currentNodeId);
-            
-            // 4. 保存数据
-            GameDataManager.Instance.SaveGameData();
-            
-            Debug.Log("节点状态已更新并保存");
-        }
-        else
-        {
-            Debug.LogWarning("当前战斗节点ID为空");
+            if (!string.IsNullOrEmpty(currentNodeId))
+            {
+                Debug.Log($"完成节点: {currentNodeId}");
+                
+                // 2. 标记为已完成
+                GameDataManager.Instance.CompleteNode(currentNodeId);
+                
+                // 3. 保存数据
+                GameDataManager.Instance.SaveGameData();
+                
+                Debug.Log("节点状态已更新并保存");
+            }
+            else
+            {
+                Debug.LogWarning("当前战斗节点ID为空");
+            }
         }
     }
-}
  private void OnVictoryContinue()
 {
     // 恢复时间
@@ -473,11 +470,17 @@ public class GameFlowManager : MonoBehaviour
     // 隐藏胜利面板
     if (victoryPanel != null) victoryPanel.SetActive(false);
     
-    // 关键：更新节点状态并移动到下一关
-    UpdateMapNodeAfterVictory();
-    
-    // 直接加载地图场景
-    SceneManager.LoadScene("MapScene");
+        // 关键：更新节点状态并移动到下一关
+        UpdateMapNodeAfterVictory();
+        
+        // 保存数据确保所有更改（包括当前节点推进）都写入磁盘
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.SaveGameData();
+        }
+        
+        // 直接加载地图场景
+        SceneManager.LoadScene("MapScene");
 }
 
 
@@ -485,43 +488,15 @@ private void UpdateMapNodeAfterVictory()
 {
     if (GameDataManager.Instance != null)
     {
-        // 获取当前战斗的节点ID
         string battleNodeId = GameDataManager.Instance.battleNodeId;
-        
         if (!string.IsNullOrEmpty(battleNodeId))
         {
-            Debug.Log($"战斗胜利，处理节点 {battleNodeId} 完成");
-            
-            // 1. 标记节点完成
+            // 关键修复：只调用 CompleteNode，由它负责根据地图连接关系解锁邻居
+            // 移除了错误的 GetNextNodeId 线性推测逻辑
             GameDataManager.Instance.CompleteNode(battleNodeId);
             
-            // 2. 解锁下一个节点并设置为当前节点
-            // 这里需要根据你的地图结构，这里假设是线性关卡
-            // 如果是分支结构，需要更复杂的逻辑
-            
-            // 简单线性逻辑：Node1 -> Node2 -> Node3
-            string nextNodeId = GetNextNodeId(battleNodeId);
-            
-            if (!string.IsNullOrEmpty(nextNodeId))
-            {
-                // 解锁下一个节点
-                GameDataManager.Instance.UnlockNode(nextNodeId);
-                
-                // 设置下一个节点为当前节点
-                GameDataManager.Instance.SetCurrentNode(nextNodeId);
-                
-                Debug.Log($"解锁并设置当前节点为: {nextNodeId}");
-            }
-            
-            // 3. 保存数据
             GameDataManager.Instance.SaveGameData();
-            
-            // 4. 清除战斗数据
             GameDataManager.Instance.ClearBattleData();
-        }
-        else
-        {
-            Debug.LogWarning("当前战斗节点ID为空");
         }
     }
 }

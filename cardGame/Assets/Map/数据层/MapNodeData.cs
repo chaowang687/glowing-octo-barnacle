@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace SlayTheSpireMap
 {
+
+
     /// <summary>
     /// 运行时地图节点的数据表示。
     /// 区别于 ScriptableObject，这个类实例存在于内存或存档中，记录实时状态。
@@ -18,7 +20,7 @@ namespace SlayTheSpireMap
 
         [Header("连接关系")]
         // 该节点指向的下游节点列表
-        [System.NonSerialized] 
+        [System.NonSerialized]
         public List<MapNodeData> connectedNodes = new List<MapNodeData>();
 
         [Header("实时状态")]
@@ -34,12 +36,8 @@ namespace SlayTheSpireMap
         // 如果是事件节点，关联的事件数据
         public EventData eventData;
 
-        /// <summary>
-        /// 构造函数或初始化方法，用于从配置（MapNodeDataSO）生成运行时数据
-        /// </summary>
         public MapNodeData() { }
 
-       
         public void AddConnectedNode(MapNodeData targetNode)
         {
             if (targetNode != null && !connectedNodes.Contains(targetNode))
@@ -47,7 +45,5 @@ namespace SlayTheSpireMap
                 connectedNodes.Add(targetNode);
             }
         }
-        
-        
     }
 }

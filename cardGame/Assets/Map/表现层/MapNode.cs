@@ -41,6 +41,11 @@ namespace SlayTheSpireMap
         
         private void Start()
         {
+            // 确保原始缩放值是正常的（非0）
+            if (transform.localScale == Vector3.zero) 
+            {
+                transform.localScale = Vector3.one;
+            }
             originalScale = transform.localScale;
             UpdateVisuals();
         }
@@ -53,6 +58,11 @@ namespace SlayTheSpireMap
             this.linkedNodeData = data;
             this.nodeType = data.nodeType; // 确保这一行存在
             UpdateVisuals(); // 换图
+            if (data.encounterData == null)
+            {
+        // 只有不为空时才设置 UI（例如图标、名字等）
+        // nodeIcon.sprite = data.encounterData.icon; 
+            }
             if (data == null)
             {
                 Debug.LogError("UIMapNode: 初始化数据为空");
@@ -95,16 +105,23 @@ namespace SlayTheSpireMap
     
         private void HandleNodeStatusChanged(MapNodeData data)
         {
-             if(this.linkedNodeData == data) {
-                UpdateVisuals(); // 仅刷新自己
-            }
-            // 关键：只有当变化的数据是自己关联的数据时，才执行刷新
-            if (data == linkedNodeData)
+            // 如果数据变动了（不论是不是自己），都可能影响自己的可达性（比如邻居解锁了我）
+            // 但为了性能，我们通常只在 data 是自己，或者 data 是自己的上游时刷新
+            // 简单起见，这里只判断是否是自己
+            
+            // 修正：我们需要检查全局状态，因为邻居完成会导致我解锁
+            // 更好的做法是：MapManager 应该通知“所有受影响的节点”刷新
+            // 或者：直接在这里判断 id 是否匹配
+            
+            if (linkedNodeData != null && data != null)
             {
-                SyncFromData(); // 内部调用 UpdateVisuals()
-                // 检查自己是不是当前节点，决定是否播呼吸动画
-                SetAsCurrentNode(MapManager.Instance.currentNode == linkedNodeData);
-                Debug.Log($"UI节点 {data.nodeId} 已局部更新");
+                // 如果变更的是自己，或者变更的节点连接到了自己（即自己是它的下游）
+                // 简化逻辑：每次有节点变动，所有 UI 节点都检查一下自己的状态是否需要更新
+                // 因为数量不多（几十个），开销可以接受
+                SyncFromData();
+                
+                bool isCurrent = MapManager.Instance.currentNode == linkedNodeData;
+                SetAsCurrentNode(isCurrent);
             }
         }
         /// <summary>
@@ -120,61 +137,73 @@ namespace SlayTheSpireMap
         }
         
         // 更新节点外观
-   public void UpdateVisuals()
-{
-    if (linkedNodeData == null || GameDataManager.Instance == null) return;
-    // 【新增】强制同步状态，否则 isSelectable 永远是 false
-    isSelectable = linkedNodeData.isUnlocked;
-    isVisited = linkedNodeData.isCompleted;
-
-    // 只要解锁了或者是打过的，图标就不能是置灰的（保留你之前的图标逻辑）
-    if (nodeIcon != null)
-    {
-        nodeIcon.color = (isSelectable || isVisited) ? Color.white : Color.gray;
-    }
-    // 1. 【核心修复】从全局数据同步状态
-    // 确保 UI 上的 isSelectable 永远跟随全局解锁列表
-    if (GameDataManager.Instance != null)
-    {
-        isSelectable = GameDataManager.Instance.unlockedNodeIds.Contains(linkedNodeData.nodeId);
-        isVisited = GameDataManager.Instance.completedNodeIds.Contains(linkedNodeData.nodeId);
-        
-        // 同时更新数据对象的值，保持一致性
-        linkedNodeData.isUnlocked = isSelectable;
-        linkedNodeData.isCompleted = isVisited;
-    }
-
-    // 2. 【状态图标逻辑】根据节点类型设置对应的图标（保留你原本的图标）
-    if (nodeIcon != null)
-    {
-        // 根据类型选择你 Inspector 里赋值的 Sprite
-        switch (nodeType)
+        // 更新节点外观
+        public void UpdateVisuals()
         {
-            case NodeType.Combat: nodeIcon.sprite = combatIcon; break;
-            case NodeType.Elite:  nodeIcon.sprite = eliteIcon; break;
-            case NodeType.Shop:   nodeIcon.sprite = shopIcon; break;
-            case NodeType.Rest:   nodeIcon.sprite = restIcon; break;
-            case NodeType.Event:  nodeIcon.sprite = eventIcon; break;
-            case NodeType.Boss:   nodeIcon.sprite = bossIcon; break;
+            if (linkedNodeData == null) return;
+
+            // 1. 【优先】从全局数据管理器同步最新状态
+            if (GameDataManager.Instance != null)
+            {
+                isSelectable = GameDataManager.Instance.unlockedNodeIds.Contains(linkedNodeData.nodeId);
+                isVisited = GameDataManager.Instance.completedNodeIds.Contains(linkedNodeData.nodeId);
+                
+                // 同步回本地数据对象，保持一致
+                linkedNodeData.isUnlocked = isSelectable;
+                linkedNodeData.isCompleted = isVisited;
+            }
+            else
+            {
+                // 降级：使用本地数据状态
+                isSelectable = linkedNodeData.isUnlocked;
+                isVisited = linkedNodeData.isCompleted;
+            }
+
+            // 2. 根据状态设置颜色
+            if (nodeIcon != null)
+            {
+                // 如果节点已解锁或已访问，显示原色；否则置灰
+                nodeIcon.color = (isSelectable || isVisited) ? Color.white : new Color(0.2f, 0.2f, 0.2f, 0.8f);
+                
+                // 根据类型设置图标
+                Sprite targetSprite = null;
+                switch (nodeType)
+                {
+                    case NodeType.Combat: targetSprite = combatIcon; break;
+                    case NodeType.Elite:  targetSprite = eliteIcon; break;
+                    case NodeType.Shop:   targetSprite = shopIcon; break;
+                    case NodeType.Rest:   targetSprite = restIcon; break;
+                    case NodeType.Event:  targetSprite = eventIcon; break;
+                    case NodeType.Boss:   targetSprite = bossIcon; break;
+                }
+
+                if (targetSprite != null)
+                {
+                    nodeIcon.sprite = targetSprite;
+                }
+                else
+                {
+                    // 兜底提示：如果未配置图标，使用默认白色方块并给个颜色，确保可见
+                    if (nodeIcon.sprite == null)
+                    {
+                        // 尝试加载一个默认资源（如果有的话），或者直接不操作让它显示 Image 默认的白色
+                        // nodeIcon.color = Color.magenta; // 调试色
+                    }
+                }
+            }
+
+            // 3. 更新高亮框（当前可点且未访问的节点显示高亮）
+            if (selectableHighlight != null)
+            {
+                selectableHighlight.SetActive(isSelectable && !isVisited);
+            }
+
+            // 4. 更新已访问遮罩
+            if (visitedOverlay != null)
+            {
+                visitedOverlay.SetActive(isVisited);
+            }
         }
-
-        // 3. 【颜色逻辑】仅对 Sprite 进行变色处理
-        // 如果节点已解锁或已访问，显示原色；如果还没轮到，置灰
-        nodeIcon.color = (isSelectable || isVisited) ? Color.white : new Color(0.2f, 0.2f, 0.2f, 0.8f);
-    }
-
-    // 4. 更新高亮框（通常是当前可点的节点在闪烁）
-    if (selectableHighlight != null)
-    {
-        selectableHighlight.SetActive(isSelectable && !isVisited);
-    }
-
-    // 5. 更新已访问遮罩（打过的节点变暗或打勾）
-    if (visitedOverlay != null)
-    {
-        visitedOverlay.SetActive(isVisited);
-    }
-}
         
         // 设置节点可选择
         public void SetSelectable(bool selectable)
@@ -201,6 +230,12 @@ namespace SlayTheSpireMap
         // 设置为当前节点（开始/停止动画）
         public void SetAsCurrentNode(bool isCurrent)
         {
+            // 如果节点已经完成，就不应该再作为“当前待处理节点”进行呼吸动画了
+            if (isVisited) 
+            {
+                isCurrent = false;
+            }
+
             isCurrentNode = isCurrent;
             
             if (isCurrent)

@@ -191,28 +191,58 @@ namespace SlayTheSpireMap
             SaveGameData();
         }
         
-       public void CompleteNode(string nodeId)
-{
-    if (!completedNodeIds.Contains(nodeId))
-    {
-        completedNodeIds.Add(nodeId);
-        
-        // 查找该数据对象，解锁它的连线节点
-        // 这里需要配合 MapManager 里的节点引用进行解锁
-        MapNodeData nodeData = MapManager.Instance.allNodes.FirstOrDefault(n => n.nodeId == nodeId);
-        if (nodeData != null)
+        public void CompleteNode(string nodeId)
         {
-            foreach (var neighbor in nodeData.connectedNodes)
+            if (!completedNodeIds.Contains(nodeId))
             {
-                if (!unlockedNodeIds.Contains(neighbor.nodeId))
+                completedNodeIds.Add(nodeId);
+                
+                // 安全检查：确保 MapManager 存在再尝试解锁邻居
+                if (MapManager.Instance != null && MapManager.Instance.allNodes != null)
                 {
-                    unlockedNodeIds.Add(neighbor.nodeId);
+                    // 根据地图实际连接关系解锁下一关
+                    MapNodeData nodeData = MapManager.Instance.allNodes.FirstOrDefault(n => n.nodeId == nodeId);
+                    if (nodeData != null)
+                    {
+                        // 1. 解锁所有邻居
+                        foreach (var neighbor in nodeData.connectedNodes)
+                        {
+                            if (!unlockedNodeIds.Contains(neighbor.nodeId))
+                            {
+                                unlockedNodeIds.Add(neighbor.nodeId);
+                                Debug.Log($"[GameDataManager] 节点完成，解锁邻居: {neighbor.nodeId}");
+                            }
+                        }
+
+                        // 2. 核心修复：自动推进当前节点指针
+                        // 如果当前完成的节点正是记录中的“当前节点”，则自动指向下一个
+                        if (currentNodeId == nodeId)
+                        {
+                            if (nodeData.connectedNodes != null && nodeData.connectedNodes.Count > 0)
+                            {
+                                // 默认选中第一个邻居作为新的当前节点
+                                // 玩家后续可以点击其他已解锁邻居来改变这个选择
+                                currentNodeId = nodeData.connectedNodes[0].nodeId;
+                                Debug.Log($"[GameDataManager] 进度推进：CurrentNodeId 已从 {nodeId} 更新为 {currentNodeId}");
+                            }
+                            else
+                            {
+                                Debug.LogError($"[GameDataManager] 节点 {nodeId} 没有连接的下游节点！无法推进进度。ConnectedNodes Count: {nodeData.connectedNodes?.Count ?? 0}");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[GameDataManager] 完成的节点 {nodeId} 不是当前记录的节点 {currentNodeId}，不执行自动推进。");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError($"[GameDataManager] 无法在 MapManager 中找到节点: {nodeId}，无法解锁邻居！");
+                    }
                 }
+                SaveGameData();
             }
         }
-        SaveGameData();
-    }
-}
         
         public void UnlockNode(string nodeId)
         {

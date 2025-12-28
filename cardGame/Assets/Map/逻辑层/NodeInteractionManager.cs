@@ -132,21 +132,40 @@ private void EnterActualNode(MapNodeData node, MapManager mapManager)
         }
 
         private void EnterBattle(MapNodeData node, MapManager mapManager)
-        {
-            Debug.Log($"进入战斗: {node.nodeName}");
-            
-            // 保存当前节点到GameDataManager
-            if (GameDataManager.Instance != null)
-            {
-                GameDataManager.Instance.SetCurrentNode(node.nodeId);
-                GameDataManager.Instance.SetBattleData(node.nodeId, node.encounterData);
-                GameDataManager.Instance.SaveGameData(); // 立即保存
-            }
-            
-            // 跳转到战斗场景
-            SceneManager.LoadScene("BattleScene");
-        }
+{
+    // 调试：在这里打印一下，看看到底抓到的是哪关的数据
+    Debug.Log($"[Map] 点击了节点: {node.nodeId}, 准备加载敌人: {node.encounterData?.encounterName}");
+    if (GameDataManager.Instance != null)
+    {
+        // 关键：把当前节点物体的配置塞进全局单例
+        GameDataManager.Instance.battleEncounterData = node.encounterData;
+        GameDataManager.Instance.currentNodeId = node.nodeId;
+        // 如果这里 node.encounterData 还是空的，它就不会更新单例里的数据
+        // 导致战斗场景加载时，从单例里拿到的还是上一关剩下的数据
+        //GameDataManager.Instance.SetBattleData(node.nodeId, node.encounterData);
+    }
+    Debug.Log($"进入战斗: {node.nodeName}");
 
+    // --- 修复逻辑开始 ---
+    // 如果当前节点没有敌人配置，尝试从地图布局资源中找回它
+    if (node.encounterData == null && mapManager.currentMapLayout != null)
+    {
+        Debug.LogWarning($"[Map] 节点 {node.nodeName} 缺少实时配置，尝试从 MapLayout 中匹配数据...");
+        // 假设你的 MapLayout 有个方法能按 ID 或索引返回配置
+        // 如果没有现成方法，你需要确保生成时就塞进去
+    }
+    // --- 修复逻辑结束 ---
+
+    if (GameDataManager.Instance != null)
+    {
+        GameDataManager.Instance.SetCurrentNode(node.nodeId);
+        // 关键：确保这里传过去的数据不是 null
+        GameDataManager.Instance.SetBattleData(node.nodeId, node.encounterData);
+        GameDataManager.Instance.SaveGameData(); 
+    }
+    
+    SceneManager.LoadScene("BattleScene");
+}
         private void ExecuteRest(MapNodeData node, MapManager mapManager)
         {
             // 休息点逻辑：先回血，再标记完成

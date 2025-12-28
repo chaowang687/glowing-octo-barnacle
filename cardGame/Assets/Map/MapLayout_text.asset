@@ -25,42 +25,42 @@ MonoBehaviour:
   - position: {x: 0, y: 300}
     nodeType: 0
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 500}
     nodeType: 1
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 700}
     nodeType: 2
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 900}
     nodeType: 1
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 1100}
     nodeType: 4
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
   - position: {x: 0, y: 1300}
     nodeType: 4
     isFixedType: 0
-    presetEncounter: {fileID: 0}
+    presetEncounter: {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
     isBoss: 0
     isElite: 0
     isStartNode: 0
