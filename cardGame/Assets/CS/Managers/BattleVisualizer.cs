@@ -71,6 +71,12 @@ public class BattleVisualizer : MonoBehaviour
     public float layoutCardDelay = 0.05f; 
     public Vector3 centralPileOffset = new Vector3(0f, 20f, -0.1f); 
     
+    [Header("Discard Animation")]
+    [Range(0.01f, 0.5f)]
+    public float discardInterval = 0.05f;
+    [Range(0.1f, 1f)]
+    public float discardDuration = 0.3f;
+    
     [Header("Ease Types")]
     public Ease drawEaseType = Ease.OutQuad; 
     public Ease playToCenterEaseType = Ease.OutSine; 
@@ -263,38 +269,50 @@ public class BattleVisualizer : MonoBehaviour
 
     public void AnimateDiscardHand(List<CardDisplay> cardsToDiscard, System.Action onComplete)
     {
-        float discardDuration = 0.2f; // Could be parameterized if needed
-        int count = cardsToDiscard.Count;
-        int completedCount = 0;
-
-        if (count == 0)
+        if (cardsToDiscard.Count == 0)
         {
             onComplete?.Invoke();
             return;
         }
 
-        foreach (var display in cardsToDiscard) 
+        // 1. Lock all cards in their current visual state immediately
+        // This prevents them from snapping to new layout positions when the hand is cleared logically
+        foreach (var display in cardsToDiscard)
         {
-            if (display != null && discardPileLocationTransform != null)
+            if (display != null)
             {
-                display.transform.DOMove(discardPileLocationTransform.position, discardDuration)
-                    .SetEase(playToDiscardEaseType)
-                    .OnComplete(() => {
-                        if (display != null) Destroy(display.gameObject);
-                        completedCount++;
-                        if (completedCount >= count)
-                        {
-                            onComplete?.Invoke();
-                        }
-                    });
-            }
-            else
-            {
-                // Handle edge case where display might be null already
-                completedCount++;
-                if (completedCount >= count) onComplete?.Invoke();
+                DOTween.Kill(display.transform); // Stop any floating/hover animations
+                display.enabled = false;         // Disable script interaction
             }
         }
+
+        Sequence discardSequence = DOTween.Sequence();
+        
+        // Iterate from Right (End) to Left (Start)
+        for (int i = cardsToDiscard.Count - 1; i >= 0; i--)
+        {
+            CardDisplay display = cardsToDiscard[i];
+            if (display == null) continue;
+
+            // Calculate delay based on reverse order
+            int sequenceIndex = (cardsToDiscard.Count - 1) - i;
+            float startTime = sequenceIndex * discardInterval;
+            
+            if (discardPileLocationTransform != null)
+            {
+                discardSequence.Insert(startTime, 
+                    display.transform.DOMove(discardPileLocationTransform.position, discardDuration)
+                    .SetEase(playToDiscardEaseType));
+            }
+            
+            float destroyTime = startTime + discardDuration;
+            CardDisplay captureDisplay = display; 
+            discardSequence.InsertCallback(destroyTime, () => {
+                 if (captureDisplay != null) Destroy(captureDisplay.gameObject);
+            });
+        }
+
+        discardSequence.OnComplete(() => onComplete?.Invoke());
     }
 
     // --- Hover Logic ---
