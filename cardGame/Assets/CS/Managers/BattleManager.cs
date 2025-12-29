@@ -156,6 +156,14 @@ private IEnumerator Start()
 
     // 4. 加载卡组
     cardSystem.LoadDeckFromGlobal();
+    
+    // Debug: 打印当前抽牌堆内容，确认新卡是否加入
+    if (cardSystem != null)
+    {
+        Debug.Log($"[Battle] 卡组加载完成。Master Deck: {cardSystem.masterDeck.Count} 张, Draw Pile: {cardSystem.drawPile.Count} 张。");
+        string deckList = string.Join(", ", cardSystem.drawPile.Select(c => c.cardName));
+        Debug.Log($"[Battle] 当前抽牌堆: {deckList}");
+    }
 
     // Ensure round starts at 1 if not initialized
     if (CurrentRound <= 0) CurrentRound = 1;
@@ -919,59 +927,131 @@ private IEnumerator StartEnemyTurn()
     OnEnemyTurnCleanupComplete();
 }
 
-  // 替换掉之前所有的 EndBattle 和 CheckBattleOver
-public void EndBattle(bool isVictory)
-{
-    // 1. 防止重复进入逻辑
-    if (IsBattleOver) return;
-    IsBattleOver = true;
-
-    // 2. 锁定操作：防止弹窗时还能点结束回合或出牌
-    isTurnInProgress = false;
-    isCardBeingPlayed = false;
-    this.StopAllCoroutines(); 
-
-    Debug.Log($"[战斗结束] 结果: {(isVictory ? "胜利" : "失败")}");
-
-    // 3. UI 表现：触发结算页面
-    if (GameFlowManager.Instance != null)
+    /// <summary>
+    /// 从资源中加载所有卡牌数据，并随机选择指定数量。
+    /// </summary>
+    private List<CardData> GetRandomRewardCards(int count)
     {
+        List<CardData> allCards = new List<CardData>();
+        
+        // 加载 Resources/Cards 和 Resources/CardData 下的所有卡牌
+        allCards.AddRange(Resources.LoadAll<CardData>("Cards"));
+        allCards.AddRange(Resources.LoadAll<CardData>("CardData"));
+        
+        // 去重 (如果有重复 ID)
+        allCards = allCards.GroupBy(c => c.cardID).Select(g => g.First()).ToList();
+        
+        if (allCards.Count == 0)
+        {
+            Debug.LogWarning("No cards found in Resources/Cards or Resources/CardData!");
+            return new List<CardData>();
+        }
+
+        // 随机洗牌并取前 count 个
+        // 简单随机算法
+        List<CardData> selected = allCards.OrderBy(x => UnityEngine.Random.value).Take(count).ToList();
+        
+        return selected;
+    }
+
+    public void EndBattle(bool isVictory)
+    {
+        // 1. 防止重复进入逻辑
+        if (IsBattleOver) return;
+        IsBattleOver = true;
+
+        // 2. 锁定操作：防止弹窗时还能点结束回合或出牌
+        isTurnInProgress = false;
+        isCardBeingPlayed = false;
+        this.StopAllCoroutines(); 
+
         if (isVictory)
         {
-            GameFlowManager.Instance.ShowVictoryPanel("Victory");
+            Debug.Log("Victory! Processing rewards...");
+            
+            int gold = 50; // 示例奖励
+            
+            // 1. 生成 3 张随机卡牌选项
+            List<CardData> rewardOptions = GetRandomRewardCards(3);
+            
+            // 2. 显示奖励面板，并等待玩家选择
+            if (BattleUIManager.Instance != null)
+            {
+                // 确保引用 cardPrefab (如果 UIManager 没有赋值)
+                if (BattleUIManager.Instance.cardPrefab == null)
+                {
+                    BattleUIManager.Instance.cardPrefab = this.cardPrefab;
+                }
+                
+                BattleUIManager.Instance.ShowRewardDisplay(gold, rewardOptions, (selectedCard) => {
+                    // 3. 玩家选择卡牌后的回调
+                    Debug.Log($"[BattleManager] Callback Received for card: {selectedCard.cardName}");
+                    
+                    // 保存结果 (金币 + 选中卡牌)
+                    if (BattleDataManager.Instance != null)
+                    {
+                        // 关键修复：保存 selectedCard.name (文件名) 而不是 cardID
+                        // 这样 Resources.Load<CardData>($"Cards/{name}") 才能正确找到文件
+                        BattleDataManager.Instance.SaveBattleResult(true, gold, selectedCard.name);
+                        Debug.Log($"[BattleManager] 调用 BattleDataManager.SaveBattleResult。Card Name: {selectedCard.name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("[BattleManager] BattleDataManager.Instance 为 null！无法保存奖励。");
+                    }
+                    
+                    // 显示最终胜利结算 (包含继续按钮)
+                    // GameFlowManager.Instance.ShowVictoryPanel("VICTORY");
+                    // 修复：移除此调用，因为 ShowVictoryPanel 会再次调用 ShowRewardDisplay 导致死循环刷新。
+                    // UI 的后续流程（显示继续按钮）已由 BattleUIManager.ShowRewardDisplay 内部处理。
+                });
+            }
+            else
+            {
+                // Fallback if UI Manager missing
+                Debug.LogError("BattleUIManager missing, auto-selecting first reward.");
+                if (rewardOptions.Count > 0)
+                {
+                    string autoSelectedCardName = rewardOptions[0].name;
+                    if (BattleDataManager.Instance != null)
+                    {
+                        // 同样修复 Fallback 逻辑
+                        BattleDataManager.Instance.SaveBattleResult(true, gold, autoSelectedCardName);
+                    }
+                    else if (GameDataManager.Instance != null)
+                    {
+                        Debug.LogWarning("[BattleManager] BattleDataManager missing (Auto-Select). Saving directly to GameDataManager.");
+                        GameDataManager.Instance.AddGold(gold);
+                        GameDataManager.Instance.AddCard(autoSelectedCardName);
+                        
+                        if (characterManager != null && characterManager.GetActiveHero() != null)
+                            GameDataManager.Instance.Health = characterManager.GetActiveHero().currentHp;
+                            
+                        if (!string.IsNullOrEmpty(GameDataManager.Instance.battleNodeId))
+                            GameDataManager.Instance.CompleteNode(GameDataManager.Instance.battleNodeId);
+                            
+                        GameDataManager.Instance.SaveGameData();
+                        GameDataManager.Instance.ClearBattleData();
+                    }
+                }
+                // 同上，防止循环调用
+                // GameFlowManager.Instance.ShowVictoryPanel("VICTORY");
+                
+                // 如果没有 UI，直接触发继续
+                GameFlowManager.Instance.OnVictoryContinue();
+            }
         }
         else
         {
-            GameFlowManager.Instance.ShowDefeatPanel("The battle failed");
+            Debug.Log("Defeat! Processing loss...");
+            if (BattleDataManager.Instance != null)
+            {
+                // 失败不保存奖励，但可能需要更新状态
+                BattleDataManager.Instance.SaveBattleResult(false, 0, null);
+            }
+            GameFlowManager.Instance.ShowDefeatPanel("DEFEAT");
         }
     }
-
-    // 4. 数据结算：发放奖励并通知全局管理器
-    List<ItemData> rewards = new List<ItemData>();
-    if (isVictory)
-    {
-        // 这里可以执行你的奖励生成逻辑
-        // rewards = GenerateBattleRewards();
-    }
-
-    if (GameStateManager.Instance != null)
-    {
-        GameStateManager.Instance.EndBattle(isVictory, rewards);
-    }
-    if (isVictory)
-    {
-        // 建议在这里生成奖励数据
-        int gold = 50; // 示例
-        string card = "RandomCardID"; 
-        
-        // 关键：通知 BattleDataManager 保存结果
-        if (BattleDataManager.Instance != null)
-        {
-            BattleDataManager.Instance.SaveBattleResult(true, gold, card);
-        }
-        GameFlowManager.Instance.ShowVictoryPanel("胜利");
-    }
-}
 
 public bool CheckBattleEnd()
 {

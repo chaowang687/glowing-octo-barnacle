@@ -4,9 +4,44 @@ using System.Collections.Generic;
 
 namespace SlayTheSpireMap
 {
+    public enum MapGenerationType
+    {
+        Manual,         // 手动摆放
+        ProceduralTree  // 程序化树状生成
+    }
+
     [CreateAssetMenu(fileName = "NewMapLayout", menuName = "SlayTheSpire/Map Layout")]
     public class MapLayoutSO : ScriptableObject
     {
+        [Header("生成模式")]
+        public MapGenerationType generationType = MapGenerationType.Manual;
+        
+        [Header("程序化生成配置 (仅ProceduralTree模式)")]
+        public int treeLayers = 10; // 层数（包括起点和Boss）
+        public Vector2Int nodesPerLayer = new Vector2Int(3, 5); // 每层节点数范围
+        public float layerDistanceY = 200f; // 层间距
+        public float nodeDistanceX = 150f; // 同层节点间距
+        public float xRandomOffset = 30f; // X轴随机偏移
+        public float yRandomOffset = 30f; // Y轴随机偏移
+        public int startNodeCount = 3; // 起始节点数量
+        public bool generateBoss = true; // 是否生成Boss节点
+        
+        [Header("节点类型概率 (权重)")]
+        public int combatWeight = 40;
+        public int eliteWeight = 15;
+        public int shopWeight = 5;
+        public int restWeight = 10;
+        public int eventWeight = 20;
+
+        [Header("关卡内容池 (通用配置)")]
+        public List<EncounterData> easyEnemyPool = new List<EncounterData>();   // 简单敌人
+        public List<EncounterData> normalEnemyPool = new List<EncounterData>(); // 普通敌人
+        public List<EncounterData> hardEnemyPool = new List<EncounterData>();   // 困难敌人 (新增)
+        public List<EncounterData> eliteEnemyPool = new List<EncounterData>();  // 精英敌人
+        public List<EncounterData> bossEnemyPool = new List<EncounterData>();   // Boss
+        public List<EncounterData> eventPool = new List<EncounterData>();       // 事件
+        public List<EncounterData> shopPool = new List<EncounterData>();        // 商店(如有特殊)
+
         [Header("布局基本信息")]
         public string layoutName;
         public string sceneToLoad; // 关联的场景名称

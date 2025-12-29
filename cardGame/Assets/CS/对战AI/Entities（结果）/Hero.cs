@@ -25,7 +25,16 @@ public class Hero : CharacterBase
     // 修复：正确重写 Awake 方法
     protected override void Awake()
     {
-        base.Awake();
+        // 关键：不要调用 base.Awake()，因为它会强制重置血量
+        // base.Awake(); 
+        
+        // 我们手动初始化必要的组件，但不重置数值
+        // 使用基类提供的 protected 方法来初始化事件，避开编译错误
+        InitializeEvents();
+        
+        // 关键：监听自身血量变化，实时同步到全局数据
+        // 这样无论是战斗中扣血、回血，还是休息回血，都会被记录下来
+        OnHealthChanged += SyncToGlobal;
         
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
@@ -55,6 +64,19 @@ public void SyncFromGlobal()
     GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(this);
 }
 
+// 实时同步血量到全局数据
+private void SyncToGlobal(int current, int max)
+{
+    if (GameDataManager.Instance != null)
+    {
+        // 注意：这里我们只更新内存中的数值，避免频繁调用 PlayerPrefs.Save() 造成卡顿
+        // GameDataManager.Health 的 setter 会调用 SaveGameData，如果觉得卡顿可以优化
+        // 目前为了保证数据绝对安全，直接赋值即可
+        GameDataManager.Instance.Health = current;
+        Debug.Log($"[Hero] 血量变化已同步全局: {current}");
+    }
+}
+
     public void InitializeHero(string name, int maxHp, int energy = 3)
     {
         Initialize(name, maxHp);
@@ -66,6 +88,11 @@ public void SyncFromGlobal()
 
 
 
+
+    private void OnDestroy()
+    {
+        OnHealthChanged -= SyncToGlobal;
+    }
 
     /// <summary>
     /// 英雄死亡处理 - 现在正确重写 HandleDeath

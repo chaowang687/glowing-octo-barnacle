@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: A_DRAW
   cardName: Strike
-  description: Dealing 3 points of damage
+  description: Dealing 6 points of damage
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 1
   requiredClass: 0
@@ -25,7 +25,7 @@ MonoBehaviour:
   actions:
   - effectType: 1
     targetType: 2
-    value: 3
+    value: 6
     repeatCount: 0
     scalesWithStatus: 1
     statusEffect: 0

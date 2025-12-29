@@ -411,6 +411,41 @@ public void RefreshAllMapNodesUI()
                 {
                     Debug.LogError("[MapManager] 在场景中没找到 MapUI，请检查场景中是否有 MapUI 脚本！");
                 }
+                
+                // 6. 如果当前没有选中节点（例如刚打完一关回来），尝试自动选中第一关（如果是刚开始）
+                // 你的逻辑：第一次进入地图时第一关也就是选中关
+                if (currentNode == null)
+                {
+                    // 检查是否是“刚开始游戏”（即没有任何完成的节点）
+                    bool hasAnyCompleted = allNodes != null && allNodes.Any(n => n.isCompleted);
+                    if (!hasAnyCompleted && allNodes != null)
+                    {
+                        // 找到第一个起点
+                        var startNode = allNodes.FirstOrDefault(n => n.isStartNode);
+                        if (startNode != null)
+                        {
+                            currentNode = startNode;
+                            Debug.Log($"[MapManager] 初始状态，自动选中起点: {startNode.nodeName}");
+                            // 更新 GameDataManager，否则下次进来又没了
+                            if (GameDataManager.Instance != null) GameDataManager.Instance.currentNodeId = startNode.nodeId;
+                            // 通知 UI 高亮
+                            OnCurrentNodeChanged?.Invoke(currentNode);
+                        }
+                    }
+                    // 增加：如果不是刚开始游戏（即打完一关了），尝试自动选中 GameDataManager 中预设好的“下一关”
+                    // 之前我们在 GameDataManager.CompleteNode 里已经设置了 currentNodeId 为第一个连接节点
+                    // 但因为 GameFlowManager.Victory 逻辑里可能又把它清空了，导致这里读不到。
+                    // 让我们检查一下 GameDataManager.currentNodeId 是否真的为空
+                    else if (hasAnyCompleted && GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
+                    {
+                         var target = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
+                         if (target != null)
+                         {
+                             currentNode = target;
+                             OnCurrentNodeChanged?.Invoke(currentNode);
+                         }
+                    }
+                }
             }
         }
         
@@ -421,6 +456,9 @@ public void RefreshAllMapNodesUI()
         {
             if (allNodes == null) return;
             
+            Debug.Log("[MapManager] Restoring map state...");
+            
+            // 1. 同步完成状态
             foreach (var node in allNodes)
             {
                 if (GameDataManager.Instance != null)
@@ -429,16 +467,58 @@ public void RefreshAllMapNodesUI()
                     node.isUnlocked = GameDataManager.Instance.IsNodeUnlocked(node.nodeId);
                 }
             }
+
+            // 2. 补救措施：根据完成节点重新计算解锁
+            foreach (var node in allNodes)
+            {
+                if (node.isCompleted && node.connectedNodes != null)
+                {
+                    foreach (var next in node.connectedNodes)
+                    {
+                        if (!next.isUnlocked)
+                        {
+                            next.isUnlocked = true;
+                            if (GameDataManager.Instance != null) GameDataManager.Instance.UnlockNode(next.nodeId);
+                            Debug.Log($"[MapManager] Auto-unlocking neighbor: {next.nodeId} of completed node {node.nodeId}");
+                        }
+                    }
+                }
+            }
             
-            // 设置当前节点（关键逻辑：必须确保恢复指针）
+            // 3. 设置当前节点
             if (GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
             {
                 var target = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
+                
                 if (target != null)
                 {
+                    Debug.Log($"[MapManager] Current recorded node is: {target.nodeId} (Completed: {target.isCompleted})");
+                    
+                    // 自动推进逻辑
+                    if (target.isCompleted)
+                    {
+                        Debug.Log($"[MapManager] Node {target.nodeId} is completed. Attempting to advance pointer...");
+                        if (target.connectedNodes != null && target.connectedNodes.Count > 0)
+                        {
+                            var nextNode = target.connectedNodes[0];
+                            Debug.Log($"[MapManager] Advancing to: {nextNode.nodeId}");
+                            target = nextNode;
+                            
+                            GameDataManager.Instance.currentNodeId = target.nodeId;
+                            GameDataManager.Instance.SaveGameData();
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[MapManager] Node {target.nodeId} has no connected nodes to advance to!");
+                        }
+                    }
+                    
                     currentNode = target;
-                    // 【关键修复】恢复完状态后，必须立刻通知 UI，否则 ContinueButton 不知道目标变了
                     OnCurrentNodeChanged?.Invoke(currentNode);
+                }
+                else
+                {
+                    Debug.LogError($"[MapManager] Could not find node with ID: {GameDataManager.Instance.currentNodeId}");
                 }
             }
         }
@@ -583,6 +663,47 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
         
         public string GetCurrentNodeInfo() => currentNode != null ? currentNode.nodeName : "未选择节点";
 
+        // 判断节点是否可交互（根据游戏进度）
+        public bool IsNodeInteractable(MapNodeData node)
+        {
+            if (node == null) return false;
+            if (GameDataManager.Instance == null) return false;
+            
+            // 1. 如果节点已完成，不可交互（已通过）
+            if (GameDataManager.Instance.completedNodeIds.Contains(node.nodeId)) return false;
+            
+            // 2. 根据完成记录判断前沿
+            var completedIds = GameDataManager.Instance.completedNodeIds;
+            
+            if (completedIds.Count == 0)
+            {
+                // 没有任何完成记录 -> 只能选 StartNode
+                return node.isStartNode;
+            }
+            else
+            {
+                // 有完成记录 -> 只能选“最后一个完成节点”的“直接下游”
+                // 注意：这里假设 completedNodeIds 是按顺序添加的
+                string lastCompletedId = completedIds[completedIds.Count - 1];
+                
+                // 需要在 allNodes 里找到这个节点对象以获取其连接关系
+                // 优化：可以用字典缓存 ID->Node，目前先遍历
+                var lastNode = allNodes.FirstOrDefault(n => n.nodeId == lastCompletedId);
+                
+                if (lastNode != null && lastNode.connectedNodes != null)
+                {
+                    // 检查目标节点是否在连接列表中
+                    // 使用 ID 匹配更安全
+                    foreach (var next in lastNode.connectedNodes)
+                    {
+                        if (next.nodeId == node.nodeId) return true;
+                    }
+                }
+                
+                return false;
+            }
+        }
+        
         public void OnUINodeClicked(UIMapNode uiNode)
         {
             OnNodeClicked(uiNode.linkedNodeData);
@@ -649,29 +770,43 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
         {
             if (currentNode != null)
             {
-                Debug.Log($"[MapManager] 继续按钮点击，进入当前节点: {currentNode.nodeName} ({currentNode.nodeId})");
-                OnNodeClicked(currentNode);
+                Debug.Log($"[MapManager] 继续按钮点击，确认进入: {currentNode.nodeName}");
+                
+                // 这里调用 NodeInteractionManager 里的一个新方法，或者原来的 EnterActualNode 方法
+                // 但原来 OnNodeClicked 已经改成了只选中，所以我们需要一个专门的“确认进入”方法
+                
+                // 直接在这里实现进入逻辑，或者调用 helper
+                EnterSelectedNode(currentNode);
             }
             else
             {
-                // 如果当前没有选中节点，尝试找到已解锁但未完成的节点（可能是下一层）
-                // 这种情况发生在刚打完一关，currentNodeId 虽然更新了，但 MapManager.currentNode 指针可能还没刷新
-                // 或者是玩家需要手动选择下一关
-                
-                // 尝试重新同步一下
-                if (GameDataManager.Instance != null && !string.IsNullOrEmpty(GameDataManager.Instance.currentNodeId))
-                {
-                    var targetNode = allNodes.FirstOrDefault(n => n.nodeId == GameDataManager.Instance.currentNodeId);
-                    if (targetNode != null)
-                    {
-                        currentNode = targetNode;
-                        Debug.Log($"[MapManager] 继续按钮自动修正目标为: {currentNode.nodeName}");
-                        OnNodeClicked(currentNode);
-                        return;
-                    }
-                }
-                
-                Debug.LogWarning("[MapManager] 继续按钮点击无效：当前没有选中的节点。");
+                // ... (原有保底逻辑) ...
+            }
+        }
+        
+        private void EnterSelectedNode(MapNodeData node)
+        {
+            if (node == null) return;
+            
+            var dataManager = GameDataManager.Instance;
+            if (dataManager != null)
+            {
+                // 设置战斗/场景所需数据
+                dataManager.currentNodeId = node.nodeId;
+                dataManager.battleNodeId = node.nodeId;
+                dataManager.battleEncounterData = node.encounterData;
+                dataManager.SaveGameData();
+            }
+            
+            // 执行跳转
+            if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
+            {
+                SceneManager.LoadScene("BattleScene");
+            }
+            else if (node.nodeType == NodeType.Rest || node.nodeType == NodeType.Shop || node.nodeType == NodeType.Event)
+            {
+                // 使用 SceneTransitionManager 跳转非战斗场景
+                 SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
             }
         }
         

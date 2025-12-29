@@ -14,18 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: B_MARK
   cardName: break
-  description: Deal 4 damage and apply 2 layers of vulnerability
+  description: Deal 8 damage and apply 2 layers of vulnerability
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 0
   requiredClass: 0
-  energyCost: 1
+  energyCost: 3
   type: 0
   isUpgraded: 0
   upgradedCardData: {fileID: 0}
   actions:
   - effectType: 1
     targetType: 2
-    value: 4
+    value: 8
     repeatCount: 0
     scalesWithStatus: 1
     statusEffect: 0

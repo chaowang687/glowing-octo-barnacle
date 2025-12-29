@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79b91057ada56414f87c236d34c8d571, type: 3}
-  m_Name: EnemyEncounter003
+  m_Name: EnemyEncounter_s4
   m_EditorClassIdentifier: 
-  encounterName: "\u53CC\u4EBA\u7EC4"
+  encounterName: "\u6D77\u76D7\u56DB\u4EBA\u7EC4"
   nodeType: 0
   enemyConfigs: []
   minGold: 10
@@ -26,4 +26,7 @@ MonoBehaviour:
   healthReward: 0
   enemyList:
   - {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
+  - {fileID: 11400000, guid: 53d7366cb3a464337a69241d1da4f5d9, type: 2}
+  - {fileID: 11400000, guid: 7efc781dd1f66488187a49acf91ae6c3, type: 2}
+  - {fileID: 11400000, guid: 53d7366cb3a464337a69241d1da4f5d9, type: 2}
   battleBackground: {fileID: 0}

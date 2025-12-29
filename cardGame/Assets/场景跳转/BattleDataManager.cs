@@ -68,7 +68,11 @@ namespace SlayTheSpireMap
         // 胜利奖励
         GameDataManager.Instance.AddGold(gold);
         if (!string.IsNullOrEmpty(card))
+        {
+            // Debug: 确认传递到 AddCard 的字符串
+            Debug.Log($"[BattleDataManager] 尝试添加卡牌到 GameDataManager: {card}");
             GameDataManager.Instance.AddCard(card); // 确保这是 CardID
+        }
         if (!string.IsNullOrEmpty(relic))
             GameDataManager.Instance.AddRelic(relic);
         
@@ -85,9 +89,9 @@ namespace SlayTheSpireMap
         // 如果扣完血小于等于0，通常在这里触发游戏结束/回到主菜单逻辑
     }
     
-    // 3. 统一存档并清理临时战斗数据
+    // 3. 统一存档 (注意：不要在这里 ClearBattleData，将其推迟到离开场景时由 GameFlowManager 处理)
     GameDataManager.Instance.SaveGameData();
-    GameDataManager.Instance.ClearBattleData();
+    // GameDataManager.Instance.ClearBattleData(); // 移除了这行，防止 GameFlowManager 读取不到 ID
 }
         
         public void ReturnToMap()

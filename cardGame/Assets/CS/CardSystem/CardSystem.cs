@@ -82,8 +82,19 @@ public class CardSystem : MonoBehaviour
             List<string> cardIds = GameDataManager.Instance.playerData.cardIds;
             Debug.Log($"LoadDeckFromGlobal: 尝试加载 {cardIds.Count} 张卡牌");
 
-            foreach (string id in cardIds)
+            foreach (string originalId in cardIds)
             {
+                // Legacy ID Mapping (Migration Fix)
+                string id = originalId;
+                if (id == "Strike_R") id = "B_FRENZY";
+                else if (id == "Defend_R") id = "B_BLOCK";
+                else if (id == "Bash") id = "B_EXECUTE";
+
+                if (id != originalId)
+                {
+                    Debug.Log($"[CardSystem] Migrating Legacy Card ID: {originalId} -> {id}");
+                }
+
                 // 尝试路径 1: Resources/Cards/ID
                 CardData card = Resources.Load<CardData>($"Cards/{id}");
                 
@@ -93,13 +104,49 @@ public class CardSystem : MonoBehaviour
                     card = Resources.Load<CardData>($"CardData/{id}");
                 }
 
+                // 尝试路径 3: 暴力遍历所有 CardData 查找文件名或 cardID 匹配的卡牌
+                // 这可以解决 ID 与文件名不一致，或路径不对的问题
+                if (card == null)
+                {
+                    CardData[] allCards = Resources.LoadAll<CardData>("");
+                    // 先按 cardID 匹配
+                    card = allCards.FirstOrDefault(c => c.cardID == id);
+                    // 再按文件名匹配
+                    if (card == null)
+                    {
+                        card = allCards.FirstOrDefault(c => c.name == id);
+                    }
+                }
+
                 if (card != null)
                 {
                     masterDeck.Add(card);
+                    Debug.Log($"[CardSystem] 成功加载卡牌: {card.cardName} (ID: {id})");
                 }
                 else
                 {
-                    Debug.LogWarning($"找不到卡牌资源: {id}. 请确保卡牌在 Resources/Cards 或 Resources/CardData 目录下");
+                    Debug.LogWarning($"[CardSystem] 找不到卡牌资源: {id}. 已尝试直接路径及全局搜索。请检查 Resources 下的文件名或 cardID 配置。");
+                }
+            }
+            
+            // Failsafe: 如果加载后的卡组数量过少 (例如因为资源丢失)，且原本期望的卡牌数量较多，则尝试使用默认卡组填充
+            if (masterDeck.Count < 3 && cardIds.Count >= 3)
+            {
+                Debug.LogError($"[CardSystem] 严重警告: 尝试加载 {cardIds.Count} 张卡牌，但仅成功加载 {masterDeck.Count} 张。可能存在资源丢失或 ID 不匹配。正在回退到默认卡组。");
+                masterDeck.Clear();
+                // 尝试加载新的默认卡牌
+                string[] defaultBackups = new string[] { "B_FRENZY", "B_BLOCK", "B_EXECUTE" };
+                foreach(var backupId in defaultBackups)
+                {
+                    CardData c = Resources.Load<CardData>($"Cards/{backupId}");
+                    if(c != null) masterDeck.Add(c);
+                }
+                // 补充到一定数量
+                while(masterDeck.Count < 8)
+                {
+                     CardData c = Resources.Load<CardData>("Cards/B_FRENZY");
+                     if(c!=null) masterDeck.Add(c);
+                     else break;
                 }
             }
             

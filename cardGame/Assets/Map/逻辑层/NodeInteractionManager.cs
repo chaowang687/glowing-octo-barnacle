@@ -14,59 +14,82 @@ namespace SlayTheSpireMap
 
 // NodeInteractionManager.cs
 public void OnNodeClicked(MapNodeData node, MapManager mapManager)
-{
-    var dataManager = GameDataManager.Instance;
-    
-    // --- 关键修复：判定逻辑 ---
-    // 1. 是否是当前已经选中的点（针对继续按钮）
-    bool isCurrentNode = node.nodeId == dataManager.currentNodeId;
-    
-    // 2. 是否在已解锁列表中
-    bool isUnlockedInList = dataManager.unlockedNodeIds.Contains(node.nodeId);
-    
-    // 3. 是否是起始节点且还没选过任何点
-    bool isInitialStart = node.isStartNode && string.IsNullOrEmpty(dataManager.currentNodeId);
+        {
+            var dataManager = GameDataManager.Instance;
+            
+            // 判定：是否是合法可进入的节点
+            // 使用 MapManager 统一的进度验证逻辑，不再依赖 loose 的 unlockedNodeIds
+            bool canAccess = mapManager.IsNodeInteractable(node);
+            
+            // 特殊情况：如果是当前已选中的节点，当然可以再次点击（虽然状态不变）
+            if (node.nodeId == dataManager.currentNodeId) canAccess = true;
 
-    // 只要满足以上任意一个，就允许进入
-    bool canAccess = isCurrentNode || isUnlockedInList || isInitialStart;
+            if (!canAccess)
+            {
+                Debug.Log($"[Map] 节点 {node.nodeName} 不可访问 (不符合进度规则)。");
+                return; 
+            }
 
-    if (!canAccess)
-    {
-        Debug.Log($"[Map] 节点 {node.nodeName} 不可访问。");
-        return; 
-    }
+            // --- 修改逻辑：点击节点仅“选中”并设为当前节点，不直接跳转 ---
+            Debug.Log($"[Map] 选中节点: {node.nodeName} ({node.nodeId})");
 
-    // --- 执行进入和场景跳转 ---
-    Debug.Log($"[Map] 正在进入: {node.nodeName}");
+            // 1. 更新当前节点状态
+            dataManager.currentNodeId = node.nodeId;
+            mapManager.SetCurrentNode(node); // 让 MapManager 知道当前选中了谁
 
-    // 1. 设置当前节点数据
-    dataManager.currentNodeId = node.nodeId;
-    dataManager.battleNodeId = node.nodeId;
-    dataManager.battleEncounterData = node.encounterData;
-    dataManager.SaveGameData(); // 必须保存，否则跳回来数据就丢了
-
-    // 2. 场景跳转
-    if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
-    {
-        SceneManager.LoadScene("BattleScene"); // 确保你的场景名叫这个
-    }
-}
+            // 2. 刷新 UI：更新所有节点的视觉状态（高亮当前节点，置灰不可达节点）
+            // 关键：必须调用 mapManager.ui.UpdateAllUI() 或 mapManager.RefreshAllMapNodesUI()
+            // RefreshAllMapNodesUI 会遍历所有 UIMapNode 并调用 UpdateVisuals -> SyncFromData -> SetAsCurrentNode
+            // 这样就能确保旧节点收到“我不再是 CurrentNode”的通知，从而关闭高亮
+            
+            if (mapManager.ui != null && mapManager.ui.mapUI != null)
+            {
+                // 使用 MapUI 的 UpdateUI 方法更直接
+                mapManager.ui.mapUI.UpdateUI();
+            }
+            else
+            {
+                // 兜底
+                mapManager.RefreshAllMapNodesUI();
+            }
+            
+            // 3. 激活 Continue 按钮（如果有 MapUIManager）
+            if (mapManager.ui != null)
+            {
+                // 让 UI 管理器刷新 Continue 按钮状态（例如变成 "Enter Battle"）
+                mapManager.ui.SetContinueButtonState(true);
+            }
+        }
 private void EnterActualNode(MapNodeData node, MapManager mapManager)
-{
-    Debug.Log($"[Map] 成功进入节点: {node.nodeName}");
+        {
+            Debug.Log($"[Map] 成功进入节点: {node.nodeName}");
 
-    // 设置全局数据，让系统知道我们“正在”打这一关
-    GameDataManager.Instance.currentNodeId = node.nodeId;
-    GameDataManager.Instance.battleNodeId = node.nodeId;
-    GameDataManager.Instance.battleEncounterData = node.encounterData;
-
-    // 跳转场景
-    if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
-    {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("BattleScene");
-    }
-    // ... 其他节点跳转逻辑
-}
+            // 设置全局数据，让系统知道我们“正在”打这一关
+            GameDataManager.Instance.currentNodeId = node.nodeId;
+            GameDataManager.Instance.battleNodeId = node.nodeId;
+            GameDataManager.Instance.battleEncounterData = node.encounterData;
+            
+            // --- 关键补充：解锁子节点逻辑 ---
+            // 当真正进入一个节点时（或完成它时），通常我们希望在这里预先解锁它的连接关系
+            // 但在 Slay the Spire 逻辑中，只有当节点“完成”后才解锁下一层。
+            // 所以这里的逻辑应该是：
+            // 1. 玩家进入节点 -> 战斗/事件场景
+            // 2. 玩家获胜/完成 -> 调用 GameFlowManager.UpdateMapNodeAfterVictory -> GameDataManager.CompleteNode
+            // 3. CompleteNode 方法内部会查找所有 connectedNodes 并将它们设为 isUnlocked = true
+            
+            // 所以这里不需要手动解锁，只需确保 GameDataManager.CompleteNode 正确工作即可。
+            
+            // 跳转场景
+            if (node.nodeType == NodeType.Combat || node.isElite || node.isBoss)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene("BattleScene");
+            }
+            else if (node.nodeType == NodeType.Rest || node.nodeType == NodeType.Shop || node.nodeType == NodeType.Event)
+            {
+                 // 使用 SceneTransitionManager 跳转非战斗场景
+                 SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
+            }
+        }
         /// <summary>
         /// 简化的合法性判定：只关心“是不是下一步”
         /// </summary>

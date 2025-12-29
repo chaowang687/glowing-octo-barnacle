@@ -167,18 +167,18 @@ public class GameFlowManager : MonoBehaviour
     /// </summary>
     public void ShowVictoryPanel(string title = "victory！")
     {
-        // 保存战斗结果
+        // 如果是回调回来的（UI已经显示过奖励了），就不应该再调用 SaveVictoryResult 
+        // 这是一个潜在的逻辑死循环风险，最好的办法是 SaveVictoryResult 只负责数据，不负责 UI
+        // 但为了最小化改动，我们这里假设 ShowVictoryPanel 只是入口
+        
+        // 简单处理：如果 BattleUIManager 已经在显示胜利面板，就不重复逻辑
+        if (BattleUIManager.Instance != null && BattleUIManager.Instance.victoryPanel.activeSelf) return;
+
+        // 保存战斗结果并触发奖励流程
         SaveVictoryResult();
         
-        // 调用 UI 管理器显示面板
-        if (BattleUIManager.Instance != null)
-        {
-            BattleUIManager.Instance.ShowVictoryPanel(title);
-        }
-        else
-        {
-            Debug.LogError("[GameFlowManager] 找不到 BattleUIManager，无法显示胜利面板！");
-        }
+        // 注意：SaveVictoryResult 内部会调用 ShowRewardDisplay，然后回调里再 ShowVictoryPanel(UI)
+        // 所以这里不需要直接 ShowVictoryPanel，除非没有奖励
     }
     
     /// <summary>
@@ -190,18 +190,43 @@ public class GameFlowManager : MonoBehaviour
         {
             // 计算胜利奖励
             int goldReward = CalculateGoldReward();
-            string cardReward = GetRandomCardReward();
-            string relicReward = GetRandomRelicReward();
+            // cardReward 和 relicReward 的逻辑已变更，现在由 BattleUIManager 处理选卡，这里不再直接决定卡牌
+            // string relicReward = GetRandomRelicReward(); // 暂时移除遗物奖励逻辑或保留
             
-            // 保存结果
-            BattleDataManager.Instance.SaveBattleResult(true, goldReward, cardReward, relicReward);
+            // 仅仅保存金币，卡牌在玩家选择后由回调保存
+            // BattleDataManager.Instance.SaveBattleResult(true, goldReward, cardReward, relicReward);
             
             // 显示奖励（委托给 UI Manager）
             if (BattleUIManager.Instance != null)
             {
-                BattleUIManager.Instance.ShowRewardDisplay(goldReward, cardReward, relicReward);
+                 // 生成 3 张随机卡牌作为选项
+                 List<CardData> rewardOptions = GetRandomRewardCards(3);
+                 
+                 BattleUIManager.Instance.ShowRewardDisplay(goldReward, rewardOptions, (selectedCard) => {
+                     // 玩家选择卡牌后的回调
+                     BattleDataManager.Instance.SaveBattleResult(true, goldReward, selectedCard.cardID);
+                     
+                     // 变更：不再直接调用 ShowVictoryPanel，而是让奖励页面的继续按钮接管跳转
+                     // ShowVictoryPanel("VICTORY"); 
+                     // BattleUIManager.Instance.ShowVictoryPanel("VICTORY");
+                     
+                     // 这里什么都不做，或者只记录状态，等待玩家点击 RewardPanel 上的 Continue 按钮
+                     Debug.Log("Reward selected. Waiting for player to click Continue.");
+                 });
             }
         }
+    }
+    
+    // 辅助方法：获取随机奖励卡牌 (复用 BattleManager 的逻辑或在此处实现)
+    private List<CardData> GetRandomRewardCards(int count)
+    {
+         List<CardData> allCards = new List<CardData>();
+         allCards.AddRange(Resources.LoadAll<CardData>("Cards"));
+         allCards.AddRange(Resources.LoadAll<CardData>("CardData"));
+         allCards = allCards.GroupBy(c => c.cardID).Select(g => g.First()).ToList();
+         
+         if (allCards.Count == 0) return new List<CardData>();
+         return allCards.OrderBy(x => Random.value).Take(count).ToList();
     }
     
     /// <summary>
@@ -247,7 +272,9 @@ public class GameFlowManager : MonoBehaviour
     {
         if (BattleUIManager.Instance != null)
         {
-            BattleUIManager.Instance.ShowRewardDisplay(gold, card, relic);
+             // 兼容旧接口的临时实现，或者直接废弃此方法
+             // BattleUIManager.Instance.ShowRewardDisplay(gold, card, relic); 
+             Debug.LogWarning("Call to obsolete ShowRewardDisplay(string, string).");
         }
     }
     
@@ -291,12 +318,6 @@ public class GameFlowManager : MonoBehaviour
         // 恢复时间
         Time.timeScale = 1f;
         
-        // 隐藏所有面板
-        if (BattleUIManager.Instance != null)
-        {
-            BattleUIManager.Instance.HideAllResultPanels();
-        }
-        
         // 关键：更新节点状态并移动到下一关
         UpdateMapNodeAfterVictory();
         
@@ -306,8 +327,24 @@ public class GameFlowManager : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
         }
         
-        // 直接加载地图场景
+        // 跳转到地图场景
         SceneManager.LoadScene("MapScene");
+        
+        // 在场景跳转指令发出后，再隐藏面板 (虽然切场景会自动销毁，但保持逻辑清晰)
+        // 实际上切场景后 UI 就没了，所以这一步是可选的
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.HideAllResultPanels();
+        }
+        
+        // --- 关键修复：战斗胜利后，确保 GameDataManager 的状态正确 ---
+        // 注意：不要在这里置空 currentNodeId，因为 CompleteNode 已经指向了下一关。
+        
+        if (GameDataManager.Instance != null)
+        {
+            // 确保数据已保存
+            GameDataManager.Instance.SaveGameData();
+        }
     }
     
     private void UpdateMapNodeAfterVictory()
@@ -315,14 +352,20 @@ public class GameFlowManager : MonoBehaviour
         if (GameDataManager.Instance != null)
         {
             string battleNodeId = GameDataManager.Instance.battleNodeId;
+            Debug.Log($"[GameFlowManager] UpdateMapNodeAfterVictory called. BattleNodeId: '{battleNodeId}'");
+            
             if (!string.IsNullOrEmpty(battleNodeId))
             {
-                // 关键修复：只调用 CompleteNode，由它负责根据地图连接关系解锁邻居
-                // 移除了错误的 GetNextNodeId 线性推测逻辑
+                // 1. 标记当前节点完成 (解锁逻辑在 CompleteNode 内部)
                 GameDataManager.Instance.CompleteNode(battleNodeId);
                 
+                // 2. 保存并清理战斗临时数据
                 GameDataManager.Instance.SaveGameData();
                 GameDataManager.Instance.ClearBattleData();
+            }
+            else
+            {
+                Debug.LogError("[GameFlowManager] BattleNodeId is empty! Cannot complete node.");
             }
         }
     }
@@ -448,6 +491,12 @@ public class GameFlowManager : MonoBehaviour
     {
         // 3. 核心修复：先同步数据（血量从存档里读出 30）
         heroScript.SyncFromGlobal();
+        
+        // 补丁：强制同步血量（GameDataManager 中属性名为 Health）
+        if (GameDataManager.Instance != null)
+        {
+            heroScript.currentHp = GameDataManager.Instance.Health;
+        }
 
         // 4. 注册到管理器
         characterManager.RegisterHero(heroScript);
@@ -496,6 +545,12 @@ public class GameFlowManager : MonoBehaviour
 
             // 3. 【关键】先同步数据！！
             heroScript.SyncFromGlobal();
+            
+            // 补丁：强制同步血量
+            if (GameDataManager.Instance != null)
+            {
+                heroScript.currentHp = GameDataManager.Instance.Health;
+            }
 
             // 4. 【关键】最后初始化 UI
             heroObj.GetComponentInChildren<CharacterUIDisplay>(true)?.Initialize(heroScript);

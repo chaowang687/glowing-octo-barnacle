@@ -99,11 +99,28 @@ namespace SlayTheSpireMap
             }
 
             // 计算 X 轴居中偏移量
-            // 用户反馈：不需要复杂的居中计算，X坐标为0即可（左对齐）
+            // 修正：统一使用 normalizedPos (0 ~ mapWidth) 作为基准
             float xOffset = 0f;
             
-            // 如果确实需要居中，可以使用下面的逻辑，但目前简化为0
-            // float xOffset = (mapWidth < availableWidth) ? (availableWidth - mapWidth) / 2f : 100f;
+            // 1. 如果 Pivot 是中心 (0.5)，则 Content 的 X=0 是中心点
+            // 我们需要让地图的中心 (mapWidth / 2) 对齐到 0
+            // Offset = -mapWidth / 2
+            
+            // 2. 如果 Pivot 是左上 (0)，则 Content 的 X=0 是左边缘
+            // 我们需要让地图的中心 (mapWidth / 2) 对齐到 availableWidth / 2
+            // Offset = (availableWidth / 2) - (mapWidth / 2) = (availableWidth - mapWidth) / 2
+            
+            if (contentRect != null)
+            {
+                if (contentRect.pivot.x < 0.1f) // Pivot Left
+                {
+                     xOffset = (availableWidth - mapWidth) / 2f;
+                }
+                else // Pivot Center (0.5)
+                {
+                     xOffset = -mapWidth / 2f;
+                }
+            }
             
             // 5. 渲染器资源自动补救（如果 Inspector 没拖）
             if (uiNodePrefab != null)
@@ -260,7 +277,14 @@ namespace SlayTheSpireMap
                     uiNode.SyncFromData();
                     
                     // 检查是否是当前节点，设置高亮或图标
-                    bool isCurrent = MapManager.Instance.currentNode == uiNode.linkedNodeData;
+                    bool isCurrent = false;
+                    if (MapManager.Instance != null && MapManager.Instance.currentNode != null)
+                    {
+                        // 统一使用 nodeId 字符串匹配
+                        isCurrent = MapManager.Instance.currentNode.nodeId == uiNode.linkedNodeData.nodeId;
+                    }
+                    
+                    // 这会触发 MapNode 内部逻辑：如果是 current，开启呼吸动画；如果不是，关闭动画
                     uiNode.SetAsCurrentNode(isCurrent);
                 }
             }

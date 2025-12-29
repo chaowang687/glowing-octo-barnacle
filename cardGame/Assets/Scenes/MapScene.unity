@@ -119,6 +119,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &159129574
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 159129576}
+  - component: {fileID: 159129575}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &159129575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 159129574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fce974dd4100a45d3984f215295707cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  linePrefab: {fileID: 2474001901101128593, guid: ec24e62ab4bfd405d9ab404b960c4efb, type: 3}
+  lineWidth: 5
+  lineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  lineContainer: {fileID: 1247463826}
+--- !u!4 &159129576
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 159129574}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1579.4034, y: 568.988, z: 0.4261018}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &185313444
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,7 +256,17 @@ MonoBehaviour:
     health: 30
     maxHealth: 30
     gold: 100
-    cardIds: []
+    cardIds:
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
+    - 
   playerDeck:
     cardIds:
     - Strike
@@ -230,10 +288,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4946ff4fbe7542f68cc8756f318c558, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapUI: {fileID: 1906893038}
-  healthText: {fileID: 0}
-  goldText: {fileID: 0}
-  continueButton: {fileID: 245929729}
 --- !u!114 &185313451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1080,6 +1134,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1614098298}
+  - component: {fileID: 1614098299}
   - component: {fileID: 1614098297}
   m_Layer: 0
   m_Name: GameDataManager
@@ -1101,10 +1156,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterName: "\u52C7\u8005"
+  defaultMaxHealth: 100
+  defaultGold: 99
   playerData:
     characterName: "\u94C1\u7532\u536B\u58EB"
-    health: 30
-    maxHealth: 30
+    health: 50
+    maxHealth: 50
     gold: 100
     cardIds: []
     relicIds: []
@@ -1128,6 +1185,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1614098299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1614098296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8c01f3815e524278a86e1b55ef557f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  battleNodeId: 
+  battleEncounter: {fileID: 0}
+  isVictory: 0
+  goldEarned: 0
+  cardEarned: 
+  relicEarned: 
 --- !u!1 &1906893036
 GameObject:
   m_ObjectHideFlags: 0
@@ -1161,9 +1236,9 @@ RectTransform:
   - {fileID: 703980782}
   m_Father: {fileID: 521134679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 540}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 960, y: 540}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1906893038
@@ -1182,7 +1257,7 @@ MonoBehaviour:
   uiNodePrefab: {fileID: 784546792196583180, guid: 54e107dfc96434d10b162d11461a220a, type: 3}
   nodesContainer: {fileID: 703980782}
   linesContainer: {fileID: 1247463826}
-  mapLineRenderer: {fileID: 0}
+  mapLineRenderer: {fileID: 159129575}
   horizontalSpacing: 150
   verticalSpacing: 120
   uiNodes: []
@@ -1332,3 +1407,4 @@ SceneRoots:
   - {fileID: 185313452}
   - {fileID: 521134679}
   - {fileID: 1614098298}
+  - {fileID: 159129576}

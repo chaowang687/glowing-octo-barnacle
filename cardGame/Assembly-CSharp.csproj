@@ -173,6 +173,7 @@
     <Compile Include="Assets/CS/LootPopup.cs" />
     <Compile Include="Assets/CS3/WorldTileEditor.cs" />
     <Compile Include="Assets/CS2/RandomEventManager.cs" />
+    <Compile Include="Assets/CS/Data/CharacterStarterData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />

@@ -5,7 +5,7 @@ using System.Collections;
 
 namespace SlayTheSpireMap
 {
-    public class UIMapNode : MonoBehaviour, IPointerClickHandler
+    public class UIMapNode : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         // 关联的数据节点
         [System.NonSerialized]
@@ -120,7 +120,17 @@ namespace SlayTheSpireMap
                 // 因为数量不多（几十个），开销可以接受
                 SyncFromData();
                 
-                bool isCurrent = MapManager.Instance.currentNode == linkedNodeData;
+                // 关键修复：当状态变更时（例如从上一关出来，进入了下一层），
+                // 需要重新判断自己是否是 CurrentNode。
+                // 之前的逻辑只在点击时设置 isCurrentNode，但从存档加载或初始化时可能没同步。
+                
+                bool isCurrent = false;
+                if (MapManager.Instance != null && MapManager.Instance.currentNode != null)
+                {
+                    // 统一使用 nodeId 字符串匹配，避免对象引用不同导致的问题
+                    isCurrent = MapManager.Instance.currentNode.nodeId == linkedNodeData.nodeId;
+                }
+                
                 SetAsCurrentNode(isCurrent);
             }
         }
@@ -143,12 +153,14 @@ namespace SlayTheSpireMap
             if (linkedNodeData == null) return;
 
             // 1. 【优先】从全局数据管理器同步最新状态
-            if (GameDataManager.Instance != null)
+            if (GameDataManager.Instance != null && MapManager.Instance != null)
             {
-                isSelectable = GameDataManager.Instance.unlockedNodeIds.Contains(linkedNodeData.nodeId);
+                // 使用 MapManager 的严格校验逻辑来决定是否“可选”
+                // 这能解决“解锁列表里有上一层的兄弟节点导致误判”的问题
+                isSelectable = MapManager.Instance.IsNodeInteractable(linkedNodeData);
                 isVisited = GameDataManager.Instance.completedNodeIds.Contains(linkedNodeData.nodeId);
                 
-                // 同步回本地数据对象，保持一致
+                // 同步回本地数据对象
                 linkedNodeData.isUnlocked = isSelectable;
                 linkedNodeData.isCompleted = isVisited;
             }
@@ -181,21 +193,16 @@ namespace SlayTheSpireMap
                 {
                     nodeIcon.sprite = targetSprite;
                 }
-                else
-                {
-                    // 兜底提示：如果未配置图标，使用默认白色方块并给个颜色，确保可见
-                    if (nodeIcon.sprite == null)
-                    {
-                        // 尝试加载一个默认资源（如果有的话），或者直接不操作让它显示 Image 默认的白色
-                        // nodeIcon.color = Color.magenta; // 调试色
-                    }
-                }
             }
 
-            // 3. 更新高亮框（当前可点且未访问的节点显示高亮）
+            // 3. 更新高亮框（仅当前选中的节点显示高亮）
+            // 修复：之前逻辑是 isSelectable && !isVisited 就会高亮，导致所有解锁层都亮了
+            // 现在改为只由 SetAsCurrentNode 控制高亮框的显隐，这里只负责初始化状态（默认关）
+            // 或者：如果确实想表达“可达”，可以用另一种视觉（比如微光），而“选中”用强高亮
+            // 这里我们遵循用户需求：只保留选中的关有高亮
             if (selectableHighlight != null)
             {
-                selectableHighlight.SetActive(isSelectable && !isVisited);
+                selectableHighlight.SetActive(isCurrentNode); 
             }
 
             // 4. 更新已访问遮罩
@@ -227,24 +234,80 @@ namespace SlayTheSpireMap
             }
         }
         
-        // 设置为当前节点（开始/停止动画）
+        // ------------------------ 新增悬停放大逻辑 ------------------------
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            // 只有已解锁且未访问的节点（即可选节点），鼠标悬停时才播放呼吸动画
+            if (isSelectable && !isVisited)
+            {
+                // 如果当前没有在播放动画（或者不是选中状态导致的动画），则开始呼吸
+                if (currentAnimation == null)
+                {
+                    StartCurrentNodeAnimation();
+                }
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            // 移开时恢复原状
+            if (isSelectable && !isVisited)
+            {
+                 // 如果这个节点不是当前选中的节点，那么移开时就停止动画
+                 // 如果是选中的节点，它应该保持呼吸（或者根据需求，选中节点也可能不呼吸？）
+                 // 根据“只有选中的节点有高亮框，鼠标悬停播放呼吸动画”的理解：
+                 // 选中节点：常亮高亮框
+                 // 悬停节点：呼吸动画
+                 
+                 // 如果当前节点虽然被选中，但鼠标移开了，要不要停？
+                 // 用户说“改为鼠标悬停的节点播放呼吸动画”，暗示只有悬停时才呼吸。
+                 // 那么我们强制停止。
+                 
+                 StopCurrentNodeAnimation();
+                 
+                 // 如果是选中状态，恢复选中时的高亮框逻辑（如果之前有关闭的话，但这里只管动画）
+            }
+        }
+        // -----------------------------------------------------------------
+
+        // 设置为当前节点（控制高亮框显隐，并启用呼吸动画）
         public void SetAsCurrentNode(bool isCurrent)
         {
-            // 如果节点已经完成，就不应该再作为“当前待处理节点”进行呼吸动画了
-            if (isVisited) 
-            {
-                isCurrent = false;
-            }
-
             isCurrentNode = isCurrent;
             
+            // 1. 选中状态的视觉反馈 (高亮框)
+            // 只有被选中时才显示高亮框，未选中则关闭
+            if (selectableHighlight != null)
+            {
+                selectableHighlight.SetActive(isCurrent);
+            }
+            
+            // 2. 移除之前的呼吸动画逻辑，只处理图标颜色
+            // 用户新需求：改为鼠标悬停播放呼吸动画。所以这里不再自动开启呼吸。
             if (isCurrent)
             {
-                StartCurrentNodeAnimation();
+                // 确保选中时是亮的
+                if (nodeIcon != null) nodeIcon.color = Color.white;
             }
             else
             {
+                // 如果不再是当前节点，确保动画停止（双重保险）
                 StopCurrentNodeAnimation();
+                
+                // 颜色状态处理
+                if (isSelectable)
+                {
+                     if (nodeIcon != null) nodeIcon.color = new Color(0.8f, 0.8f, 0.8f);
+                }
+                else if (isVisited)
+                {
+                     if (nodeIcon != null) nodeIcon.color = new Color(0.5f, 0.5f, 0.5f); // 已访问变灰
+                }
+                else
+                {
+                     // 不可达且未访问（未来的节点），变暗
+                     if (nodeIcon != null) nodeIcon.color = new Color(0.6f, 0.6f, 0.6f);
+                }
             }
         }
         
@@ -290,9 +353,17 @@ namespace SlayTheSpireMap
         // 点击事件
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (isSelectable && !isVisited && MapManager.Instance != null)
+            // 确保没有全屏遮罩挡住，并且管理器存在
+            if (MapManager.Instance != null)
             {
-                MapManager.Instance.OnUINodeClicked(this);
+                if (isSelectable && !isVisited)
+                {
+                    MapManager.Instance.OnUINodeClicked(this);
+                }
+                else
+                {
+                    Debug.Log($"[MapNode] 点击无效: Selectable={isSelectable}, Visited={isVisited}");
+                }
             }
         }
         

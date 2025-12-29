@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: B_Block
   cardName: Block
-  description: block 4
+  description: block 5
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 0
   requiredClass: 0
@@ -25,7 +25,8 @@ MonoBehaviour:
   actions:
   - effectType: 2
     targetType: 1
-    value: 4
+    value: 5
+    repeatCount: 0
     scalesWithStatus: 0
     statusEffect: 0
     duration: 5

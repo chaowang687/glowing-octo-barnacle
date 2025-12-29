@@ -5,10 +5,20 @@ using System.Collections;
 
 public class CharacterBase : MonoBehaviour
 {
-    // 事件定义
-    public event Action<int, int> OnHealthChanged; // 修复：改为 OnHealthChanged 与 EnemyDisplay 匹配
+    // 修复：将事件访问权限改为 protected，或者提供 protected 的触发方法
+    // 为了不破坏外部订阅，我们保持 event 为 public，但提供 protected 的重置方法供子类调用
+    
+    public event Action<int, int> OnHealthChanged; 
     public event Action<int> OnBlockChanged;
     public event Action OnCharacterDied;
+
+    // 新增：供子类初始化事件的方法
+    protected void InitializeEvents()
+    {
+        OnHealthChanged = delegate { };
+        OnBlockChanged = delegate { };
+        OnCharacterDied = delegate { };
+    }
     
     // 属性
     [SerializeField] protected string _characterName;

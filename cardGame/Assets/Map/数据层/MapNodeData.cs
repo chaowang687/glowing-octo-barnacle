@@ -17,6 +17,7 @@ namespace SlayTheSpireMap
         public string nodeName;         // 节点显示名称
         public NodeType nodeType;       // 节点类型（战斗、商店、事件等）
         public Vector2 position;        // 在UI地图上的坐标位置
+        public int layerIndex;          // 所在层级 (0为起点层)
 
         [Header("连接关系")]
         // 该节点指向的下游节点列表

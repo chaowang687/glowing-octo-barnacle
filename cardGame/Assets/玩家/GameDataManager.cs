@@ -26,6 +26,19 @@ namespace SlayTheSpireMap
             public List<string> relicIds = new List<string>();
         }
         
+        [Header("游戏配置")]
+        public CharacterStarterData defaultCharacterData; // 静态配置资产
+        // public int defaultMaxHealth = 80; // Deprecated
+        // public int defaultGold = 99;      // Deprecated
+
+        /* [Header("默认配置")]
+        public List<string> defaultStartingDeckIds = new List<string> 
+        { 
+            "B_FRENZY", "B_FRENZY", "B_FRENZY", "B_FRENZY", 
+            "B_BLOCK", "B_BLOCK", "B_BLOCK", "B_BLOCK", 
+            "B_EXECUTE" 
+        }; */
+
         [Header("玩家数据")]
         public PlayerStateData playerData = new PlayerStateData(); // 改为 public
         
@@ -40,29 +53,7 @@ namespace SlayTheSpireMap
         // 在 GameDataManager.cs 中添加或检查
         public void InitializeNewGame()
         {
-            completedNodeIds.Clear();
-            unlockedNodeIds.Clear();
-            
-            // 假设你的起始节点 ID 是 "StartNode"
-            // 你需要确保在游戏开始时，第一层的节点是默认解锁的
-            // 或者在 MapManager 生成地图时执行这个逻辑
-
-            // 重置基础属性
-                playerData.health = 80;
-                playerData.maxHealth = 80;
-                playerData.gold = 99;
-                playerData.characterName = "铁甲卫士";
-
-                // 配置初始卡包 (添加卡牌 ID)
-                playerData.cardIds.Clear();
-                for(int i = 0; i < 5; i++) playerData.cardIds.Add("Strike_R"); // 5张打击
-                for(int i = 0; i < 4; i++) playerData.cardIds.Add("Defend_R"); // 4张防御
-                playerData.cardIds.Add("Bash"); // 1张重击
-
-                completedNodeIds.Clear();
-                unlockedNodeIds.Clear();
-                
-                SaveGameData();
+            ResetToDefault();
         }
         // 属性访问器
         public int Health 
@@ -127,6 +118,14 @@ namespace SlayTheSpireMap
             if (pauseStatus) SaveGameData();
         }
         
+        [ContextMenu("Clear Save Data")]
+        public void ClearSaveData()
+        {
+             PlayerPrefs.DeleteAll();
+             ResetToDefault();
+             Debug.Log("已手动清除存档并重置");
+        }
+
         #endregion
         
         #region 玩家数据操作方法
@@ -159,10 +158,16 @@ namespace SlayTheSpireMap
         
         public void AddCard(string cardId)
         {
-            if (!playerData.cardIds.Contains(cardId))
+            // 修复：Slay the Spire 允许重复卡牌，所以移除 Contains 检查
+            // if (!playerData.cardIds.Contains(cardId))
             {
                 playerData.cardIds.Add(cardId);
+                
+                // 核心修复：更新内存后，必须同步更新 PlayerPrefs
+                // SaveGameData() 内部会调用 SaveListToPlayerPrefs("PlayerCardIds", playerData.cardIds);
                 SaveGameData();
+                
+                Debug.Log($"[GameDataManager] 获得卡牌: {cardId}。当前卡组数量: {playerData.cardIds.Count}");
             }
         }
         
@@ -193,13 +198,23 @@ namespace SlayTheSpireMap
         
         public void CompleteNode(string nodeId)
         {
+            Debug.Log($"[GameDataManager] Request to complete node: {nodeId}");
+            
+            // 无论是否已经包含，都尝试执行完成逻辑，以防之前的逻辑未完整执行
             if (!completedNodeIds.Contains(nodeId))
             {
                 completedNodeIds.Add(nodeId);
-                
-                // 安全检查：确保 MapManager 存在再尝试解锁邻居
-                if (MapManager.Instance != null && MapManager.Instance.allNodes != null)
+                Debug.Log($"[GameDataManager] Added {nodeId} to Completed list.");
+            }
+            else
+            {
+                Debug.Log($"[GameDataManager] Node {nodeId} was already in Completed list.");
+            }
+
+            // 安全检查：确保 MapManager 存在再尝试解锁邻居
+            if (MapManager.Instance != null && MapManager.Instance.allNodes != null)
                 {
+                    Debug.Log($"[GameDataManager] CompleteNode: MapManager found. Processing node {nodeId}...");
                     // 根据地图实际连接关系解锁下一关
                     MapNodeData nodeData = MapManager.Instance.allNodes.FirstOrDefault(n => n.nodeId == nodeId);
                     if (nodeData != null)
@@ -240,8 +255,11 @@ namespace SlayTheSpireMap
                         Debug.LogError($"[GameDataManager] 无法在 MapManager 中找到节点: {nodeId}，无法解锁邻居！");
                     }
                 }
+                else
+                {
+                    Debug.LogError($"[GameDataManager] MapManager.Instance 或 allNodes 为空！无法处理节点解锁逻辑。Instance: {MapManager.Instance}, AllNodes: {MapManager.Instance?.allNodes?.Length}");
+                }
                 SaveGameData();
-            }
         }
         
         public void UnlockNode(string nodeId)
@@ -315,10 +333,12 @@ namespace SlayTheSpireMap
                 // 检查是否有存档
                 if (!PlayerPrefs.HasKey("PlayerHealth"))
                 {
-                    Debug.Log("无存档数据，使用默认值");
+                    Debug.Log("[GameDataManager] 无存档数据，使用默认值初始化");
                     ResetToDefault();
                     return;
                 }
+                
+                Debug.Log("[GameDataManager] 发现现有存档，正在加载...");
                 
                 // 加载玩家基础数据
                 playerData.health = PlayerPrefs.GetInt("PlayerHealth", 30);
@@ -344,14 +364,43 @@ namespace SlayTheSpireMap
         
         public void ResetToDefault()
         {
-            playerData = new PlayerStateData()
+            if (defaultCharacterData != null)
             {
-                health = 30,
-                maxHealth = 30,
-                gold = 100,
-                cardIds = new List<string> { "Strike", "Defend", "Strike", "Defend", "Strike" },
-                relicIds = new List<string>()
-            };
+                playerData = new PlayerStateData()
+                {
+                    characterName = defaultCharacterData.characterName,
+                    health = defaultCharacterData.maxHealth,
+                    maxHealth = defaultCharacterData.maxHealth,
+                    gold = defaultCharacterData.startingGold,
+                    cardIds = new List<string>(),
+                    relicIds = new List<string>(defaultCharacterData.startingRelicIds)
+                };
+
+                // 从配置资产中提取卡牌文件名作为 ID
+                foreach (var card in defaultCharacterData.startingCards)
+                {
+                    if (card != null)
+                    {
+                        playerData.cardIds.Add(card.name);
+                    }
+                }
+                
+                Debug.Log($"[GameDataManager] 已使用 CharacterStarterData 重置。卡组数量: {playerData.cardIds.Count}");
+            }
+            else
+            {
+                Debug.LogWarning("[GameDataManager] defaultCharacterData 未赋值！使用硬编码默认值作为后备。");
+                // Fallback hardcoded defaults
+                playerData = new PlayerStateData()
+                {
+                    characterName = "铁甲卫士",
+                    health = 80,
+                    maxHealth = 80,
+                    gold = 99,
+                    cardIds = new List<string> { "B_FRENZY", "B_FRENZY", "B_FRENZY", "B_FRENZY", "B_BLOCK", "B_BLOCK", "B_BLOCK", "B_BLOCK", "B_EXECUTE" },
+                    relicIds = new List<string>()
+                };
+            }
             
             currentNodeId = "";
             completedNodeIds.Clear();

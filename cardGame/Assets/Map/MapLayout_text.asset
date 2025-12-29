@@ -12,6 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baaf132d4d1c54b3ab105968796df82f, type: 3}
   m_Name: MapLayout_text
   m_EditorClassIdentifier: 
+  generationType: 1
+  treeLayers: 6
+  nodesPerLayer: {x: 3, y: 5}
+  layerDistanceY: 300
+  nodeDistanceX: 150
+  xRandomOffset: 30
+  yRandomOffset: 30
+  startNodeCount: 1
+  generateBoss: 1
+  combatWeight: 40
+  eliteWeight: 15
+  shopWeight: 0
+  restWeight: 0
+  eventWeight: 0
+  easyEnemyPool:
+  - {fileID: 11400000, guid: 31f5ac0ca17364fcebf3c952b199f0bc, type: 2}
+  normalEnemyPool:
+  - {fileID: 11400000, guid: 076390c0a19dc4bf58696fd7d4c32026, type: 2}
+  hardEnemyPool:
+  - {fileID: 11400000, guid: 1df4bab11584f42d7bd177b242693897, type: 2}
+  eliteEnemyPool:
+  - {fileID: 11400000, guid: 2eca28d19c0714998ba2bf450ae72754, type: 2}
+  bossEnemyPool: []
+  eventPool: []
+  shopPool: []
   layoutName: 
   sceneToLoad: 
   nodePositions:
