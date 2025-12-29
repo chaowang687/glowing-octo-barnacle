@@ -388,9 +388,31 @@ public class BattleVisualizer : MonoBehaviour
 
     // --- Layout Logic ---
 
+    // 新增：强制刷新所有卡牌的 Sibling Index (渲染顺序)
+    // 确保右边的卡牌压在左边的卡牌上面 (或者符合你的设计预期)
+    private void RefreshSiblingIndices()
+    {
+        for (int i = 0; i < visualHandDisplays.Count; i++)
+        {
+            CardDisplay card = visualHandDisplays[i];
+            if (card != null && card != highlightedCard) // 高亮卡牌保持最上层，不重置
+            {
+                card.transform.SetSiblingIndex(i);
+            }
+        }
+        // 再次确保高亮卡在最上
+        if (highlightedCard != null)
+        {
+            highlightedCard.transform.SetAsLastSibling();
+        }
+    }
+
     public void UpdateHandLayout(float duration) 
     { 
         if (visualHandDisplays == null || visualHandDisplays.Count == 0) return;
+
+        // 每次更新布局时，也刷新渲染层级
+        RefreshSiblingIndices();
 
         List<CardLayoutData> layoutData = CalculateAllCurrentLayout(highlightedCard);
         

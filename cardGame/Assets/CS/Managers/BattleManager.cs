@@ -618,38 +618,18 @@ private IEnumerator StartEnemyTurn()
         return cardSystem.IsValidTarget(card, target); 
     }
 
-    /// <summary>
-    /// 核心发牌逻辑：分两阶段动画，实现抽牌到中央堆叠，再依次整理散开。
-    /// VITAL: 此方法的最终 OnComplete 回调会释放回合锁。
-    /// </summary>
-    public void DrawCards(int count)
+    // 新增：处理抽牌的 UI 逻辑
+    public void ProcessDrawnCards(List<CardData> drawnCards)
     {
-        // 立即设置回合锁，防止在动画过程中结束回合
-        isTurnInProgress = true; 
-        
-        if (cardSystem == null || characterManager == null) 
-        {
-            Debug.LogError($"DrawCards: cardSystem or characterManager is null. cardSystem={cardSystem}, characterManager={characterManager}");
-            isTurnInProgress = false; // VITAL: If draw fails immediately, release lock
-            return;
-        }
-        
-        List<CardData> drawnCardsData = cardSystem.DrawCards(count);
-        List<CardDisplay> newlyDrawnDisplays = new List<CardDisplay>(); 
-        
-        if (drawnCardsData.Count == 0) 
-        {
-            // If no cards are drawn, the entire animation sequence is skipped. 
-            // We must release the lock immediately.
-            isTurnInProgress = false; 
-            return;
-        }
+        if (drawnCards == null || drawnCards.Count == 0) return;
 
         // 准备起点和终点
         Vector3 drawPileLocalPos = handContainer.InverseTransformPoint(drawPileLocationTransform.position);
         Vector3 receiveCenterLocalPos = new Vector3(0f, 0f, 0f); // 手牌容器中心
+        
+        List<CardDisplay> newlyDrawnDisplays = new List<CardDisplay>();
 
-        foreach (CardData drawnCard in drawnCardsData)
+        foreach (CardData drawnCard in drawnCards)
         {
             GameObject cardObject = Instantiate(cardPrefab, handContainer);
             CardDisplay display = cardObject.GetComponent<CardDisplay>();
@@ -668,18 +648,84 @@ private IEnumerator StartEnemyTurn()
             display.transform.localScale = Vector3.one; 
         }
         
-        // --- 阶段 1: 抽牌到中央堆叠 (Draw to Center Pile) ---
+        // 播放抽牌动画
         if (BattleVisualizer.Instance != null)
         {
             BattleVisualizer.Instance.AnimateCardDraw(newlyDrawnDisplays, drawPileLocalPos, receiveCenterLocalPos, () => {
-                isTurnInProgress = false; 
-                Debug.Log("[DrawCards] Animation complete. Turn Lock Released.");
+                // 如果需要，可以在这里处理动画结束后的逻辑
+                Debug.Log("[ProcessDrawnCards] Animation complete.");
             });
         }
-        else
+    }
+
+    /// <summary>
+    /// 核心发牌逻辑：分两阶段动画，实现抽牌到中央堆叠，再依次整理散开。
+    /// VITAL: 此方法的最终 OnComplete 回调会释放回合锁。
+    /// </summary>
+    public void DrawCards(int count)
+    {
+        // 立即设置回合锁，防止在动画过程中结束回合
+        isTurnInProgress = true; 
+        
+        if (cardSystem == null || characterManager == null) 
         {
-             isTurnInProgress = false;
+            Debug.LogError($"DrawCards: cardSystem or characterManager is null. cardSystem={cardSystem}, characterManager={characterManager}");
+            isTurnInProgress = false; // VITAL: If draw fails immediately, release lock
+            return;
         }
+        
+        // 调用 CardSystem 抽牌，并在 CardSystem 内部触发 UI 更新 (ProcessDrawnCards)
+        // 注意：ProcessDrawnCards 会在 CardSystem.DrawCards 返回前被调用吗？
+        // 不，因为我们在 CardSystem 里是先计算 drawn 列表，再调用 BattleManager。
+        // 所以这里其实不需要再手动处理 UI 了，除非你想把逻辑全放在这里。
+        // 但为了兼容回合开始时的抽牌（它也调用这个方法），我们需要确保回合锁能正确释放。
+        
+        List<CardData> drawnCardsData = cardSystem.DrawCards(count);
+        
+        // 如果没有抽到牌（比如牌堆空了且弃牌堆也空），直接释放锁
+        if (drawnCardsData.Count == 0) 
+        {
+            isTurnInProgress = false; 
+            return;
+        }
+        
+        // 由于 CardSystem.DrawCards 内部已经调用了 ProcessDrawnCards 来处理 UI 生成和动画，
+        // 我们只需要在这里等待动画完成释放锁即可。
+        // 但 ProcessDrawnCards 是异步动画，我们怎么知道它什么时候结束？
+        // 简单方案：估算动画时间。
+        // 更好方案：让 ProcessDrawnCards 接受回调。
+        // 目前为了最小改动，我们假设 ProcessDrawnCards 的动画时间和之前一样，
+        // 或者我们可以在 ProcessDrawnCards 里手动释放 isTurnInProgress 锁？
+        // 不行，ProcessDrawnCards 是通用的，不一定总是对应回合开始。
+        
+        // 修正：我们把 ProcessDrawnCards 的调用权收回到这里，
+        // 或者让 CardSystem 里的调用只负责“效果抽牌”，而这里负责“回合抽牌”。
+        // 但这样逻辑会分裂。
+        
+        // 最终决定：为了保持代码整洁，我们让 CardSystem 里的 ProcessDrawnCards 调用生效，
+        // 而在这里，我们手动添加一个延迟来释放锁。
+        // 或者，我们可以修改 CardSystem，让它不调用 ProcessDrawnCards，而是返回数据让我们处理。
+        // 实际上 CardSystem.DrawCards 已经返回了 List<CardData>。
+        // 所以，我在 CardSystem 里加的那个 BattleManager.Instance.ProcessDrawnCards 其实是多余的？
+        // 不，那是为了解决“卡牌效果抽牌”的问题。卡牌效果调用的是 CardSystem.DrawCards，如果不加那个调用，效果抽牌就没有 UI。
+        
+        // 冲突点：回合开始时调用 DrawCards(5)，CardSystem 内部调用 ProcessDrawnCards 生成 UI，
+        // 然后 DrawCards(5) 返回列表，这里原来的逻辑又会生成一遍 UI！
+        // 结果：抽5张牌，手里会有10张牌的 UI（其中5张是幽灵/重复的）。
+        
+        // 修复方案：
+        // 1. 删除本方法中原有的 UI 生成逻辑。
+        // 2. 依赖 CardSystem.DrawCards 内部的 ProcessDrawnCards 调用来生成 UI。
+        // 3. 在这里只处理回合锁的释放。
+        
+        // 等待动画结束释放锁
+        // 动画时长约 = (count * interval) + moveDuration + fanOutDuration
+        // 简单起见，我们给一个足够的延迟
+        float estimatedDuration = 1.0f + (count * 0.1f);
+        DOVirtual.DelayedCall(estimatedDuration, () => {
+             isTurnInProgress = false;
+             Debug.Log("[DrawCards] Turn Lock Released (via Delay).");
+        });
     }
     
     // CalculateAllCurrentLayout moved to BattleVisualizer

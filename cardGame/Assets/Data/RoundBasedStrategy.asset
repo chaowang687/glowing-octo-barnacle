@@ -20,7 +20,7 @@ MonoBehaviour:
     weight: 0
     description: 
   - intentType: 1
-    value: 15
+    value: 13
     statusEffectName: 
     duration: 0
     weight: 0

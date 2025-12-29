@@ -62,17 +62,30 @@ public class CardData : ScriptableObject
                 List<CharacterBase> targets = GetActualTargets(source, selectedTarget, action.targetType);
                 int finalValue = CalculateFinalValue(source, action);
 
-                if (targets.Count == 0 && action.targetType != TargetType.None)
+                // 修正：抽牌和回能不需要“目标”，只要 action 类型匹配就执行
+                // 之前的逻辑只判断了 "targets.Count == 0 && action.targetType != TargetType.None"，
+                // 这意味着如果你设置了 TargetType.SelectedEnemy（为了打伤害），targets 列表不为空，
+                // 但下方的 foreach 循环里又没有对 EffectType.DrawCard 做特殊处理，
+                // 导致抽牌逻辑被错误地绑定在“对每个目标执行一次”里，或者因为目标类型判断失误而被跳过。
+                
+                // 拆分处理逻辑：
+                // 全局效果（抽牌、能量）直接执行一次
+                if (action.effectType == EffectType.DrawCard || action.effectType == EffectType.Energy)
                 {
-                    // 某些效果（如抽牌）不需要目标
                     ApplyAction(source, null, action, cardSystem, finalValue);
                 }
-                else
+                // 指向性效果（伤害、格挡、Buff）对每个目标执行
+                else if (targets.Count > 0)
                 {
                     foreach (var t in targets)
                     {
                         ApplyAction(source, t, action, cardSystem, finalValue);
                     }
+                }
+                // 自我效果且未被 targets 覆盖的情况（如未指定目标但默认为 Self）
+                else if (action.targetType == TargetType.Self || action.targetType == TargetType.None)
+                {
+                    ApplyAction(source, source, action, cardSystem, finalValue);
                 }
                 
                 // 3. 连击间隔

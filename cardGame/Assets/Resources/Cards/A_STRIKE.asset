@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 670ba8367942647839b683bb63c66594, type: 3}
-  m_Name: A_DRAW
+  m_Name: A_STRIKE
   m_EditorClassIdentifier: 
-  cardID: A_DRAW
-  cardName: Draw Card
-  description: Deal 4 damage, Draw 2 card
+  cardID: A_STRIKE
+  cardName: Strike
+  description: Dealing 6 points of damage
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
-  rarity: 0
+  rarity: 1
   requiredClass: 0
   energyCost: 1
   type: 0
@@ -25,15 +25,8 @@ MonoBehaviour:
   actions:
   - effectType: 1
     targetType: 2
-    value: 4
-    repeatCount: 1
-    scalesWithStatus: 0
-    statusEffect: 0
-    duration: 0
-  - effectType: 4
-    targetType: 1
-    value: 2
-    repeatCount: 1
-    scalesWithStatus: 0
+    value: 6
+    repeatCount: 0
+    scalesWithStatus: 1
     statusEffect: 0
     duration: 0

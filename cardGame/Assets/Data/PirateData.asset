@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: PirateData
   m_EditorClassIdentifier: 
   enemyName: Pirate
-  maxHp: 40
+  maxHp: 30
   artwork: {fileID: -114325617, guid: 91fdc8731dc5d49c1aa89bf063cabb72, type: 3}
   intentStrategy: {fileID: 11400000, guid: 16be7853e20a747379d502013a791d0c, type: 2}

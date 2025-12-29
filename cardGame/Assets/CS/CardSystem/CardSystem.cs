@@ -237,6 +237,14 @@ public class CardSystem : MonoBehaviour
             Debug.Log($"DEBUG: 成功抽取卡牌: {card.cardName}. Draw Pile 剩余: {drawPile.Count}");
         }
         
+        // --- 核心修复：通知 BattleManager 更新 UI ---
+        // 之前只更新了 CardSystem 的内部数据 (hand 列表)，
+        // 但没有触发 BattleManager 生成对应的 CardDisplay 预制体，所以你看不到手牌增加。
+        if (BattleManager.Instance != null && drawn.Count > 0)
+        {
+            BattleManager.Instance.ProcessDrawnCards(drawn);
+        }
+        
         Debug.Log($"DEBUG: DrawCards 结束. 实际抽取: {drawn.Count} 张. Hand size: {hand.Count}");
         return drawn;
     }

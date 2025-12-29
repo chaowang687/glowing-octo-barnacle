@@ -1156,8 +1156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterName: "\u52C7\u8005"
-  defaultMaxHealth: 100
-  defaultGold: 99
+  defaultCharacterData: {fileID: 11400000, guid: 67891e17d41a64e1db88ece602d0972b, type: 2}
   playerData:
     characterName: "\u94C1\u7532\u536B\u58EB"
     health: 50
