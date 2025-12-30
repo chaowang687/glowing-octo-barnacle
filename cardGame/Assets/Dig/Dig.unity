@@ -154,7 +154,7 @@ MonoBehaviour:
   defaultTile: {fileID: 11400000, guid: c037cbda688ad47e5ba457f5d789c3a8, type: 2}
   gridShakeMagnitude: 0.2
   gridShakeDuration: 0.02
-  testFossil: {fileID: 11400000, guid: be3f314ac48cb4276b665b3fbe3a8b32, type: 2}
+  testFossil: {fileID: 11400000, guid: d2f5a7ce432a2436ca8690b41de0a56c, type: 2}
   treasureVisualPrefab: {fileID: 8379350320096740830, guid: fb289d94d2ecb4c8f96b6eb2704a19d0, type: 3}
 --- !u!4 &347739706
 Transform:
@@ -249,7 +249,7 @@ SpriteRenderer:
   m_SortingLayer: -3
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 5d49a7602da5648e58f57a7fa9b498de, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

@@ -251,18 +251,78 @@ public class GridManager : MonoBehaviour {
         isShaking = false;
     }
 
-    void RevealTile(Vector2Int pos, TileState state) {
+        void RevealTile(Vector2Int pos, TileState state) {
         state.isRevealed = true;
         
         if (state.data.breakEffect) 
             Instantiate(state.data.breakEffect, tileObjects[pos].transform.position, Quaternion.identity);
         
-        tileObjects[pos].SetActive(false);
+        // --- 核心修改：不要直接关闭 tileObjects[pos] ---
+        // 而是找到 Visual 子物体并关闭它，这样边缘子物体才能留下来
+        GameObject go = tileObjects[pos];
+        // --- 修复：当自己被挖开时，关闭自己身上所有的 Edge 装饰 ---
+        if (go.TryGetComponent<TileView>(out TileView view)) {
+            view.HideAllEdges(); // 调用我们之前在 TileView 里写的清理方法
+        }
+        Transform visualChild = go.transform.Find("Visual");
+        if (visualChild != null) {
+            visualChild.gameObject.SetActive(false);
+        } else {
+            // 如果没找到子物体，才关闭整个物体（防止报错）
+            go.SetActive(false);
+        }
+
+        // 禁用碰撞体，防止挖开后还能被点击
+        if (go.TryGetComponent<BoxCollider2D>(out var col)) {
+            col.enabled = false;
+        }
+
+        // 通知四周的邻居刷新它们的边缘
+        UpdateNeighborEdges(pos);
 
         if (!string.IsNullOrEmpty(state.treasureId)) {
             OnTileBroken(pos, state.treasureId);
         }
     }
+    void UpdateNeighborEdges(Vector2Int pos) {
+    // 定义四个方向：上、下、左、右
+    Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+    
+    foreach (var dir in directions) {
+        Vector2Int neighborPos = pos + dir;
+        
+        // 如果邻居存在，且邻居还没被挖开（它还显示着泥土），就让它刷新边缘
+        if (gridData.ContainsKey(neighborPos) && !gridData[neighborPos].isRevealed) {
+            RefreshSingleTileEdge(neighborPos);
+        }
+    }
+}
+void RefreshSingleTileEdge(Vector2Int pos) {
+    if (tileObjects.TryGetValue(pos, out GameObject go)) {
+        if (gridData[pos].isRevealed) return;
+
+        if (go.TryGetComponent<TileView>(out TileView view)) {
+            // 我们直接判断“邻居是否还在”
+            // 如果上方还有土（没被挖开），t 就是 false
+            bool t = IsRevealed(pos + Vector2Int.up);
+            bool b = IsRevealed(pos + Vector2Int.down);
+            bool l = IsRevealed(pos + Vector2Int.left);
+            bool r = IsRevealed(pos + Vector2Int.right);
+
+            // 修正：我们要的是“当上方被挖开时，显示上边缘”
+            // 所以直接把 bool 传进去，让 TileView 内部不做取反操作
+            // 或者在这里直接取反
+            view.UpdateEdgeVisuals(t, b, l, r); 
+        }
+    }
+}
+bool IsRevealed(Vector2Int pos) {
+        // 边界处理：如果越界，视为“未挖开/有土”，这样地图边缘不会显示一圈边框
+        // 如果想做浮岛效果，这里可以改为 return true
+        if (!gridData.ContainsKey(pos)) return false; 
+        return gridData[pos].isRevealed;
+    }
+
 
         // GridManager.cs 中的 OnTileBroken 方法
         void OnTileBroken(Vector2Int pos, string treasureId) {
@@ -286,44 +346,61 @@ public class GridManager : MonoBehaviour {
         }
 
     void CreateTileObject(Vector2Int pos, TileState state, float startX, float startY) {
-        // 使用传入的 startX/Y 计算世界坐标，实现地图居中
-        Vector3 worldPos = new Vector3(startX + pos.x + 0.5f, startY - pos.y - 0.5f, 0);
-        
-        GameObject go = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
-        
-        // 随机选择贴图逻辑
+    // 1. 计算居中对齐的世界坐标
+    Vector3 worldPos = new Vector3(startX + pos.x + 0.5f, startY - pos.y - 0.5f, 0);
+    
+    // 2. 生成预制体
+    GameObject go = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
+    
+    // 3. --- 关键修改：寻找名为 "Visual" 的子物体上的渲染器 ---
+    Transform visualChild = go.transform.Find("Visual");
+    SpriteRenderer sr = null;
+
+    if (visualChild != null) {
+        sr = visualChild.GetComponent<SpriteRenderer>();
+    } else {
+        // 兜底逻辑：如果找不到子物体，尝试获取根物体的渲染器并报错
+        sr = go.GetComponent<SpriteRenderer>();
+        Debug.LogWarning($"地块预制体 {go.name} 缺少名为 'Visual' 的子物体，已回退到根节点渲染器。");
+    }
+
+    // 4. 赋值贴图
+    if (sr != null) {
         Sprite chosenSprite = state.data.defaultSprite;
         if (state.data.randomSprites != null && state.data.randomSprites.Length > 0) {
             chosenSprite = state.data.randomSprites[Random.Range(0, state.data.randomSprites.Length)];
         }
-        
-        go.GetComponent<SpriteRenderer>().sprite = chosenSprite;
-        tileObjects[pos] = go;
+        sr.sprite = chosenSprite;
     }
+
+    tileObjects[pos] = go;
+}
 
     void UpdateTileVisual(Vector2Int pos, TileState state) {
-        // 检查这个位置是否有对应的地块物体
-        if (tileObjects.TryGetValue(pos, out GameObject go)) {
-            
-            // 1. 缩放反馈（受伤时缩放一下）
-            go.transform.localScale = Vector3.one * 0.8f;
-            
-            // 2. 调用 TileView 脚本执行震动或颜色变化（如果有的话）
-            float hpPercent = (float)state.currentHealth / state.data.maxHealth;
-            if (go.TryGetComponent<TileView>(out TileView view)) {
-                view.OnHit(hpPercent);
-            }
+    if (tileObjects.TryGetValue(pos, out GameObject go)) {
+        
+        // 1. 获取 Visual 子物体，用于视觉反馈（缩放和裂纹）
+        Transform visualChild = go.transform.Find("Visual");
+        GameObject visualObj = (visualChild != null) ? visualChild.gameObject : go;
 
-            // 3. 切换裂纹贴图逻辑
-            if (state.data.crackSprites != null && state.data.crackSprites.Length > 0) {
-                float healthPercent = (float)state.currentHealth / state.data.maxHealth;
-                int crackIndex = Mathf.FloorToInt((1f - healthPercent) * (state.data.crackSprites.Length - 1));
-                crackIndex = Mathf.Clamp(crackIndex, 0, state.data.crackSprites.Length - 1);
-                
-                go.GetComponent<SpriteRenderer>().sprite = state.data.crackSprites[crackIndex];
-            }
+        // 2. 缩放反馈（作用在子物体上，不会影响碰撞体）
+        visualObj.transform.localScale = Vector3.one * 0.8f;
+        
+        // 3. 震动和受损变色
+        float hpPercent = (float)state.currentHealth / state.data.maxHealth;
+        if (go.TryGetComponent<TileView>(out TileView view)) {
+            view.OnHit(hpPercent);
+        }
+
+        // 4. --- 关键修改：更新子物体的裂纹贴图 ---
+        SpriteRenderer sr = visualObj.GetComponent<SpriteRenderer>();
+        if (sr != null && state.data.crackSprites != null && state.data.crackSprites.Length > 0) {
+            int crackIndex = Mathf.FloorToInt((1f - hpPercent) * (state.data.crackSprites.Length - 1));
+            crackIndex = Mathf.Clamp(crackIndex, 0, state.data.crackSprites.Length - 1);
+            sr.sprite = state.data.crackSprites[crackIndex];
         }
     }
+}
 
     // 辅助：世界坐标转网格坐标
     public Vector2Int WorldToGridPosition(Vector3 worldPos) {

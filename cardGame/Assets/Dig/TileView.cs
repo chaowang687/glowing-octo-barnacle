@@ -1,6 +1,8 @@
 using UnityEngine;
 
 public class TileView : MonoBehaviour {
+    // 四个方向的边缘装饰物体
+    public GameObject edgeTop, edgeBottom, edgeLeft, edgeRight;
     private SpriteRenderer sr;
     private Vector3 originalPos;
     
@@ -11,19 +13,38 @@ public class TileView : MonoBehaviour {
     public float shakeDuration = 0.1f;
 
     void Awake() {
-        sr = GetComponent<SpriteRenderer>();
-        // 注意：Awake 时记录的 localPosition 可能是 (0,0,0) 如果它是动态生成的预制体
-        // 但如果它被实例化到了特定位置，Awake 时的 localPosition 就是相对于父级的位置。
-        // GridManager 生成时是直接设的世界坐标 (parent=transform)，所以 localPosition = worldPos - parentPos
-        // 建议在 Start 或首次调用时记录，或者确保生成后 originalPos 被正确初始化。
-        // 为了稳妥，我们在 Awake 记录，但在 GridManager 生成后，位置可能会被修改。
-        // 更好的方式是在 OnHit 开始震动前，如果不在震动中，就认为当前位置是“原位”。
+        // 自动查找 Visual 子物体上的渲染器
+        Transform visualTransform = transform.Find("Visual");
+        if (visualTransform != null) {
+            sr = visualTransform.GetComponent<SpriteRenderer>();
+        } else {
+            sr = GetComponent<SpriteRenderer>(); // 兜底
+        }
+
+        // 自动查找边缘子物体 (如果 Inspector 没拖)
+        if (edgeTop == null) edgeTop = FindEdge("EdgeTop");
+        if (edgeBottom == null) edgeBottom = FindEdge("EdgeBottom");
+        if (edgeLeft == null) edgeLeft = FindEdge("EdgeLeft");
+        if (edgeRight == null) edgeRight = FindEdge("EdgeRight");
+    }
+
+    private GameObject FindEdge(string name) {
+        Transform t = transform.Find(name);
+        // 也尝试在 Visual 下面找，或者在 Edges 父节点下找
+        if (t == null) t = transform.Find("Edges/" + name);
+        if (t == null) t = transform.Find("Visual/" + name);
+        return t != null ? t.gameObject : null;
     }
     
     void Start() {
          originalPos = transform.localPosition;
     }
-
+    public void HideAllEdges() {
+        if(edgeTop) edgeTop.SetActive(false);
+        if(edgeBottom) edgeBottom.SetActive(false);
+        if(edgeLeft) edgeLeft.SetActive(false);
+        if(edgeRight) edgeRight.SetActive(false);
+    }
     // 当方块被打时调用
     public void OnHit(float healthPercent) {
         // 1. 轻微震动效果
@@ -35,7 +56,14 @@ public class TileView : MonoBehaviour {
         // 2. 颜色变暗，模拟受损
         sr.color = Color.Lerp(Color.white, Color.gray, 1f - healthPercent);
     }
-
+    // 当邻居状态改变时，更新自己的边缘显示
+    public void UpdateEdgeVisuals(bool upRevealed, bool downRevealed, bool leftRevealed, bool rightRevealed) {
+    // 如果上方被挖开了 (upRevealed == true)，我们就需要显示这个“墙面”
+    if(edgeTop) edgeTop.SetActive(upRevealed); 
+    if(edgeBottom) edgeBottom.SetActive(downRevealed);
+    if(edgeLeft) edgeLeft.SetActive(leftRevealed);
+    if(edgeRight) edgeRight.SetActive(rightRevealed);
+}
     System.Collections.IEnumerator Shake() {
         float elapsed = 0f;
         while (elapsed < shakeDuration) {

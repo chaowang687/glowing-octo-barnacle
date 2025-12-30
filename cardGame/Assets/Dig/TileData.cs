@@ -11,6 +11,10 @@ public class TileData : ScriptableObject {
     [Tooltip("随机贴图池 (新)：生成时会从中随机选一张")]
     public Sprite[] randomSprites; 
 
+    [Header("Auto-Tiling")]
+    [Tooltip("边缘贴图数组 (需按 Bitmask 顺序排列 0-15)\n0:四周都有土, 15:四周都空\n顺序: 上(1) 右(2) 下(4) 左(8)")]
+    public Sprite[] maskSprites;
+
     public Sprite[] crackSprites; // 随损坏程度改变的贴图
     public GameObject breakEffect; // 破碎粒子
 }
