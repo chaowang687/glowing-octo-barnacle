@@ -2081,7 +2081,9 @@ MonoBehaviour:
   handContainerRect: {fileID: 629862148}
   arcBaseWidth: 1000
   arcHeight: 50
-  cardSpacing: 224
+  maxCardSpacing: 220
+  minCardSpacing: 80
+  arcWidthFactor: 0.8
   hoverDelayDuration: 0.3
   hoverTranslateY: 70
   hoverScale: 1.1
@@ -2271,8 +2273,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterName: "\u52C7\u8005"
-  defaultMaxHealth: 80
-  defaultGold: 99
+  defaultCharacterData: {fileID: 0}
   playerData:
     characterName: "\u94C1\u7532\u536B\u58EB"
     health: 30

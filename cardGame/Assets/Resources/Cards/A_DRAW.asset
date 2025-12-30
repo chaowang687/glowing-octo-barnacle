@@ -32,8 +32,8 @@ MonoBehaviour:
     duration: 0
   - effectType: 4
     targetType: 1
-    value: 2
-    repeatCount: 1
+    value: 1
+    repeatCount: 2
     scalesWithStatus: 0
     statusEffect: 0
     duration: 0

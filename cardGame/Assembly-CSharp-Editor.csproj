@@ -69,6 +69,7 @@
     <Compile Include="Assets/Editor/CSVReader.cs" />
     <Compile Include="Assets/Editor/WorldTileEditorInspector.cs" />
     <Compile Include="Assets/Editor/CardDataImporter.cs" />
+    <Compile Include="Assets/Editor/GridEditorTool.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Editor/ReadmeEditor.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -88,6 +88,8 @@
     <Compile Include="Assets/CS/对战AI/AI蓝图接口/IEnemyIntentStrategy.cs" />
     <Compile Include="Assets/CS/CardSystem/CardAction.cs" />
     <Compile Include="Assets/CS/EnemyEncounterData.cs" />
+    <Compile Include="Assets/Dig/DigInputHandler.cs" />
+    <Compile Include="Assets/Dig/TileView.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Item.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/CharacterUIDisplay.cs" />
     <Compile Include="Assets/CS/CardSystem/CardDataEnums.cs" />
@@ -104,6 +106,7 @@
     <Compile Include="Assets/CS2/宝箱搜刮/AudioManager.cs" />
     <Compile Include="Assets/CS/对战AI/行为/RoundBasedStrategy.cs" />
     <Compile Include="Assets/CS4/ThemeSequenceSO.cs" />
+    <Compile Include="Assets/Dig/TreasureVisual.cs" />
     <Compile Include="Assets/Map/逻辑层/SaveLoadManager.cs" />
     <Compile Include="Assets/Map/数据层/PlayerDeck.cs" />
     <Compile Include="Assets/Map/数据层/LevelDesignSO.cs" />
@@ -141,6 +144,8 @@
     <Compile Include="Assets/CS2/PlayerStats.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Hero.cs" />
     <Compile Include="Assets/CS/Managers/BattleManager.cs" />
+    <Compile Include="Assets/Dig/FossilData.cs" />
+    <Compile Include="Assets/Dig/GridManager.cs" />
     <Compile Include="Assets/CS3/ClockUIController.cs" />
     <Compile Include="Assets/CS/UIManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/EquipmentData.cs" />
@@ -165,6 +170,7 @@
     <Compile Include="Assets/Map/逻辑层/NodeInteractionManager.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyDisplay.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/CharacterDisplay.cs" />
+    <Compile Include="Assets/Dig/TileData.cs" />
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/Map/数据层/EncounterData.cs" />

@@ -18,7 +18,11 @@ public class BattleVisualizer : MonoBehaviour
     public float arcHeight = 250f; 
     
     [Range(100f, 300f)]
-    public float cardSpacing = 175f; 
+    public float maxCardSpacing = 175f; 
+    [Range(50f, 150f)]
+    public float minCardSpacing = 80f;  
+    [Range(0.5f, 1.0f)]
+    public float arcWidthFactor = 0.8f;  
 
     [Header("手牌高亮与悬停参数")]
     [Range(0.1f, 1f)]
@@ -317,6 +321,7 @@ public class BattleVisualizer : MonoBehaviour
 
     // --- Hover Logic ---
 
+    // 更新 Hover 逻辑中对 cardSpacing 的引用
     private void HandleHoverSelection()
     {
         if (handLayoutReference.Count == 0 || handContainerRect == null)
@@ -343,7 +348,9 @@ public class BattleVisualizer : MonoBehaviour
 
         CardDisplay bestMatch = null;
         float minDistance = float.MaxValue;
-        float hoverToleranceX = cardSpacing * hoverToleranceFactor;
+        
+        // 这里使用 maxCardSpacing 作为基础容差，确保能覆盖到
+        float hoverToleranceX = maxCardSpacing * hoverToleranceFactor; 
 
         foreach (var item in handLayoutReference)
         {
@@ -448,8 +455,25 @@ public class BattleVisualizer : MonoBehaviour
         int count = visualHandDisplays.Count;
         handLayoutReference.Clear(); 
 
-        float totalCardWidth = (count > 1) ? (count - 1) * cardSpacing : 0f;
+        // --- 核心优化：动态计算间距 ---
         float fixedArcWidth = arcBaseWidth; 
+        float availableWidth = fixedArcWidth * arcWidthFactor; // 实际可用的弧线宽度
+        
+        // 1. 尝试使用最大间距
+        float currentSpacing = maxCardSpacing;
+        float totalCardWidth = (count > 1) ? (count - 1) * currentSpacing : 0f;
+        
+        // 2. 如果总宽度超出了可用范围，则压缩间距
+        if (totalCardWidth > availableWidth)
+        {
+            // 重新计算间距：总可用宽度 / (卡牌数 - 1)
+            // 至少保证有 minCardSpacing
+            currentSpacing = Mathf.Max(minCardSpacing, availableWidth / (count - 1));
+            totalCardWidth = (count - 1) * currentSpacing;
+        }
+        
+        // --- 间距计算结束 ---
+        
         float fixedArcHeight = arcHeight;
         
         int highlightedIndex = -1;
@@ -469,7 +493,7 @@ public class BattleVisualizer : MonoBehaviour
             CardDisplay display = visualHandDisplays[i];
             if (display == null) continue;
 
-            float currentXOffset = i * cardSpacing;
+            float currentXOffset = i * currentSpacing; // 使用动态计算的 currentSpacing
             
             if (highlightedIndex != -1 && i > highlightedIndex)
             {
@@ -480,6 +504,8 @@ public class BattleVisualizer : MonoBehaviour
             
             handLayoutReference.Add((display, finalTargetX));
 
+            // 将 X 坐标映射到贝塞尔曲线的 t 值 (0~1)
+            // 注意：这里用 finalTargetX 相对于 arcBaseWidth 进行归一化
             float t = (finalTargetX + fixedArcWidth / 2f) / fixedArcWidth;
             t = Mathf.Clamp01(t); 
 
