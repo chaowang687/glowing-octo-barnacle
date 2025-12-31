@@ -12,7 +12,7 @@ public class GridItemSpawnTester : MonoBehaviour
     
     [Header("生成设置")]
     public KeyCode spawnKey = KeyCode.Space;
-    public KeyCode spawnRandomKey = KeyCode.R;
+    public KeyCode spawnRandomKey = KeyCode.T; // 修改为T键，避免与旋转键冲突
     public KeyCode spawnAtMouseKey = KeyCode.M;
     public KeyCode clearAllKey = KeyCode.C;
     public KeyCode debugKey = KeyCode.D;
@@ -164,7 +164,7 @@ public class GridItemSpawnTester : MonoBehaviour
             if (item != null && item.data != null)
             {
                 Debug.Log($"- {item.data.itemName}: 位置({item.posX},{item.posY}), " +
-                         $"尺寸{item.CurrentWidth}x{item.CurrentHeight}, 旋转{item.isRotated}");
+                         $"尺寸{item.CurrentWidth}x{item.CurrentHeight}");
             }
         }
         

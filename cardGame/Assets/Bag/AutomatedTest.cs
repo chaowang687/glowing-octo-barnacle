@@ -28,12 +28,8 @@ public class AutomatedTest : MonoBehaviour
         Debug.Log("=== 测试2：拖拽放置 ===");
         yield return StartCoroutine(TestDragAndDrop());
         
-        // 测试3：旋转物品
-        Debug.Log("=== 测试3：旋转物品 ===");
-        yield return StartCoroutine(TestRotation());
-        
-        // 测试4：存档/读档
-        Debug.Log("=== 测试4：存档测试 ===");
+        // 测试3：存档/读档
+        Debug.Log("=== 测试3：存档测试 ===");
         yield return StartCoroutine(TestSaveLoad());
         
         Debug.Log("=== 所有测试完成 ===");
@@ -98,33 +94,7 @@ public class AutomatedTest : MonoBehaviour
         yield return new WaitForSeconds(testDelay);
     }
     
-    IEnumerator TestRotation() {
-        Debug.Log("开始旋转测试...");
-        
-        if (spawnedItems.Count == 0) {
-            Debug.Log("没有物品可测试旋转，跳过...");
-            yield break;
-        }
-        
-        // 测试旋转第一个物品
-        ItemUI firstItem = spawnedItems[0];
-        bool wasRotated = firstItem.itemInstance.isRotated;
-        
-        Debug.Log($"旋转前状态: 旋转={wasRotated}, 尺寸={firstItem.itemInstance.CurrentWidth}x{firstItem.itemInstance.CurrentHeight}");
-        
-        // 模拟按R键旋转
-        // 注意：这里需要模拟按键，我们直接调用旋转逻辑
-        // 实际游戏中是通过ItemUI的Update检测R键
-        
-        // 手动旋转
-        firstItem.itemInstance.isRotated = !wasRotated;
-        RectTransform rect = firstItem.GetComponent<RectTransform>();
-        rect.localEulerAngles = firstItem.itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
-        
-        Debug.Log($"旋转后状态: 旋转={firstItem.itemInstance.isRotated}, 尺寸={firstItem.itemInstance.CurrentWidth}x{firstItem.itemInstance.CurrentHeight}");
-        
-        yield return new WaitForSeconds(testDelay);
-    }
+
     
     IEnumerator TestSaveLoad() {
         Debug.Log("开始存档/读档测试...");

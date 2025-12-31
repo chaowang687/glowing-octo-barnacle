@@ -68,7 +68,8 @@ namespace Bag
         /// <returns>本地坐标</returns>
         public Vector2 GetPositionFromGrid(int x, int y, int w, int h) 
         {
-            return GetPositionFromGrid(x, y);
+            // 对于Pivot在左上角的情况，物品位置就是左上角坐标
+            return new Vector2(x * cellSize, -y * cellSize);
         }
         
         /// <summary>
@@ -97,16 +98,10 @@ namespace Bag
             int itemWidth = item.CurrentWidth;
             int itemHeight = item.CurrentHeight;
             
-            // 检查是否可以放置
+            // 检查是否可以放置（只允许放在空格子上）
             bool canPlace = CanPlace(gridPos.x, gridPos.y, itemWidth, itemHeight);
             
-            // 如果不可以直接放置，检查是否可以交换
-            if (!canPlace) {
-                ItemInstance overlapItem = GetOverlapItem(gridPos.x, gridPos.y, itemWidth, itemHeight);
-                canPlace = overlapItem != null; // 允许与现有物品交换
-            }
-            
-            // 绘制预览
+            // 绘制预览（只有在空格子上才显示绿色预览）
             DrawPreviewGhost(gridPos, itemWidth, itemHeight, canPlace);
         }
         

@@ -221,7 +221,7 @@ namespace Bag
         }
 
         /// <summary>
-        /// 尝试将物品放入网格
+        /// 尝试将物品放入网格（只允许放在空格子上）
         /// </summary>
         /// <param name="item">物品实例</param>
         /// <param name="x">目标X坐标</param>
@@ -232,33 +232,13 @@ namespace Bag
         {
             if (item == null || targetGrid == null) return false;
             
-            // 1. 检查空间是否足够
+            // 只检查空间是否足够，不允许交换物品
             if (targetGrid.CanPlace(x, y, item.CurrentWidth, item.CurrentHeight)) 
             {
                 targetGrid.PlaceItem(item, x, y);
                 
                 // 添加到物品列表
                 AddItemToBag(item);
-                
-                return true;
-            }
-            
-            // 2. 尝试交换逻辑
-            ItemInstance overlapItem = targetGrid.GetOverlapItem(x, y, item.CurrentWidth, item.CurrentHeight);
-            if (overlapItem != null) 
-            {
-                // 移除旧物品
-                targetGrid.RemoveItem(overlapItem);
-                
-                // 放置新物品
-                targetGrid.PlaceItem(item, x, y);
-                
-                // 确保两个物品都在列表中
-                AddItemToBag(item);
-                AddItemToBag(overlapItem);
-                
-                // 触发旧物品的拖拽逻辑
-                PickUpItem(overlapItem); 
                 
                 return true;
             }
@@ -306,8 +286,7 @@ namespace Bag
                 saveData.items.Add(new ItemSaveEntry {
                     itemID = item.data.itemName, // 或者使用唯一的 GUID
                     posX = item.posX,
-                    posY = item.posY,
-                    isRotated = item.isRotated
+                    posY = item.posY
                 });
             }
 
@@ -359,8 +338,7 @@ namespace Bag
                     // 2. 创建实例
                     ItemInstance newItem = new ItemInstance(data) {
                         posX = entry.posX,
-                        posY = entry.posY,
-                        isRotated = entry.isRotated
+                        posY = entry.posY
                     };
 
                     // 3. 实例化 UI 并对齐

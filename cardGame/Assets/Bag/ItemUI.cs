@@ -331,13 +331,32 @@ namespace Bag
             
             float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
             
-            // 设置物品尺寸
-            rect.sizeDelta = new Vector2(itemInstance.data.width * cellSize, itemInstance.data.height * cellSize);
+            // 使用CurrentWidth和CurrentHeight来计算旋转后的尺寸
+            int currentWidth = itemInstance.CurrentWidth;
+            int currentHeight = itemInstance.CurrentHeight;
+            rect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
             
             // 设置图标
             if (iconImage != null)
             {
                 iconImage.sprite = itemInstance.data.icon;
+                
+                // 确保图标正确适应旋转后的尺寸
+                // 检查图标Image组件的设置
+                iconImage.type = Image.Type.Simple;
+                iconImage.preserveAspect = true;
+                
+                // 设置图标大小为与物品尺寸一致
+                RectTransform iconRect = iconImage.GetComponent<RectTransform>();
+                if (iconRect != null)
+                {
+                    // 确保图标锚点为中心，大小与物品一致
+                    iconRect.anchorMin = Vector2.zero;
+                    iconRect.anchorMax = Vector2.one;
+                    iconRect.pivot = Vector2.one * 0.5f;
+                    iconRect.offsetMin = Vector2.zero;
+                    iconRect.offsetMax = Vector2.zero;
+                }
             }
         }
 
@@ -364,8 +383,8 @@ namespace Bag
             // 设置尺寸
             rect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
             
-            // 设置旋转角度
-            rect.localEulerAngles = item.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
+            // 移除旋转角度设置
+            rect.localEulerAngles = Vector3.zero;
             
             // 设置图标
             if (iconImage != null)
@@ -374,39 +393,7 @@ namespace Bag
             }
         }
 
-        private void Update()
-        {
-            // 旋转检测
-            if (isDragging && Input.GetKeyDown(KeyCode.R))
-            {
-                RotateItem();
-            }
-        }
 
-        /// <summary>
-        /// 旋转物品
-        /// </summary>
-        private void RotateItem()
-        {
-            if (itemInstance == null) return;
-            
-            itemInstance.isRotated = !itemInstance.isRotated;
-            rect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
-            
-            // 调整位置以保持中心点
-            float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
-            if (itemInstance.isRotated)
-            {
-                rect.anchoredPosition += new Vector2(itemInstance.data.height * cellSize, 0);
-            }
-            else
-            {
-                rect.anchoredPosition -= new Vector2(itemInstance.data.width * cellSize, 0);
-            }
-            
-            // 更新视觉
-            UpdateVisual();
-        }
         
         /// <summary>
         /// 处理点击事件
