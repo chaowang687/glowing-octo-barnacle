@@ -79,6 +79,7 @@
     <Compile Include="Assets/CS/动画控制/GameFlowManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
+    <Compile Include="Assets/Bag/ItemUI.cs" />
     <Compile Include="Assets/Map/数据层/MapNodeData.cs" />
     <Compile Include="Assets/CS2/IsometricMapNode.cs" />
     <Compile Include="Assets/CS/CardSystem/CardSystem.cs" />
@@ -100,6 +101,7 @@
     <Compile Include="Assets/CS2/PlayerPiece.cs" />
     <Compile Include="Assets/CS3/FollowCamer.cs" />
     <Compile Include="Assets/CS/Managers/BattleVisualizer.cs" />
+    <Compile Include="Assets/Bag/BagSave.cs" />
     <Compile Include="Assets/Map/逻辑层/MapGenerator.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAI.cs" />
     <Compile Include="Assets/CS2/ScavengingController.cs" />
@@ -114,11 +116,13 @@
     <Compile Include="Assets/CS4/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS/CardSystem/Enums.cs" />
     <Compile Include="Assets/CS2/PathSelectionUI.cs" />
+    <Compile Include="Assets/Bag/ItemInstance.cs" />
     <Compile Include="Assets/Map/数据层/EventData.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/ItemData.cs" />
     <Compile Include="Assets/CS/CardSystem/CardVisualManager.cs" />
     <Compile Include="Assets/CS/动画控制/AnimationDebugger.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
+    <Compile Include="Assets/Bag/InventoryUtils.cs" />
     <Compile Include="Assets/Map/表现层/ContinueButtonUI.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootItemData.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
@@ -143,6 +147,8 @@
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Enemy.cs" />
     <Compile Include="Assets/CS2/PlayerStats.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Hero.cs" />
+    <Compile Include="Assets/Bag/ItemData.cs" />
+    <Compile Include="Assets/Bag/InventoryGrid.cs" />
     <Compile Include="Assets/CS/Managers/BattleManager.cs" />
     <Compile Include="Assets/Dig/FossilData.cs" />
     <Compile Include="Assets/Dig/GridManager.cs" />
@@ -174,6 +180,8 @@
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/Map/数据层/EncounterData.cs" />
+    <Compile Include="Assets/Bag/InventoryManager.cs" />
+    <Compile Include="Assets/Bag/InventoryTester.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootAnimationManager.cs" />
     <Compile Include="Assets/CS/DestroyListener.cs" />
     <Compile Include="Assets/CS/LootPopup.cs" />
