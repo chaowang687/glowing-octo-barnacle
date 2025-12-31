@@ -179,9 +179,10 @@
     <Compile Include="Assets/Dig/TileData.cs" />
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
+    <Compile Include="Assets/Bag/AutomatedTest.cs" />
     <Compile Include="Assets/Map/数据层/EncounterData.cs" />
+    <Compile Include="Assets/Bag/GridItemSpawnTester.cs" />
     <Compile Include="Assets/Bag/InventoryManager.cs" />
-    <Compile Include="Assets/Bag/InventoryTester.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootAnimationManager.cs" />
     <Compile Include="Assets/CS/DestroyListener.cs" />
     <Compile Include="Assets/CS/LootPopup.cs" />
