@@ -15,5 +15,6 @@ namespace Bag
         public string itemID; // 用于从资源库加载对应的 ItemData
         public int posX;
         public int posY;
+        public bool isRotated;
     }
 }

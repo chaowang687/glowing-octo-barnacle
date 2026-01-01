@@ -41,6 +41,15 @@ namespace Bag
             if (iconTransform != null)
             {
                 iconImage = iconTransform.GetComponent<Image>();
+                
+                // 初始化Icon的锚点设置为中心点，避免拉伸冲突
+                RectTransform iconRect = iconImage.rectTransform;
+                if (iconRect != null)
+                {
+                    iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    iconRect.pivot = new Vector2(0.5f, 0.5f);
+                }
             }
         }
 
@@ -346,16 +355,20 @@ namespace Bag
                 iconImage.type = Image.Type.Simple;
                 iconImage.preserveAspect = true;
                 
-                // 设置图标大小为与物品尺寸一致
-                RectTransform iconRect = iconImage.GetComponent<RectTransform>();
+                // 设置图标旋转和大小
+                RectTransform iconRect = iconImage.rectTransform;
                 if (iconRect != null)
                 {
-                    // 确保图标锚点为中心，大小与物品一致
-                    iconRect.anchorMin = Vector2.zero;
-                    iconRect.anchorMax = Vector2.one;
-                    iconRect.pivot = Vector2.one * 0.5f;
-                    iconRect.offsetMin = Vector2.zero;
-                    iconRect.offsetMax = Vector2.zero;
+                    // 旋转 Icon 角度
+                    iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
+                    
+                    // 手动设置 Icon 的大小
+                    if (itemInstance.isRotated)
+                    {
+                        iconRect.sizeDelta = new Vector2(currentHeight * cellSize, currentWidth * cellSize);
+                    } else {
+                        iconRect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
+                    }
                 }
             }
         }
@@ -383,13 +396,25 @@ namespace Bag
             // 设置尺寸
             rect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
             
-            // 移除旋转角度设置
-            rect.localEulerAngles = Vector3.zero;
-            
-            // 设置图标
+            // 初始化Icon的旋转和大小
             if (iconImage != null)
             {
                 iconImage.sprite = item.data.icon;
+                
+                RectTransform iconRect = iconImage.rectTransform;
+                if (iconRect != null)
+                {
+                    // 旋转 Icon 角度
+                    iconRect.localEulerAngles = item.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
+                    
+                    // 手动设置 Icon 的大小
+                    if (item.isRotated)
+                    {
+                        iconRect.sizeDelta = new Vector2(item.CurrentHeight * cellSize, item.CurrentWidth * cellSize);
+                    } else {
+                        iconRect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
+                    }
+                }
             }
         }
 
@@ -405,6 +430,9 @@ namespace Bag
             // 添加点击效果反馈
             canvasGroup.alpha = 0.7f;
             Invoke(nameof(ResetAlpha), 0.1f);
+            
+            // 调用旋转方法
+            RotateItem();
         }
         
         /// <summary>
@@ -413,6 +441,38 @@ namespace Bag
         private void ResetAlpha()
         {
             canvasGroup.alpha = 1f;
+        }
+        
+        /// <summary>
+        /// 旋转物品
+        /// </summary>
+        public void RotateItem() { 
+            // 1. 切换旋转状态 
+            if (itemInstance == null) return;
+            itemInstance.isRotated = !itemInstance.isRotated; 
+        
+            // 2. 交换父物体(ItemUI)的宽高 
+            float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
+            float newWidth = itemInstance.CurrentWidth * cellSize; 
+            float newHeight = itemInstance.CurrentHeight * cellSize; 
+            rect.sizeDelta = new Vector2(newWidth, newHeight); 
+        
+            // 3. 处理 Icon (子物体) 
+            if (iconImage != null) { 
+                RectTransform iconRect = iconImage.rectTransform; 
+                
+                // 【关键】旋转 Icon 角度 
+                iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero; 
+        
+                // 【核心修复】旋转后，手动设置 Icon 的大小 
+                // 如果不旋转，Icon 大小 = 正常宽高 
+                // 如果旋转了，Icon 的宽度要设为父物体的高度，Icon 的高度要设为父物体的宽度 
+                if (itemInstance.isRotated) { 
+                    iconRect.sizeDelta = new Vector2(newHeight, newWidth); 
+                } else { 
+                    iconRect.sizeDelta = new Vector2(newWidth, newHeight); 
+                } 
+            } 
         }
     }
 }

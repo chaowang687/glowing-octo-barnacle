@@ -286,7 +286,8 @@ namespace Bag
                 saveData.items.Add(new ItemSaveEntry {
                     itemID = item.data.itemName, // 或者使用唯一的 GUID
                     posX = item.posX,
-                    posY = item.posY
+                    posY = item.posY,
+                    isRotated = item.isRotated
                 });
             }
 
@@ -338,7 +339,8 @@ namespace Bag
                     // 2. 创建实例
                     ItemInstance newItem = new ItemInstance(data) {
                         posX = entry.posX,
-                        posY = entry.posY
+                        posY = entry.posY,
+                        isRotated = entry.isRotated
                     };
 
                     // 3. 实例化 UI 并对齐
