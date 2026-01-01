@@ -30,6 +30,11 @@ namespace Bag
         public ItemUI CarriedItem { get; set; }
         
         /// <summary>
+        /// 当前选中的物品
+        /// </summary>
+        public ItemUI SelectedItem { get; set; }
+        
+        /// <summary>
         /// 背包物品变化事件
         /// </summary>
         public System.Action<ItemInstance, bool> OnItemChanged; // 参数：物品实例，是否添加
@@ -45,6 +50,56 @@ namespace Bag
             else
             {
                 Destroy(gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// 尝试旋转物品（安全模式）
+        /// </summary>
+        /// <param name="ui">物品UI引用</param>
+        public void TryRotateItem(ItemUI ui) 
+        {
+            if (ui == null || ui.itemInstance == null) return;
+        
+            // 情况A：正在拖拽中
+            // 允许自由旋转，只需更新视觉，合法性由 OnEndDrag 或 Preview 处理
+            if (ui.IsDragging) 
+            {
+                ui.DoVisualRotate(); // 仅执行UI和数据变更
+                // 强制刷新一下预览（如果鼠标不动，OnDrag可能不触发，手动刷一下）
+                if (CurrentGrid != null) 
+                {
+                    CurrentGrid.ShowPlacementPreview(ui.itemInstance, ui.GetComponent<RectTransform>().anchoredPosition);
+                }
+                return;
+            }
+        
+            // 情况B：物品已放置在网格中
+            // 必须检查空间是否足够
+            if (CurrentGrid != null) 
+            {
+                // 1. 检查旋转是否合法
+                bool canRotate = CurrentGrid.CheckRotateValidity(ui.itemInstance);
+        
+                if (canRotate) 
+                {
+                    // 2. 如果合法：先从网格移除旧数据
+                    CurrentGrid.RemoveItem(ui.itemInstance);
+        
+                    // 3. 执行旋转（修改数据 + UI）
+                    ui.DoVisualRotate();
+        
+                    // 4. 以新形态重新放入网格
+                    CurrentGrid.PlaceItem(ui.itemInstance, ui.itemInstance.posX, ui.itemInstance.posY);
+                    
+                    Debug.Log("物品旋转成功");
+                } 
+                else 
+                {
+                    // 5. 如果不合法：播放一个失败动画或音效，拒绝旋转
+                    Debug.LogWarning("空间不足，无法旋转！");
+                    // 可选：ui.ShakeAnimation();
+                }
             }
         }
         

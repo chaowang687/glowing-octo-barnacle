@@ -10,7 +10,10 @@ namespace Bag
     /// </summary>
     public class ItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        // 添加一个公开属性判断是否在拖拽
         private bool isDragging = false;
+        public bool IsDragging { get { return isDragging; } private set { isDragging = value; } }
+        
         public ItemInstance itemInstance;
         private RectTransform rect;
         private CanvasGroup canvasGroup;
@@ -93,7 +96,7 @@ namespace Bag
         {
             if (itemInstance == null) return;
             
-            isDragging = true;
+            IsDragging = true; // 标记开始拖拽
             canvasGroup.blocksRaycasts = false;
             canvasGroup.alpha = 0.7f;
             transform.SetAsLastSibling();
@@ -172,7 +175,7 @@ namespace Bag
         {
             if (itemInstance == null) return;
             
-            isDragging = false;
+            IsDragging = false; // 标记结束拖拽
             canvasGroup.blocksRaycasts = true;
             canvasGroup.alpha = 1f;
 
@@ -425,14 +428,24 @@ namespace Bag
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (eventData.button != PointerEventData.InputButton.Left) return;
+            // 右键旋转物品
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                // 请求管理器尝试旋转
+                InventoryManager.Instance.TryRotateItem(this);
+                return;
+            }
             
-            // 添加点击效果反馈
-            canvasGroup.alpha = 0.7f;
-            Invoke(nameof(ResetAlpha), 0.1f);
-            
-            // 调用旋转方法
-            RotateItem();
+            // 左键选中物品
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                // 设置当前选中物品
+                InventoryManager.Instance.SelectedItem = this;
+                
+                // 添加选中效果反馈
+                canvasGroup.alpha = 0.7f;
+                Invoke(nameof(ResetAlpha), 0.1f);
+            }
         }
         
         /// <summary>
@@ -444,34 +457,65 @@ namespace Bag
         }
         
         /// <summary>
-        /// 旋转物品
+        /// 执行视觉旋转（只处理数据和UI，不处理逻辑判断）
         /// </summary>
-        public void RotateItem() { 
-            // 1. 切换旋转状态 
+        public void DoVisualRotate() 
+        { 
             if (itemInstance == null) return;
-            itemInstance.isRotated = !itemInstance.isRotated; 
-        
-            // 2. 交换父物体(ItemUI)的宽高 
+
+            // --- 核心数据变更 ---
+            itemInstance.isRotated = !itemInstance.isRotated;
+
+            // --- 视觉变更 ---
             float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
-            float newWidth = itemInstance.CurrentWidth * cellSize; 
-            float newHeight = itemInstance.CurrentHeight * cellSize; 
-            rect.sizeDelta = new Vector2(newWidth, newHeight); 
-        
-            // 3. 处理 Icon (子物体) 
-            if (iconImage != null) { 
-                RectTransform iconRect = iconImage.rectTransform; 
+            
+            // 重新计算宽高
+            int w = itemInstance.CurrentWidth;
+            int h = itemInstance.CurrentHeight;
+            
+            rect.sizeDelta = new Vector2(w * cellSize, h * cellSize);
+
+            // 图标处理
+            if (iconImage != null) 
+            {
+                RectTransform iconRect = iconImage.rectTransform;
+                // 旋转 -90度 或 0度
+                iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
                 
-                // 【关键】旋转 Icon 角度 
-                iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero; 
+                // 修正图标尺寸匹配父容器
+                // 注意：如果 Icon 旋转了90度，它的 width 对应父物体的 height
+                if (itemInstance.isRotated)
+                {
+                    iconRect.sizeDelta = new Vector2(h * cellSize, w * cellSize);
+                }
+                else
+                {
+                    iconRect.sizeDelta = new Vector2(w * cellSize, h * cellSize);
+                }
+            }
+        }
         
-                // 【核心修复】旋转后，手动设置 Icon 的大小 
-                // 如果不旋转，Icon 大小 = 正常宽高 
-                // 如果旋转了，Icon 的宽度要设为父物体的高度，Icon 的高度要设为父物体的宽度 
-                if (itemInstance.isRotated) { 
-                    iconRect.sizeDelta = new Vector2(newHeight, newWidth); 
-                } else { 
-                    iconRect.sizeDelta = new Vector2(newWidth, newHeight); 
-                } 
+        /// <summary>
+        /// 补充：为了解决Unity EventSystem中 Drag 会吞掉 Click 的问题
+        /// 如果想在拖拽过程中按键盘（如 'R' 键）旋转，需要在 Update 中监听
+        /// </summary>
+        private void Update() 
+        { 
+            if (Input.GetKeyDown(KeyCode.R)) 
+            { 
+                // 只有当前选中的物品或正在拖拽的物品才允许旋转
+                // 1. 如果正在拖拽，直接旋转
+                if (IsDragging)
+                {
+                    Debug.Log("ItemUI: 拖拽中按R键旋转物品");
+                    InventoryManager.Instance.TryRotateItem(this);
+                }
+                // 2. 如果是当前选中的物品，直接旋转
+                else if (InventoryManager.Instance.SelectedItem == this)
+                {
+                    Debug.Log("ItemUI: 选中状态按R键旋转物品");
+                    InventoryManager.Instance.TryRotateItem(this);
+                }
             } 
         }
     }

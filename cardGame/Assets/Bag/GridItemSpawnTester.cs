@@ -12,7 +12,7 @@ public class GridItemSpawnTester : MonoBehaviour
     
     [Header("生成设置")]
     public KeyCode spawnKey = KeyCode.Space;
-    public KeyCode spawnRandomKey = KeyCode.T; // 修改为T键，避免与旋转键冲突
+    public KeyCode spawnRandomKey = KeyCode.T; // 使用T键，避免与旋转键R冲突
     public KeyCode spawnAtMouseKey = KeyCode.M;
     public KeyCode clearAllKey = KeyCode.C;
     public KeyCode debugKey = KeyCode.D;
@@ -27,6 +27,13 @@ public class GridItemSpawnTester : MonoBehaviour
     
     private void Update()
     {
+        // 防止spawnRandomKey被设置为R键，与旋转功能冲突
+        if (spawnRandomKey == KeyCode.R)
+        {
+            spawnRandomKey = KeyCode.T;
+            Debug.LogWarning("GridItemSpawnTester: spawnRandomKey不能设置为R键，已自动改为T键");
+        }
+        
         // 1. 生成预设物品
         if (Input.GetKeyDown(spawnKey))
         {
@@ -197,10 +204,11 @@ public class GridItemSpawnTester : MonoBehaviour
         
         GUILayout.Label("控制:");
         GUILayout.Label("空格: 生成第一个物品");
-        GUILayout.Label("R: 随机生成物品");
+        GUILayout.Label("T: 随机生成物品");
         GUILayout.Label("M: 在鼠标位置生成");
         GUILayout.Label("C: 清空所有物品");
         GUILayout.Label("D: 显示调试信息");
+        GUILayout.Label("R: 旋转当前拖拽物品");
         
         GUILayout.Space(10);
         GUILayout.Label("快速生成:");

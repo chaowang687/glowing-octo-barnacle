@@ -135,13 +135,21 @@ namespace Bag
         /// 检查物品是否可以放置在指定位置
         /// </summary>
         public bool CanPlace(int x, int y, int w, int h) {
-            if (IsOutOfBounds(x, y, w, h)) return false;
+            if (IsOutOfBounds(x, y, w, h)) 
+            {
+                Debug.Log($"越界失败: {x},{y} Size:{w}x{h}");
+                return false;
+            }
             
             for (int i = x; i < x + w; i++) {
-                for (int j = y; j < y + h; j++) {
-                    if (gridSlots[i, j] != null) return false;
+            for (int j = y; j < y + h; j++) {
+                if (gridSlots[i, j] != null) {
+                    // 打印出到底是谁占了位置
+                    Debug.Log($"格子 [{i},{j}] 已被 {gridSlots[i, j].data.itemName} 占用");
+                    return false;
                 }
             }
+    }
             return true;
         }
         
@@ -178,6 +186,29 @@ namespace Bag
                     gridSlots[i, j] = null;
                 }
             }
+        }
+        
+        /// <summary> 
+        /// 检查物品旋转后是否合法（不修改实际数据） 
+        /// </summary> 
+        public bool CheckRotateValidity(ItemInstance item) 
+        { 
+            // 1. 获取旋转后的预期尺寸 
+            // 注意：这里取反来模拟旋转后的宽 
+            int newW = item.isRotated ? item.data.width : item.data.height; 
+            int newH = item.isRotated ? item.data.height : item.data.width; 
+    
+            // 2. 暂时移除物品（为了避免检测时和自己当前的占用冲突） 
+            RemoveItem(item); 
+    
+            // 3. 检查位置是否可用 
+            bool canPlace = CanPlace(item.posX, item.posY, newW, newH); 
+    
+            // 4. 无论结果如何，先把物品放回去（保持状态原样） 
+            // 注意：这时用 item.CurrentWidth/Height 还是原来的尺寸，因为我们还没改 isRotated 
+            PlaceItem(item, item.posX, item.posY); 
+    
+            return canPlace; 
         }
         
         /// <summary>
