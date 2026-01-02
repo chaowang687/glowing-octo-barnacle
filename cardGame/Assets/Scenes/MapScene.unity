@@ -177,7 +177,6 @@ GameObject:
   m_Component:
   - component: {fileID: 185313452}
   - component: {fileID: 185313451}
-  - component: {fileID: 185313450}
   - component: {fileID: 185313449}
   - component: {fileID: 185313448}
   - component: {fileID: 185313447}
@@ -276,18 +275,6 @@ MonoBehaviour:
     - Strike
     maxSize: 20
     currentSize: 5
---- !u!114 &185313450
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 185313444}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4946ff4fbe7542f68cc8756f318c558, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &185313451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -305,7 +292,7 @@ MonoBehaviour:
   nodeInteraction: {fileID: 185313445}
   mapUI: {fileID: 1906893038}
   saveLoad: {fileID: 185313446}
-  ui: {fileID: 185313450}
+  ui: {fileID: 0}
   currentMapLayout: {fileID: 11400000, guid: 901c2f308e4fa4f8581e73244c905144, type: 2}
   lineRenderer: {fileID: 0}
 --- !u!4 &185313452

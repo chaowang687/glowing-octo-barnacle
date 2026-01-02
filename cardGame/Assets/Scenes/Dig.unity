@@ -768,6 +768,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d2f5a7ce432a2436ca8690b41de0a56c, type: 2}
   - {fileID: 11400000, guid: be3f314ac48cb4276b665b3fbe3a8b32, type: 2}
   - {fileID: 11400000, guid: 9efa414db1e9343fa943ce85c3acf79e, type: 2}
+  - {fileID: 11400000, guid: c25984b917f674fd3902f07c215a2459, type: 2}
   flyingIconPrefab: {fileID: 6933713697959982126, guid: d9389b7f74aa946b4b3782c50ebc5eaf, type: 3}
   bagButtonRect: {fileID: 953167752}
   uiCanvas: {fileID: 489667256}
