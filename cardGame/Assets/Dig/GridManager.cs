@@ -56,9 +56,42 @@ public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
     private Dictionary<string, TreasureVisual> treasureVisuals = new Dictionary<string, TreasureVisual>();
 
     void Start() {
-        GenerateLevel();
+        // 1. 从全局管理器获取配置
+        var config = SlayTheSpireMap.GameDataManager.Instance?.digData;
+        
+        if(config != null) {
+            // 2. 用 DigData.asset 的配置覆盖 GridManager 的默认属性
+            this.width = config.mapWidth;
+            this.height = config.mapHeight;
+            
+            // 3. 同步化石列表
+            this.fossilDataList.Clear();
+            foreach(var fConfig in config.fossilConfigs) {
+                // 方案 A：如果 DigData 已经包含了 FossilData 的引用（最推荐）
+                if(fConfig.fossilData != null) {
+                    this.fossilDataList.Add(fConfig.fossilData);
+                    Debug.Log("[GridManager] 已添加化石数据: " + fConfig.fossilData.name);
+                }
+                // 方案 B：如果确实需要用路径加载，确保路径是 Resources 相对路径且不含后缀
+                else if(!string.IsNullOrEmpty(fConfig.fossilDataPath)) {
+                    FossilData fossilData = Resources.Load<FossilData>(fConfig.fossilDataPath);
+                    if(fossilData != null) {
+                        this.fossilDataList.Add(fossilData);
+                        Debug.Log("[GridManager] 通过路径加载化石数据: " + fConfig.fossilDataPath);
+                    } else {
+                        Debug.LogWarning("无法加载化石数据: " + fConfig.fossilDataPath);
+                    }
+                }
+            }
+            Debug.Log("[GridManager] 已成功加载配置: " + config.digName + ", 宽高: " + width + "x" + height);
+        } else {
+            Debug.LogWarning("[GridManager] 未发现 DigData 配置，使用默认 Inspector 参数");
+        }
 
-        // 优先使用新的旋转埋宝逻辑，支持多个化石
+        // 4. 然后再执行原有的网格生成逻辑
+        GenerateLevel();
+        
+        // 生成化石
         if (fossilDataList != null && fossilDataList.Count > 0) {
             foreach (var fossilData in fossilDataList) {
                 if (fossilData != null) {
@@ -66,14 +99,13 @@ public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
                 }
             }
         } else {
-            // 如果没有配置 FossilData，则回退到旧的矩形埋宝逻辑做测试
+            // 最后使用旧的矩形埋宝逻辑做测试
             PlantTreasures("Simple_Box_Fossil", 2, 2);
         }
     }
 
     // 1. 生成关卡基础地块
     void GenerateLevel() {
-        // 计算居中偏移量
         // 地图总宽度 = width * 1.0f (假设每个格子大小为1)
         // 地图总高度 = height * 1.0f
         // 左上角起始点应该在 (-width/2, height/2)

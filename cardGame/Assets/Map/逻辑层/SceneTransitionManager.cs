@@ -10,6 +10,7 @@ namespace SlayTheSpireMap
         public const string SHOP_SCENE = "ShopScene";
         public const string EVENT_SCENE = "EventScene";
         public const string REST_SCENE = "RestScene";
+        public const string DIG_SCENE = "DigScene";     // 挖掘场景
         public const string MAP_SCENE = "MapScene";
         public const string MAIN_MENU_SCENE = "MainMenu";
         
@@ -54,6 +55,10 @@ namespace SlayTheSpireMap
                     
                 case NodeType.Rest:
                     sceneName = REST_SCENE;
+                    break;
+                    
+                case NodeType.Dig:
+                    sceneName = DIG_SCENE;
                     break;
                     
                 default:

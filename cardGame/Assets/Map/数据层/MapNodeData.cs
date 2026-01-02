@@ -36,6 +36,8 @@ namespace SlayTheSpireMap
         public EncounterData encounterData;
         // 如果是事件节点，关联的事件数据
         public EventData eventData;
+        // 如果是挖掘节点，关联的挖掘数据
+        public DigData digData;
 
         public MapNodeData() { }
 

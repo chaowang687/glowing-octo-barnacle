@@ -9,11 +9,26 @@ EditorBuildSettings:
     path: Assets/Scenes/ceshiScene.unity
     guid: 02509a58128c442179e7b69100e688de
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 209b5c7f3c4234df09e350c226c6bc32
+  - enabled: 1
+    path: Assets/Scenes/loading.unity
+    guid: 2df121a3c64b342b8acdf7d45ebc13ac
+  - enabled: 1
     path: Assets/Scenes/MapScene.unity
     guid: 144064456f2394bd2b9e55b6d5f27aeb
   - enabled: 1
     path: Assets/Scenes/BattleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/DigScene.unity
+    guid: 74b0124f0b4a444b386e2ffc53a254ee
+  - enabled: 1
+    path: Assets/Scenes/EventScene.unity
+    guid: f25ddb150772f47968a4285f671d2639
+  - enabled: 1
+    path: Assets/Scenes/ShopScene.unity
+    guid: 3e06ccae4d56546e3adf3e00d6202df1
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -30,6 +30,7 @@ namespace SlayTheSpireMap
         public Sprite shopIcon;
         public Sprite restIcon;
         public Sprite bossIcon;
+        public Sprite digIcon;
         
         [Header("动画设置")]
         public float animationScale = 1.2f;
@@ -179,14 +180,15 @@ namespace SlayTheSpireMap
                 
                 // 根据类型设置图标
                 Sprite targetSprite = null;
-                switch (nodeType)
+                switch (linkedNodeData.nodeType)
                 {
                     case NodeType.Combat: targetSprite = combatIcon; break;
                     case NodeType.Elite:  targetSprite = eliteIcon; break;
+                    case NodeType.Event:  targetSprite = eventIcon; break;
                     case NodeType.Shop:   targetSprite = shopIcon; break;
                     case NodeType.Rest:   targetSprite = restIcon; break;
-                    case NodeType.Event:  targetSprite = eventIcon; break;
                     case NodeType.Boss:   targetSprite = bossIcon; break;
+                    case NodeType.Dig:    targetSprite = digIcon; break;
                 }
 
                 if (targetSprite != null)
@@ -378,6 +380,7 @@ namespace SlayTheSpireMap
                 case NodeType.Shop: return "商店";
                 case NodeType.Rest: return "休息";
                 case NodeType.Boss: return "Boss";
+                case NodeType.Dig: return "挖掘场";
                 default: return "未知";
             }
         }

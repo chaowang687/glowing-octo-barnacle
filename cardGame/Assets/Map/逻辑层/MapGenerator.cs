@@ -74,9 +74,21 @@ namespace SlayTheSpireMap
                     
                     // 初始化 Encounter (从池中随机抽取)
                     node.encounterData = GetRandomEncounterFromPool(node.nodeType, layerIndex, layout);
-                    if (node.encounterData == null)
+                    
+                    // 处理 Dig 节点的特殊情况
+                    if (node.nodeType == NodeType.Dig)
                     {
-                        // 保底逻辑
+                        // 从 digPool 中随机获取 DigData
+                        if (layout.digPool != null && layout.digPool.Count > 0)
+                        {
+                            int rnd = Random.Range(0, layout.digPool.Count);
+                            node.digData = layout.digPool[rnd];
+                        }
+                        // 即使digPool为空，也要保留Dig节点类型
+                    }
+                    else if (node.encounterData == null)
+                    {
+                        // 保底逻辑（仅适用于非 Dig 节点）
                         node.encounterData = CreateSimpleEncounter(node);
                     }
                     
@@ -203,6 +215,7 @@ namespace SlayTheSpireMap
             int shopW = layout.shopWeight;
             int restW = layout.restWeight;
             int eventW = layout.eventWeight;
+            int digW = layout.digWeight; // 挖掘场景权重
 
             // 动态调整权重
             float progress = (float)layerIndex / layerCount;
@@ -230,14 +243,19 @@ namespace SlayTheSpireMap
             if (layerIndex == Mathf.FloorToInt(layerCount * 0.5f)) restW += 50; // 中间层休息概率大增
             
             // 归一化权重计算
-            int totalWeight = combatW + eliteW + shopW + restW + eventW;
+            int totalWeight = combatW + eliteW + shopW + restW + eventW + digW;
             int rnd = Random.Range(0, totalWeight);
 
             if (rnd < combatW) { node.nodeType = NodeType.Combat; node.nodeName = "敌人"; }
             else if (rnd < combatW + eliteW) { node.nodeType = NodeType.Elite; node.isElite = true; node.nodeName = "精英"; }
             else if (rnd < combatW + eliteW + shopW) { node.nodeType = NodeType.Shop; node.nodeName = "商店"; }
             else if (rnd < combatW + eliteW + shopW + restW) { node.nodeType = NodeType.Rest; node.nodeName = "休息"; }
-            else { node.nodeType = NodeType.Event; node.nodeName = "未知"; }
+            else if (rnd < combatW + eliteW + shopW + restW + eventW) { node.nodeType = NodeType.Event; node.nodeName = "未知"; }
+            else { 
+                node.nodeType = NodeType.Dig; 
+                node.nodeName = "挖掘场"; 
+                Debug.Log($"生成Dig节点: {node.nodeId}, 位置: {node.position}");
+            }
         }
 
         // 原有的 GenerateMap 改名为 GenerateManualMap
@@ -263,9 +281,28 @@ namespace SlayTheSpireMap
                 node.isStartNode = nodePos.isStartNode;
                 node.position = nodePos.position; 
 
-                // --- 确保每一关的敌人配置被正确塞入实例 ---
-                if (nodePos.presetEncounter != null)
+                // --- 确保每一关的配置被正确塞入实例 ---
+                if (node.nodeType == NodeType.Dig)
                 {
+                    // 处理 Dig 节点的配置
+                    if (nodePos.presetEncounter != null)
+                    {
+                        // 如果有预设 EncounterData，继续使用（向后兼容）
+                        node.encounterData = nodePos.presetEncounter;
+                        Debug.Log($"[Map] 节点 {node.nodeId} 已加载 EncounterData 配置: {node.encounterData.name}");
+                    }
+                    
+                    // 从 digPool 中随机获取 DigData
+                    if (layout.digPool != null && layout.digPool.Count > 0)
+                    {
+                        int rnd = Random.Range(0, layout.digPool.Count);
+                        node.digData = layout.digPool[rnd];
+                        Debug.Log($"[Map] 节点 {node.nodeId} 已加载 DigData 配置: {node.digData.digName}");
+                    }
+                }
+                else if (nodePos.presetEncounter != null)
+                {
+                    // 非 Dig 节点，使用传统 EncounterData
                     node.encounterData = nodePos.presetEncounter;
                     Debug.Log($"[Map] 节点 {node.nodeId} 已加载配置: {node.encounterData.name}");
                 }
@@ -358,6 +395,10 @@ namespace SlayTheSpireMap
                 case NodeType.Shop:
                     pool = layout.shopPool;
                     break;
+                case NodeType.Dig:
+                    // 挖掘场景使用专门的DigData，在MapNode中处理
+                    // 这里返回null，因为Dig场景不需要EncounterData
+                    return null;
             }
 
             if (pool != null && pool.Count > 0)

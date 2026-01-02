@@ -136,6 +136,7 @@ namespace SlayTheSpireMap
                     if (sampleNode.shopIcon == null) sampleNode.shopIcon = Resources.Load<Sprite>("MapIcons/Shop");
                     if (sampleNode.eventIcon == null) sampleNode.eventIcon = Resources.Load<Sprite>("MapIcons/Event");
                     if (sampleNode.bossIcon == null) sampleNode.bossIcon = Resources.Load<Sprite>("MapIcons/Boss");
+                    if (sampleNode.digIcon == null) sampleNode.digIcon = Resources.Load<Sprite>("MapIcons/Dig");
                 }
             }
 

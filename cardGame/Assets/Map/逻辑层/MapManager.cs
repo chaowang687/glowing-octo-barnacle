@@ -791,10 +791,26 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
             var dataManager = GameDataManager.Instance;
             if (dataManager != null)
             {
-                // 设置战斗/场景所需数据
+                // 设置场景所需数据
                 dataManager.currentNodeId = node.nodeId;
                 dataManager.battleNodeId = node.nodeId;
                 dataManager.battleEncounterData = node.encounterData;
+                
+                // 保存Dig节点数据
+                if (node.nodeType == NodeType.Dig)
+                {
+                    // 关键：确保node.digData不是null
+                    if (node.digData != null)
+                    {
+                        dataManager.digData = node.digData;
+                        Debug.Log($"[MapManager] 已将挖掘数据 {node.digData.digName} 传递给 GameDataManager");
+                    }
+                    else
+                    {
+                        Debug.LogError("[MapManager] 尝试传递空的digData！");
+                    }
+                }
+                
                 dataManager.SaveGameData();
             }
             
@@ -807,6 +823,11 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
             {
                 // 使用 SceneTransitionManager 跳转非战斗场景
                  SceneTransitionManager.Instance.GoToSceneByNodeType(node.nodeType);
+            }
+            else if (node.nodeType == NodeType.Dig)
+            {
+                // 跳转到Dig场景
+                SceneManager.LoadScene("DigScene");
             }
         }
         

@@ -216,6 +216,7 @@ MonoBehaviour:
   shopIcon: {fileID: 21300000, guid: 43d77a49be4cf44b28ab81cceb775133, type: 3}
   restIcon: {fileID: 21300000, guid: 43d77a49be4cf44b28ab81cceb775133, type: 3}
   bossIcon: {fileID: 21300000, guid: 0cbd83c762673483bad6ae0fe64ac3b2, type: 3}
+  digIcon: {fileID: 21300000, guid: b97d06174a5e640cf8d8c469b2707a33, type: 3}
   animationScale: 1.2
   animationSpeed: 2
 --- !u!114 &6831634613536542218

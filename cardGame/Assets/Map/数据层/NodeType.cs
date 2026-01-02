@@ -10,7 +10,8 @@ public enum NodeType
     Event,      // 事件
     Shop,       // 商店
     Rest,       // 休息点
-    Boss        // Boss战
+    Boss,       // Boss战
+    Dig         // 挖掘场景
 }
 
 }

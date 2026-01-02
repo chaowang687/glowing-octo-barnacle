@@ -32,6 +32,7 @@ namespace SlayTheSpireMap
         public int shopWeight = 5;
         public int restWeight = 10;
         public int eventWeight = 20;
+        public int digWeight = 10;       // 挖掘场景权重
 
         [Header("关卡内容池 (通用配置)")]
         public List<EncounterData> easyEnemyPool = new List<EncounterData>();   // 简单敌人
@@ -41,6 +42,9 @@ namespace SlayTheSpireMap
         public List<EncounterData> bossEnemyPool = new List<EncounterData>();   // Boss
         public List<EncounterData> eventPool = new List<EncounterData>();       // 事件
         public List<EncounterData> shopPool = new List<EncounterData>();        // 商店(如有特殊)
+        
+        [Header("挖掘场景配置池")]
+        public List<DigData> digPool = new List<DigData>();                     // 挖掘场景(新增)
 
         [Header("布局基本信息")]
         public string layoutName;
@@ -131,6 +135,21 @@ namespace SlayTheSpireMap
             {
                 if (nodePositions[index].isBoss) return "最终Boss";
                 if (nodePositions[index].isElite) return "精英战";
+                
+                // 根据节点类型返回不同名称
+                switch (nodePositions[index].nodeType)
+                {
+                    case NodeType.Dig:
+                        return "挖掘场";
+                    case NodeType.Combat:
+                        return "战斗";
+                    case NodeType.Event:
+                        return "事件";
+                    case NodeType.Shop:
+                        return "商店";
+                    case NodeType.Rest:
+                        return "休息点";
+                }
             }
             
             return $"节点 {index + 1}";

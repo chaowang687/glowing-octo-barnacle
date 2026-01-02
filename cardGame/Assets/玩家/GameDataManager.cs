@@ -50,6 +50,7 @@ namespace SlayTheSpireMap
         [Header("当前战斗数据")]
         public string battleNodeId = "";
         public EncounterData battleEncounterData;
+        public DigData digData;
         // 在 GameDataManager.cs 中添加或检查
         public void InitializeNewGame()
         {
@@ -295,6 +296,7 @@ namespace SlayTheSpireMap
         {
             battleNodeId = "";
             battleEncounterData = null;
+            digData = null;
         }
         
         #endregion
