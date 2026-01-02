@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using ScavengingGame;
+using Bag;
 
 [CreateAssetMenu(fileName = "NewFossil", menuName = "DigGame/Fossil")]
 public class FossilData : ScriptableObject {
     public string fossilName;
-    public ItemData rewardItem;
+    public Bag.ItemData rewardItem;
     
     // --- 添加这一行 ---
     public Sprite fossilSprite; 

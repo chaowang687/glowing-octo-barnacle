@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI; // 【新增】添加UI命名空间，用于Image组件
+using Bag; // 【新增】1. 引入背包命名空间，以便访问 InventoryManager 和 ItemData
+// 建议使用 DOTween 插件，如果没装，请告诉我，我给你写协程版
+using DG.Tweening; // 【新增】添加DOTween命名空间，用于飞行动画
 // 如果你的其他脚本在这个命名空间下，请保留；否则可以删除
  using ScavengingGame; 
 
@@ -17,7 +21,28 @@ public class GridManager : MonoBehaviour {
     public float gridShakeDuration = 0.05f;
 
     [Header("测试配置")]
-    public FossilData testFossil; // 在编辑器里把创建好的化石资源拖进来
+public List<FossilData> fossilDataList = new List<FossilData>(); // 可以添加多个化石资源
+
+    [Header("飞行动画设置")]
+public GameObject flyingIconPrefab; // 包含 Image 组件的 UI 预制体
+public RectTransform bagButtonRect; // 终点：背包按钮
+public Canvas uiCanvas;            // UI 画布，用于坐标转换
+public Transform fxContainer;      // 存放飞行动画的容器层
+
+[Header("飞行动画参数")]
+// 以下参数已不再使用，因为移除了向上跳跃的动画
+// public float jumpDuration = 0.3f;   // 向上跳跃持续时间（秒）
+public float flyDuration = 0.6f;     // 飞向背包持续时间（秒）
+// public float jumpHeight = 100f;      // 向上跳跃高度（像素）
+public float curveIntensity = 5f;    // 飞行路径曲线强度（正数向右，负数向左）
+public float curveHeight = 10f;      // 飞行路径垂直抬升高度
+public float scaleMultiplier = 0.3f; // 最终缩放比例
+// public Ease jumpEase = Ease.OutQuad; // 跳跃缓动曲线
+public Ease flyEase = Ease.InQuad;   // 飞行缓动曲线
+
+[Header("反馈动画参数")]
+public float bagPunchScale = 0.2f;   // 背包按钮抖动强度
+public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
 
     private Dictionary<Vector2Int, TileState> gridData = new Dictionary<Vector2Int, TileState>();
     private Dictionary<Vector2Int, GameObject> tileObjects = new Dictionary<Vector2Int, GameObject>();
@@ -33,9 +58,13 @@ public class GridManager : MonoBehaviour {
     void Start() {
         GenerateLevel();
 
-        // 优先使用新的旋转埋宝逻辑
-        if (testFossil != null) {
-            PlantFossil(testFossil);
+        // 优先使用新的旋转埋宝逻辑，支持多个化石
+        if (fossilDataList != null && fossilDataList.Count > 0) {
+            foreach (var fossilData in fossilDataList) {
+                if (fossilData != null) {
+                    PlantFossil(fossilData);
+                }
+            }
         } else {
             // 如果没有配置 FossilData，则回退到旧的矩形埋宝逻辑做测试
             PlantTreasures("Simple_Box_Fossil", 2, 2);
@@ -128,6 +157,25 @@ public class GridManager : MonoBehaviour {
                 Random.Range(startX, endX + 1), 
                 Random.Range(startY, endY + 1)
             );
+
+            // 检查新生成的化石是否会与已有化石重叠
+            bool isOverlapping = false;
+            foreach (var originalOffset in data.shapeOffsets) {
+                Vector2Int rotatedOffset = RotateOffset(originalOffset, rotationSteps);
+                Vector2Int finalPos = anchor + rotatedOffset;
+                
+                // 检查这个位置是否已经被其他化石占据
+                if (gridData.ContainsKey(finalPos) && !string.IsNullOrEmpty(gridData[finalPos].treasureId)) {
+                    isOverlapping = true;
+                    break;
+                }
+            }
+            
+            // 如果重叠，跳过当前位置，尝试下一次
+            if (isOverlapping) {
+                Debug.Log($"位置 {anchor} 与已有化石重叠，尝试下一个位置...");
+                continue;
+            }
 
             Debug.Log($"<color=yellow>化石生成中</color>: {data.fossilName} 锚点={anchor} 旋转步数={rotationSteps}");
 
@@ -329,21 +377,154 @@ bool IsRevealed(Vector2Int pos) {
             TreasureInstance treasure = activeTreasures.Find(t => t.id == treasureId);
             if (treasure != null) {
                 treasure.revealedCount++;
-                // 添加更多调试信息，确保引用的是同一个对象
-                Debug.Log($"化石进度更新: ID={treasureId} 进度={treasure.revealedCount}/{treasure.totalParts.Count} (ObjHash={treasure.GetHashCode()})");
+                Debug.Log($"化石进度更新: ID={treasureId} 进度={treasure.revealedCount}/{treasure.totalParts.Count}");
 
                 if (treasure.IsComplete) {
                     if(treasureVisuals.ContainsKey(treasureId)) {
-                        treasureVisuals[treasureId].OnComplete();
-                        Debug.Log($"<color=cyan>成功点亮化石: {treasureId}</color>");
-                    } else {
-                        Debug.LogWarning($"找不到化石 {treasureId} 的视觉引用！");
+                        treasureVisuals[treasureId].OnComplete(); // 原有的原地效果
+                        
+                        // --- 【新增触发】 ---
+                        Vector3 worldPos = treasureVisuals[treasureId].transform.position;
+                        // 将AddItemToInventory的调用移到动画完成回调中
+                        StartFlyingEffect(treasure.reward.icon, worldPos, treasure.reward);
                     }
+                    // 移除直接调用，改为在动画完成后调用
+                    // AddItemToInventory(treasure.reward); // 逻辑添加
                 }
-            } else {
-                Debug.LogWarning($"挖掘到了 ID 为 {treasureId} 的碎片，但找不到对应的化石实例！ActiveTreasures Count: {activeTreasures.Count}");
             }
         }
+        
+        // 【修改】封装一个添加物品的方法，不再包含飞行特效逻辑
+        private void AddItemToInventory(Bag.ItemData itemData) {
+            // 检查各种引用是否安全
+            if (Bag.InventoryManager.Instance == null) {
+                Debug.LogWarning("挖到了物品，但场景中没有 InventoryManager，无法添加进背包！");
+                return;
+            }
+
+            if (itemData == null) {
+                Debug.LogWarning("挖到了物品，但这件宝物(FossilData)没有配置对应的 Reward ItemData！");
+                return;
+            }
+
+            // 逻辑添加
+            var addedItemUI = Bag.InventoryManager.Instance.SpawnItem(itemData, Vector2Int.zero, true);
+
+            if (addedItemUI != null) {
+                Debug.Log($"<color=yellow>恭喜！获得物品: {itemData.itemName}</color>");
+            } else {
+                Debug.LogWarning("背包已满，无法添加物品！");
+                // 可选：处理背包满的情况，比如把物品丢在地上，或者通过邮件发送
+            }
+        }
+        
+        // 【新增】点击触发飞行动画
+        public void TriggerItemFlyToBag(string treasureId) {
+            Debug.Log($"触发飞行动画：{treasureId}");
+            
+            // 1. 找到对应的TreasureInstance
+            TreasureInstance treasure = activeTreasures.Find(t => t.id == treasureId);
+            if (treasure == null) {
+                Debug.LogWarning($"找不到ID为{treasureId}的TreasureInstance");
+                return;
+            }
+            
+            // 2. 检查是否有奖励物品
+            if (treasure.reward == null) {
+                Debug.LogWarning($"ID为{treasureId}的TreasureInstance没有奖励物品");
+                return;
+            }
+            
+            // 3. 获取宝藏的世界位置
+            if (treasureVisuals.TryGetValue(treasureId, out TreasureVisual visual)) {
+                Vector3 worldPos = visual.transform.position;
+                
+                // 4. 触发飞行动画
+                StartFlyingEffect(treasure.reward.icon, worldPos, treasure.reward);
+            }
+        }
+        
+    // 添加完整的动画逻辑函数
+    private void StartFlyingEffect(Sprite iconSprite, Vector3 startWorldPos, Bag.ItemData itemData) {
+        if (flyingIconPrefab == null || bagButtonRect == null || uiCanvas == null) {
+            // 如果动画无法播放，直接添加物品到背包
+            AddItemToInventory(itemData);
+            return;
+        }
+
+        // 1. 生成图标
+        GameObject iconGo = Instantiate(flyingIconPrefab, fxContainer);
+        Image iconImage = iconGo.GetComponent<Image>();
+        RectTransform rt = iconGo.GetComponent<RectTransform>();
+        
+        // 设置图标精灵并调整尺寸以匹配图片原始大小
+        iconImage.sprite = iconSprite;
+        iconImage.SetNativeSize(); // 自动调整Image大小以匹配Sprite的原始尺寸
+
+        // 2. 坐标转换：将 3D 世界坐标转为 UI 坐标
+        Vector2 screenPoint = Camera.main.WorldToScreenPoint(startWorldPos);
+        Camera cam = uiCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : uiCanvas.worldCamera;
+        
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(fxContainer as RectTransform, screenPoint, cam, out Vector2 localPos)) {
+            rt.anchoredPosition = localPos;
+        }
+
+        // 3. 使用 DOTween 制作路径
+        Sequence seq = DOTween.Sequence();
+        
+        // 去掉向上跳的动画，直接飞往背包
+        
+        // 计算贝塞尔曲线控制点，实现弧形路径
+        // 获取背包按钮在fxContainer下的本地坐标
+        Vector2 bagScreenPos = RectTransformUtility.WorldToScreenPoint(uiCanvas.worldCamera, bagButtonRect.position);
+        Vector2 bagLocalPos;
+        // 复用之前定义的cam变量，避免重复定义
+        // Camera cam = uiCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : uiCanvas.worldCamera;
+        
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            fxContainer as RectTransform,
+            bagScreenPos,
+            cam,
+            out bagLocalPos
+        )) {
+            // 使用DOPath实现弧形路径（替代DOAnchorPosBezier）
+            // 获取UI元素的世界位置
+            Vector3 startUIPos = rt.position;
+            Vector3 endWorldPos = bagButtonRect.position;
+            
+            // 计算控制点的本地位置
+            Vector2 startPos = rt.anchoredPosition;
+            float controlX = (startPos.x + bagLocalPos.x) / 2f + curveIntensity;
+            float controlY = (startPos.y + bagLocalPos.y) / 2f + curveHeight;
+            Vector2 controlPointLocal = new Vector2(controlX, controlY);
+            
+            // 将控制点转换为世界位置
+            Vector3 controlPointWorld = fxContainer.TransformPoint(controlPointLocal);
+            
+            // 创建贝塞尔路径
+            Vector3[] path = new Vector3[] { startUIPos, controlPointWorld, endWorldPos };
+            
+            // 使用DOPath实现曲线飞行
+            seq.Append(rt.DOPath(path, flyDuration, PathType.CatmullRom, PathMode.Full3D).SetEase(flyEase));
+            
+            // 同时缩小
+            seq.Join(rt.DOScale(scaleMultiplier, flyDuration));
+        } else {
+            // 如果坐标转换失败，使用原来的直线飞行
+            seq.Append(rt.DOMove(bagButtonRect.position, flyDuration).SetEase(flyEase)); // 直接飞向背包
+            
+            // 同时缩小
+            seq.Join(rt.DOScale(scaleMultiplier, flyDuration));
+        }
+        
+        seq.OnComplete(() => {
+            Destroy(iconGo);
+            bagButtonRect.DOPunchScale(Vector3.one * bagPunchScale, bagPunchDuration); // 背包按钮抖动反馈
+            
+            // --- 【新增】动画完成后添加物品到背包 ---
+            AddItemToInventory(itemData);
+        });
+    }
 
     void CreateTileObject(Vector2Int pos, TileState state, float startX, float startY) {
     // 1. 计算居中对齐的世界坐标
@@ -421,7 +602,7 @@ public class TreasureInstance
     
     // --- 确保这一行存在！ ---
     // 如果你已经创建了 ItemData.cs，就用下面这行：
-    public ItemData reward; 
+    public Bag.ItemData reward; 
     
     // 如果你还没准备好 ItemData，可以先用这行代替来消除报错：
     // public string rewardName; 

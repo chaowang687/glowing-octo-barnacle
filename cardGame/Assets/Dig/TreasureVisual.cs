@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.EventSystems; // 添加点击事件所需命名空间
 
-public class TreasureVisual : MonoBehaviour {
+public class TreasureVisual : MonoBehaviour, IPointerClickHandler { // 添加点击事件接口
     public string treasureId;
     public SpriteRenderer sr; 
     public Animator anim;     
@@ -9,6 +10,8 @@ public class TreasureVisual : MonoBehaviour {
     [Header("Animation Settings")]
     [Tooltip("挖掘出后向上浮动的高度 (世界坐标单位)")]
     public float floatHeight = 0.5f;
+    [Tooltip("点击或挖掘完成后隐藏原始化石的延迟时间 (秒)")]
+    public float hideDelay = 0.05f;
 
     private Vector3 originalLocalPos; // 记录子物体的初始位置
 
@@ -30,54 +33,55 @@ public class TreasureVisual : MonoBehaviour {
     public void OnComplete() {
         sr.color = Color.white;
         
-        // 停止之前的动画，开始“上浮点亮”效果
+        // 停止之前的动画，移除上浮点亮效果
         StopAllCoroutines();
-        StartCoroutine(AnimateDiscovery());
-
+        
+        // 旋转归正
+        sr.transform.rotation = Quaternion.identity;
+        
+        // 直接显示最大亮度，不播放上移动画
         if (anim != null) {
             anim.SetTrigger("Show"); 
         }
+        
+        // 延迟后隐藏原始物品，给飞行动画留出时间
+        StartCoroutine(HideAfterDelay(hideDelay));
     }
-
-    // 发现化石的动画：世界坐标上浮 + 子物体旋转归正 + 缩放反馈
-    IEnumerator AnimateDiscovery() {
-        float duration = 0.5f; // 动画时长
-        float elapsed = 0f;
+    
+    // 延迟隐藏原始物品，确保飞行动画完成
+    IEnumerator HideAfterDelay(float delay) {
+        yield return new WaitForSeconds(delay);
+        // 隐藏原始物品
+        gameObject.SetActive(false);
+    }
+    
+    // 点击事件处理
+    public void OnPointerClick(PointerEventData eventData) {
+        Debug.Log("点击了宝藏：" + treasureId);
         
-        // 1. 记录初始状态
-        Vector3 startWorldPos = transform.position;
-        Vector3 startScale = sr.transform.localScale; 
+        // 1. 化石原地变亮，旋转归正
+        sr.color = Color.white;
         
-        // 记录子物体（Sprite）的世界旋转
-        Quaternion startSpriteRotation = sr.transform.rotation;
-
-        // 2. 设定目标状态
-        Vector3 targetWorldPos = startWorldPos + Vector3.up * floatHeight; 
-        Vector3 targetScale = Vector3.one * 1.2f; 
+        // 停止之前的动画
+        StopAllCoroutines();
         
-        // 目标：子物体旋转归正（世界坐标下 Rotation 为 0）
-        Quaternion targetSpriteRotation = Quaternion.identity;
-
-        while (elapsed < duration) {
-            elapsed += Time.deltaTime;
-            float percent = elapsed / duration;
-            
-            // 使用平滑插值
-            float curve = Mathf.SmoothStep(0, 1, percent);
-            
-            // 应用变换
-            transform.position = Vector3.Lerp(startWorldPos, targetWorldPos, curve);
-            sr.transform.localScale = Vector3.Lerp(startScale, targetScale, curve);
-            
-            // 关键：直接操作子物体的世界旋转
-            sr.transform.rotation = Quaternion.Lerp(startSpriteRotation, targetSpriteRotation, curve);
-            
-            yield return null;
+        // 旋转归正
+        sr.transform.rotation = Quaternion.identity;
+        
+        // 播放显示动画
+        if (anim != null) {
+            anim.SetTrigger("Show"); 
         }
         
-        // 确保最终状态准确
-        transform.position = targetWorldPos;
-        sr.transform.localScale = targetScale;
-        sr.transform.rotation = targetSpriteRotation;
+        // 2. 触发飞行动画
+        // 获取GridManager实例
+        GridManager gridManager = FindObjectOfType<GridManager>();
+        if (gridManager != null) {
+            // 调用GridManager的方法，生成飞行图标并飞向背包
+            gridManager.TriggerItemFlyToBag(treasureId);
+        }
+        
+        // 3. 延迟后隐藏原始物品
+        StartCoroutine(HideAfterDelay(hideDelay));
     }
 }
