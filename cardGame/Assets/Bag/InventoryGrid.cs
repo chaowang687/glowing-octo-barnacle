@@ -80,8 +80,14 @@ namespace Bag
         public Vector2Int GetGridFromPosition(Vector2 localPos) 
         {
             // 假设 Pivot 在左上角 (0,1)
+            // 对于X轴：正常计算
             int x = Mathf.FloorToInt(localPos.x / cellSize);
-            int y = Mathf.FloorToInt(-localPos.y / cellSize);
+            
+            // 对于Y轴：修复前两行无法触发的问题
+            // 添加一个小的偏移量，确保前两行能正确触发
+            float yPos = (-localPos.y / cellSize) + 0.1f;
+            int y = Mathf.FloorToInt(yPos);
+            
             return new Vector2Int(x, y);
         }
         
@@ -97,6 +103,10 @@ namespace Bag
             Vector2Int gridPos = GetGridFromPosition(localPos);
             int itemWidth = item.CurrentWidth;
             int itemHeight = item.CurrentHeight;
+            
+            // 确保在边界内
+            gridPos.x = Mathf.Clamp(gridPos.x, 0, width - itemWidth);
+            gridPos.y = Mathf.Clamp(gridPos.y, 0, height - itemHeight);
             
             // 检查是否可以放置（只允许放在空格子上）
             bool canPlace = CanPlace(gridPos.x, gridPos.y, itemWidth, itemHeight);

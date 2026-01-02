@@ -153,8 +153,8 @@ namespace Bag
                 // 平滑过渡到吸附位置
                 rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, snappedPos, 0.3f);
                 
-                // 更新预览
-                grid.ShowPlacementPreview(itemInstance, rect.anchoredPosition);
+                // 更新预览 - 使用鼠标实际位置，而不是物品当前位置，确保判定准确
+                grid.ShowPlacementPreview(itemInstance, mousePos);
             }
             else
             {
@@ -196,17 +196,31 @@ namespace Bag
             
             if (targetGrid != null)
             {
-                Vector2Int targetPos = targetGrid.GetGridFromPosition(rect.anchoredPosition);
-                
-                // 确保在边界内
-                targetPos.x = Mathf.Clamp(targetPos.x, 0, targetGrid.width - itemInstance.CurrentWidth);
-                targetPos.y = Mathf.Clamp(targetPos.y, 0, targetGrid.height - itemInstance.CurrentHeight);
-                
-                // 尝试放置
-                if (InventoryManager.Instance.TryPlace(itemInstance, targetPos.x, targetPos.y, targetGrid))
+                // 使用鼠标位置而不是物品当前位置来计算最终放置位置
+                // 这样可以确保与预览高亮区一致
+                Vector2 mousePos;
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    rect.parent as RectTransform,
+                    eventData.position,
+                    eventData.pressEventCamera,
+                    out mousePos))
                 {
-                    SnapToGrid(targetGrid, targetPos);
-                    return;
+                    // 应用偏移
+                    mousePos += dragOffset;
+                    
+                    // 获取基于鼠标位置的网格坐标
+                    Vector2Int targetPos = targetGrid.GetGridFromPosition(mousePos);
+                    
+                    // 确保在边界内
+                    targetPos.x = Mathf.Clamp(targetPos.x, 0, targetGrid.width - itemInstance.CurrentWidth);
+                    targetPos.y = Mathf.Clamp(targetPos.y, 0, targetGrid.height - itemInstance.CurrentHeight);
+                    
+                    // 尝试放置
+                    if (InventoryManager.Instance.TryPlace(itemInstance, targetPos.x, targetPos.y, targetGrid))
+                    {
+                        SnapToGrid(targetGrid, targetPos);
+                        return;
+                    }
                 }
             }
 
