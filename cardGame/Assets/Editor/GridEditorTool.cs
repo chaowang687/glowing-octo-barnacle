@@ -4,6 +4,10 @@ using UnityEditor;
 [CustomEditor(typeof(GridManager))] // 关联你的 GridManager 脚本
 public class GridEditorTool : Editor 
 {
+    // 可配置的生成参数
+    private int generateWidth = 4;
+    private int generateHeight = 5;
+    
     public override void OnInspectorGUI() 
     {
         // 绘制默认的 Inspector 内容
@@ -13,16 +17,41 @@ public class GridEditorTool : Editor
 
         GUILayout.Space(10);
         GUILayout.Label("编辑器生成工具", EditorStyles.boldLabel);
+        
+        // 可配置的生成参数
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("地块宽度:", GUILayout.Width(80));
+        generateWidth = EditorGUILayout.IntField(generateWidth, GUILayout.Width(60));
+        GUILayout.Label("地块高度:", GUILayout.Width(80));
+        generateHeight = EditorGUILayout.IntField(generateHeight, GUILayout.Width(60));
+        GUILayout.EndHorizontal();
+        
+        // 限制最小值
+        generateWidth = Mathf.Max(1, generateWidth);
+        generateHeight = Mathf.Max(1, generateHeight);
 
-        if (GUILayout.Button("生成 4x5 测试地块")) 
+        GUILayout.Space(5);
+        
+        if (GUILayout.Button($"生成 {generateWidth}x{generateHeight} 地块")) 
         {
-            GenerateStaticGrid(manager, 4, 5);
+            GenerateStaticGrid(manager, generateWidth, generateHeight);
         }
 
         if (GUILayout.Button("清除所有地块")) 
         {
             ClearGrid(manager);
         }
+        
+        GUILayout.Space(10);
+        
+        // 快速生成预设尺寸
+        GUILayout.Label("快速生成预设:", EditorStyles.miniBoldLabel);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("3x3")) GenerateStaticGrid(manager, 3, 3);
+        if (GUILayout.Button("4x5")) GenerateStaticGrid(manager, 4, 5);
+        if (GUILayout.Button("5x5")) GenerateStaticGrid(manager, 5, 5);
+        if (GUILayout.Button("6x8")) GenerateStaticGrid(manager, 6, 8);
+        GUILayout.EndHorizontal();
     }
 
     private void GenerateStaticGrid(GridManager manager, int w, int h) 
