@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 namespace Bag
 {
@@ -15,9 +16,14 @@ namespace Bag
         public static InventoryManager Instance { get; private set; }
         
         /// <summary>
-        /// 当前背包内所有物品的列表，供存档系统使用
+        /// 静态数据资源引用
         /// </summary>
-        public List<ItemInstance> allItemsInBag = new List<ItemInstance>();
+        public InventorySO inventoryData; // 拖入你创建的静态资源文件
+        
+        /// <summary>
+        /// 只读属性，供外部访问背包内所有物品
+        /// </summary>
+        public List<ItemInstance> AllItemsInBag => inventoryData?.items ?? new List<ItemInstance>();
         
         [Header("引用设置")]
         public GameObject itemPrefab; // 物品预制体
@@ -46,11 +52,78 @@ namespace Bag
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                Debug.Log("InventoryManager: Awake - 初始化单例");
             }
             else
             {
                 Destroy(gameObject);
             }
+        }
+        
+        private void Start()
+        {
+            Debug.Log("InventoryManager: Start - 开始初始化");
+            
+            // 尝试初始化CurrentGrid和itemContainer
+            if (CurrentGrid == null)
+            {
+                CurrentGrid = FindObjectOfType<InventoryGrid>();
+                Debug.Log($"InventoryManager: Start - 尝试查找CurrentGrid: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
+            }
+            
+            if (itemContainer == null && CurrentGrid != null)
+            {
+                itemContainer = CurrentGrid.transform;
+                Debug.Log($"InventoryManager: Start - 设置itemContainer为CurrentGrid.transform: {itemContainer.name}");
+            }
+            
+            // 检查必要引用
+            CheckRequiredReferences();
+        }
+        
+        private void CheckRequiredReferences()
+        {
+            Debug.Log("InventoryManager: CheckRequiredReferences - 检查必要引用");
+            
+            if (inventoryData == null)
+            {
+                Debug.LogWarning("InventoryManager: inventoryData未赋值！请在Inspector中设置InventorySO资源");
+                
+                // 尝试创建默认的InventorySO（仅用于调试，实际项目中应在Inspector中设置）
+                inventoryData = ScriptableObject.CreateInstance<InventorySO>();
+                Debug.Log("InventoryManager: 已创建默认的InventorySO实例");
+            }
+            
+            if (itemPrefab == null)
+            {
+                Debug.LogError("InventoryManager: itemPrefab未赋值！请在Inspector中设置物品预制体");
+            }
+            
+            if (CurrentGrid == null)
+            {
+                Debug.LogWarning("InventoryManager: CurrentGrid未赋值！请确保场景中有InventoryGrid组件");
+            }
+            
+            if (itemContainer == null)
+            {
+                Debug.LogWarning("InventoryManager: itemContainer未赋值！请确保场景中有正确的容器对象");
+            }
+        }
+        
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+        
+        private void OnDestroy()
+        {
+            // 取消订阅场景加载事件
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
         
         /// <summary>
@@ -307,13 +380,24 @@ namespace Bag
         /// <param name="item">物品实例</param>
         public void AddItemToBag(ItemInstance item)
         {
-            if (item == null) return;
+            Debug.Log($"AddItemToBag: 尝试添加物品: {item.data?.itemName}");
             
-            if (!allItemsInBag.Contains(item)) 
+            if (item == null)
             {
-                allItemsInBag.Add(item);
-                OnItemChanged?.Invoke(item, true);
+                Debug.LogError("AddItemToBag: 物品实例为null");
+                return;
             }
+            
+            if (inventoryData == null)
+            {
+                Debug.LogError("AddItemToBag: inventoryData为null");
+                return;
+            }
+            
+            inventoryData.AddItem(item); // 获得即更新
+            Debug.Log($"AddItemToBag: 物品 {item.data?.itemName} 已添加到inventoryData，当前物品数量: {inventoryData.items.Count}");
+            
+            OnItemChanged?.Invoke(item, true);
         }
         
         /// <summary>
@@ -322,9 +406,9 @@ namespace Bag
         /// <param name="item">物品实例</param>
         public void RemoveFromTracker(ItemInstance item)
         {
-            if (item == null || !allItemsInBag.Contains(item)) return;
+            if (item == null || inventoryData == null) return;
             
-            allItemsInBag.Remove(item);
+            inventoryData.RemoveItem(item); // 丢弃即更新
             OnItemChanged?.Invoke(item, false);
         }
         
@@ -333,10 +417,12 @@ namespace Bag
         /// </summary>
         public void SaveInventory()
         {
+            if (inventoryData == null) return;
+            
             InventorySaveData saveData = new InventorySaveData();
             
             // 收集所有物品数据
-            foreach (var item in allItemsInBag) 
+            foreach (var item in inventoryData.items) 
             {
                 saveData.items.Add(new ItemSaveEntry {
                     itemID = item.data.itemName, // 或者使用唯一的 GUID
@@ -367,7 +453,7 @@ namespace Bag
         /// <param name="grid">目标网格</param>
         public void LoadInventory(InventoryGrid grid)
         {
-            if (grid == null || itemPrefab == null) return;
+            if (grid == null || itemPrefab == null || inventoryData == null) return;
             
             string savePath = System.IO.Path.Combine(Application.persistentDataPath, "inventory.json");
             if (!System.IO.File.Exists(savePath)) return;
@@ -379,6 +465,9 @@ namespace Bag
 
                 // 清空现有物品
                 ClearInventory(grid);
+                
+                // 清空静态数据
+                inventoryData.Clear();
                 
                 // 加载物品
                 foreach (var entry in saveData.items)
@@ -399,7 +488,7 @@ namespace Bag
                     };
 
                     // 3. 实例化 UI 并对齐
-                    GameObject go = Instantiate(itemPrefab, grid.transform);
+                    GameObject go = Instantiate(itemPrefab, itemContainer);
                     ItemUI ui = go.GetComponent<ItemUI>();
                     if (ui != null)
                     {
@@ -409,7 +498,7 @@ namespace Bag
                         ui.SnapToGrid(grid, new Vector2Int(entry.posX, entry.posY)); // 视觉对齐
                         
                         // 添加到物品列表
-                        allItemsInBag.Add(newItem);
+                        AddItemToBag(newItem);
                     }
                     else
                     {
@@ -429,26 +518,37 @@ namespace Bag
         /// </summary>
         /// <param name="savedData">物品实例列表</param>
         /// <param name="mainGrid">目标网格</param>
-        /// <param name="gridTransform">网格变换</param>
+        /// <param name="gridTransform">网格变换（已废弃，所有物品将放在ItemContainer中）</param>
         public void LoadInventory(List<ItemInstance> savedData, InventoryGrid mainGrid, Transform gridTransform) 
         {
-            if (savedData == null || mainGrid == null || gridTransform == null || itemPrefab == null) return;
+            if (savedData == null || mainGrid == null || itemPrefab == null || inventoryData == null) return;
+            
+            // 确保itemContainer有效
+            if (itemContainer == null)
+            {
+                itemContainer = mainGrid.transform;
+            }
             
             // 清空现有物品
             ClearInventory(mainGrid);
             
+            // 清空静态数据
+            inventoryData.Clear();
+            
             // 加载物品
             foreach(var data in savedData) 
             {
-                GameObject go = Instantiate(itemPrefab, gridTransform);
+                GameObject go = Instantiate(itemPrefab, itemContainer);
                 ItemUI ui = go.GetComponent<ItemUI>();
                 if (ui != null)
                 {
                     ui.itemInstance = data;
-                    ui.SnapToGrid(mainGrid, new Vector2Int(data.posX, data.posY));
+                    ui.Initialize(data, mainGrid.cellSize); // 初始化UI
+                    mainGrid.PlaceItem(data, data.posX, data.posY); // 注册到网格数组
+                    ui.SnapToGrid(mainGrid, new Vector2Int(data.posX, data.posY)); // 视觉对齐
                     
                     // 添加到物品列表
-                    allItemsInBag.Add(data);
+                    AddItemToBag(data);
                 }
                 else
                 {
@@ -462,12 +562,15 @@ namespace Bag
         /// 清空背包
         /// </summary>
         /// <param name="grid">目标网格</param>
-        private void ClearInventory(InventoryGrid grid)
+        public void ClearInventory(InventoryGrid grid)
         {
             if (grid == null) return;
             
             // 清空物品列表
-            allItemsInBag.Clear();
+            if (inventoryData != null)
+            {
+                inventoryData.Clear();
+            }
             
             // 清空网格数据
             grid.ClearGrid();
@@ -477,6 +580,117 @@ namespace Bag
             foreach (ItemUI itemUI in allItems)
             {
                 Destroy(itemUI.gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// 场景加载时调用
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // 尝试查找CurrentGrid
+            CurrentGrid = FindObjectOfType<InventoryGrid>();
+            
+            // 寻找新场景中的容器
+            if (CurrentGrid != null)
+            {
+                itemContainer = CurrentGrid.transform;
+                Debug.Log($"找到CurrentGrid，设置itemContainer为: {itemContainer.name}");
+            }
+            else
+            {
+                Debug.LogWarning("OnSceneLoaded: 没有找到CurrentGrid");
+                
+                // 尝试直接查找itemContainer
+                InventoryManager[] managers = FindObjectsOfType<InventoryManager>();
+                if (managers.Length > 0 && managers[0] != this)
+                {
+                    // 如果有其他InventoryManager实例，使用它的itemContainer
+                    itemContainer = managers[0].itemContainer;
+                    Debug.Log($"使用其他InventoryManager的itemContainer: {itemContainer?.name}");
+                }
+            }
+            
+            // 容器找回后，再执行物品加载
+            if (itemContainer != null)
+            {
+                Debug.Log("OnSceneLoaded: 调用RefreshItemsInContainer");
+                RefreshItemsInContainer();
+            }
+            else
+            {
+                Debug.LogWarning("OnSceneLoaded: itemContainer为null，无法刷新物品");
+            }
+        }
+        
+        /// <summary>
+        /// 刷新容器中的物品UI
+        /// </summary>
+        private void RefreshItemsInContainer()
+        {
+            Debug.Log($"RefreshItemsInContainer: 开始执行");
+            Debug.Log($"RefreshItemsInContainer: itemContainer={itemContainer?.name}, CurrentGrid={CurrentGrid?.name}, itemPrefab={itemPrefab?.name}");
+            
+            if (itemContainer == null || CurrentGrid == null || itemPrefab == null)
+            {
+                Debug.LogError("RefreshItemsInContainer: 缺少必要的引用，无法刷新物品");
+                return;
+            }
+            
+            // 1. 先清理容器（防止叠加）
+            Debug.Log($"RefreshItemsInContainer: 清理容器 {itemContainer.name} 中的物品UI");
+            int clearedCount = 0;
+            foreach (Transform child in itemContainer)
+            {
+                // 确保只删除物品 UI，不删背景图等
+                if (child.GetComponent<ItemUI>() != null)
+                {
+                    Destroy(child.gameObject);
+                    clearedCount++;
+                }
+            }
+            Debug.Log($"RefreshItemsInContainer: 已清理 {clearedCount} 个物品UI");
+
+            // 2. 从 NewInventorySO 加载
+            if (inventoryData != null)
+            {
+                Debug.Log($"RefreshItemsInContainer: 使用inventoryData加载物品，物品数量: {inventoryData.items.Count}");
+                int loadedCount = 0;
+                foreach (var item in inventoryData.items)
+                {
+                    Debug.Log($"RefreshItemsInContainer: 加载物品: {item.data?.itemName}, 位置: ({item.posX}, {item.posY})");
+                    
+                    // 关键：Instantiate 的第二个参数必须是 itemContainer
+                    GameObject go = Instantiate(itemPrefab, itemContainer);
+                    loadedCount++;
+                    
+                    ItemUI ui = go.GetComponent<ItemUI>();
+                    
+                    if (ui != null)
+                    {
+                        ui.itemInstance = item;
+                        ui.Initialize(item, CurrentGrid.cellSize);
+                        
+                        // 将坐标对齐到网格，并确保逻辑层也占位
+                        CurrentGrid.PlaceItem(item, item.posX, item.posY);
+                        ui.SnapToGrid(CurrentGrid, new Vector2Int(item.posX, item.posY));
+                        
+                        // 确保缩放正确 (UI 常见问题)
+                        go.GetComponent<RectTransform>().localScale = Vector3.one;
+                        
+                        Debug.Log($"RefreshItemsInContainer: 物品 {item.data?.itemName} 加载成功");
+                    }
+                    else
+                    {
+                        Debug.LogError($"RefreshItemsInContainer: 无法获取ItemUI组件");
+                        Destroy(go);
+                    }
+                }
+                Debug.Log($"RefreshItemsInContainer: 已加载 {loadedCount} 个物品");
+            }
+            else
+            {
+                Debug.LogWarning("RefreshItemsInContainer: inventoryData为null，无法加载物品");
             }
         }
         

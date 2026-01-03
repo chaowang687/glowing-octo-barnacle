@@ -112,6 +112,7 @@
     <Compile Include="Assets/Map/逻辑层/SaveLoadManager.cs" />
     <Compile Include="Assets/Map/数据层/PlayerDeck.cs" />
     <Compile Include="Assets/Map/数据层/LevelDesignSO.cs" />
+    <Compile Include="Assets/Bag/InventorySO.cs" />
     <Compile Include="Assets/Map/数据层/MapNodeDataSO.cs" />
     <Compile Include="Assets/CS4/WorldEditorHelper.cs" />
     <Compile Include="Assets/CS/CardSystem/Enums.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="Assets/CS/Managers/BattleUIManager.cs" />
     <Compile Include="Assets/CS/对战AI/Entities（结果）/CharacterBase.cs" />
     <Compile Include="Assets/CS3/DiceManager.cs" />
+    <Compile Include="Assets/Dig/DigUIManager.cs" />
     <Compile Include="Assets/Map/逻辑层/PlayerStateManager.cs" />
     <Compile Include="Assets/CS/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />

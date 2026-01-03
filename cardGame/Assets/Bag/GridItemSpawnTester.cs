@@ -143,8 +143,8 @@ public class GridItemSpawnTester : MonoBehaviour
             }
         }
         
-        // 清空列表
-        InventoryManager.Instance.allItemsInBag.Clear();
+        // 清空列表（使用InventoryManager的方法）
+        InventoryManager.Instance.ClearInventory(InventoryManager.Instance.CurrentGrid);
         
         // 清空网格数据（使用直接调用，而非反射）
         if (InventoryManager.Instance.CurrentGrid != null)
@@ -163,10 +163,10 @@ public class GridItemSpawnTester : MonoBehaviour
         if (InventoryManager.Instance == null) return;
         
         Debug.Log("=== 背包调试信息 ===");
-        Debug.Log($"物品数量: {InventoryManager.Instance.allItemsInBag.Count}");
+        Debug.Log($"物品数量: {InventoryManager.Instance.AllItemsInBag.Count}");
         
         // 显示每个物品的信息
-        foreach (ItemInstance item in InventoryManager.Instance.allItemsInBag)
+        foreach (ItemInstance item in InventoryManager.Instance.AllItemsInBag)
         {
             if (item != null && item.data != null)
             {
@@ -224,7 +224,7 @@ public class GridItemSpawnTester : MonoBehaviour
         
         GUILayout.Space(10);
         GUILayout.Label("当前物品:");
-        GUILayout.Label($"数量: {InventoryManager.Instance?.allItemsInBag.Count}");
+        GUILayout.Label($"数量: {InventoryManager.Instance?.AllItemsInBag.Count}");
         
         GUILayout.EndScrollView();
         GUILayout.EndArea();

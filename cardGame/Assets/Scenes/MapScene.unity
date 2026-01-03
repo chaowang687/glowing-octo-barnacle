@@ -1156,6 +1156,7 @@ MonoBehaviour:
   unlockedNodeIds: []
   battleNodeId: 
   battleEncounterData: {fileID: 0}
+  digData: {fileID: 0}
 --- !u!4 &1614098298
 Transform:
   m_ObjectHideFlags: 0

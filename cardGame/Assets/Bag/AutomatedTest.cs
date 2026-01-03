@@ -113,14 +113,14 @@ public class AutomatedTest : MonoBehaviour
             }
         }
         spawnedItems.Clear();
-        InventoryManager.Instance.allItemsInBag.Clear();
+        InventoryManager.Instance.ClearInventory(InventoryManager.Instance.CurrentGrid);
         
         // 重新加载
         Debug.Log("加载存档...");
         InventoryManager.Instance.LoadInventory(InventoryManager.Instance.CurrentGrid);
         
         // 检查加载的物品数量
-        int loadedCount = InventoryManager.Instance.allItemsInBag.Count;
+        int loadedCount = InventoryManager.Instance.AllItemsInBag.Count;
         Debug.Log($"加载了 {loadedCount} 个物品");
         
         yield return new WaitForSeconds(testDelay);

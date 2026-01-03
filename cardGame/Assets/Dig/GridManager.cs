@@ -102,6 +102,18 @@ public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
             // 最后使用旧的矩形埋宝逻辑做测试
             PlantTreasures("Simple_Box_Fossil", 2, 2);
         }
+        
+        // 创建DigUIManager实例，用于管理UI
+        if (FindObjectOfType<DigUIManager>() == null) {
+            GameObject uiManagerObj = new GameObject("DigUIManager");
+            uiManagerObj.AddComponent<DigUIManager>();
+        }
+        
+        // 确保SceneTransitionManager实例存在
+        if (SlayTheSpireMap.SceneTransitionManager.Instance == null) {
+            GameObject transitionManagerObj = new GameObject("SceneTransitionManager");
+            transitionManagerObj.AddComponent<SlayTheSpireMap.SceneTransitionManager>();
+        }
     }
 
     // 1. 生成关卡基础地块

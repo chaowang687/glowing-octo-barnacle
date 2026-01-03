@@ -44,7 +44,10 @@ namespace Bag
         /// </summary>
         public void ClearPreview() 
         {
-            ghostPreview?.gameObject.SetActive(false);
+            if (ghostPreview != null)
+            {
+                ghostPreview.gameObject.SetActive(false);
+            }
         }
         
         /// <summary>
@@ -98,7 +101,7 @@ namespace Bag
         /// <param name="localPos">本地坐标</param>
         public void ShowPlacementPreview(ItemInstance item, Vector2 localPos) 
         {
-            if (item == null || ghostPreview == null) return;
+            if (item == null) return;
             
             Vector2Int gridPos = GetGridFromPosition(localPos);
             int itemWidth = item.CurrentWidth;

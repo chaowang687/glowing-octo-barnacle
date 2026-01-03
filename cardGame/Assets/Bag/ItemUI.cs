@@ -218,6 +218,11 @@ namespace Bag
                     // 尝试放置
                     if (InventoryManager.Instance.TryPlace(itemInstance, targetPos.x, targetPos.y, targetGrid))
                     {
+                        // 确保物品UI的父对象是正确的ItemContainer
+                        if (transform.parent != InventoryManager.Instance.itemContainer)
+                        {
+                            transform.SetParent(InventoryManager.Instance.itemContainer);
+                        }
                         SnapToGrid(targetGrid, targetPos);
                         return;
                     }
@@ -227,11 +232,17 @@ namespace Bag
             // 放置失败，返回原位置
             if (originalGrid != null)
             {
+                // 确保物品UI的父对象是正确的ItemContainer
+                if (transform.parent != InventoryManager.Instance.itemContainer)
+                {
+                    transform.SetParent(InventoryManager.Instance.itemContainer);
+                }
+                
                 if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
                 {
                     originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
                     SnapToGrid(originalGrid, originalPos);
-                    InventoryManager.Instance.allItemsInBag.Add(itemInstance);
+                    InventoryManager.Instance.AddItemToBag(itemInstance);
                 }
                 else
                 {
@@ -265,9 +276,15 @@ namespace Bag
                 {
                     if (grid.CanPlace(x, y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
                     {
+                        // 确保物品UI的父对象是正确的ItemContainer
+                        if (transform.parent != InventoryManager.Instance.itemContainer)
+                        {
+                            transform.SetParent(InventoryManager.Instance.itemContainer);
+                        }
+                        
                         grid.PlaceItem(itemInstance, x, y);
                         SnapToGrid(grid, new Vector2Int(x, y));
-                        InventoryManager.Instance.allItemsInBag.Add(itemInstance);
+                        InventoryManager.Instance.AddItemToBag(itemInstance);
                         return true;
                     }
                 }
