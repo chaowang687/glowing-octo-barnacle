@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Bag
 {
@@ -10,6 +11,10 @@ public class ItemData : ScriptableObject {
     public Sprite icon;
     // 异形物品可以使用 bool[,] shape 数组定义
     public GameObject worldPrefab;
+    
+    [Header("效果配置")]
+    [Tooltip("支持实现 IItemEffect 接口的 ScriptableObject")]
+    public List<ScriptableObject> effects;
 
 } 
 

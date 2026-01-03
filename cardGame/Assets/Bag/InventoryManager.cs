@@ -771,5 +771,28 @@ namespace Bag
             
             return null;
         }
+        
+        /// <summary>
+        /// 触发回合开始遗物效果
+        /// </summary>
+        public void TriggerTurnStartRelics()
+        {
+            // 遍历背包中所有物品实例
+            foreach (var itemInstance in AllItemsInBag)
+            {
+                if (itemInstance.data == null || itemInstance.data.effects == null)
+                    continue;
+                
+                // 遍历物品的所有效果
+                foreach (var effectSO in itemInstance.data.effects)
+                {
+                    // 检查该效果是否实现了IItemEffect接口
+                    if (effectSO is IItemEffect effect)
+                    {
+                        effect.OnTurnStart();
+                    }
+                }
+            }
+        }
     }
 }

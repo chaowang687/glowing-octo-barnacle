@@ -77,6 +77,7 @@
     <Compile Include="Assets/CS2/宝箱搜刮/UI_ChestLootWindow.cs" />
     <Compile Include="Assets/Map/工具类/MapScrollController.cs" />
     <Compile Include="Assets/CS/动画控制/GameFlowManager.cs" />
+    <Compile Include="Assets/Bag/EnergyOnTurnStartEffect.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
     <Compile Include="Assets/Bag/ItemUI.cs" />
@@ -166,6 +167,7 @@
     <Compile Include="Assets/Map/表现层/MapNode.cs" />
     <Compile Include="Assets/CS/CardSystem/CardDisplay.cs" />
     <Compile Include="Assets/CS3/PlayerRunner.cs" />
+    <Compile Include="Assets/Bag/IItemEffect.cs" />
     <Compile Include="Assets/CS2/测试工具/LootDataDebugger.cs" />
     <Compile Include="Assets/CS/对战AI/使用说明.cs" />
     <Compile Include="Assets/Bag/TrashCanSlot.cs" />

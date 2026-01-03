@@ -492,7 +492,36 @@ public void RefreshAllMapNodesUI()
                 
                 if (target != null)
                 {
-                    Debug.Log($"[MapManager] Current recorded node is: {target.nodeId} (Completed: {target.isCompleted})");
+                    Debug.Log($"[MapManager] Current recorded node is: {target.nodeId} (Completed: {target.isCompleted}, Type: {target.nodeType})");
+                    
+                    // 从dig场景返回时，自动标记dig节点为已完成
+                    if (target.nodeType == NodeType.Dig && !target.isCompleted)
+                    {
+                        Debug.Log($"[MapManager] Marking Dig node {target.nodeId} as completed...");
+                        
+                        // 标记节点为已完成
+                        target.isCompleted = true;
+                        OnNodeStatusChanged?.Invoke(target);
+                        
+                        // 保存到GameDataManager
+                        if (GameDataManager.Instance != null)
+                        {
+                            GameDataManager.Instance.CompleteNode(target.nodeId);
+                            
+                            // 解锁连接的节点
+                            foreach (var nextNode in target.connectedNodes)
+                            {
+                                if (nextNode != null)
+                                {
+                                    nextNode.isUnlocked = true;
+                                    OnNodeStatusChanged?.Invoke(nextNode);
+                                    GameDataManager.Instance.UnlockNode(nextNode.nodeId);
+                                }
+                            }
+                            
+                            GameDataManager.Instance.SaveGameData();
+                        }
+                    }
                     
                     // 自动推进逻辑
                     if (target.isCompleted)
