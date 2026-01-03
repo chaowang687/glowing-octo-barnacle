@@ -20,7 +20,7 @@ MonoBehaviour:
     spawnChance: 0
     maxPerScene: 2
     allowRotation: 0
-  - fossilData: {fileID: 11400000, guid: be3f314ac48cb4276b665b3fbe3a8b32, type: 2}
+  - fossilData: {fileID: 11400000, guid: 9efa414db1e9343fa943ce85c3acf79e, type: 2}
     fossilDataPath: 
     spawnChance: 0
     maxPerScene: 2

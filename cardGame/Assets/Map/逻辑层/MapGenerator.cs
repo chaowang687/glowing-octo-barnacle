@@ -272,14 +272,15 @@ namespace SlayTheSpireMap
                 MapNodeData node = new MapNodeData();
                 
                 // --- 同步基础属性 ---
-                node.nodeId = $"node_{i}";
+                node.nodeId = $"node_{nodePos.layerIndex}_{i}";
                 node.encounterData = nodePos.presetEncounter;
                 node.nodeName = GetNodeName(i, nodePos);
                 node.nodeType = nodePos.nodeType;
                 node.isElite = nodePos.isElite;
                 node.isBoss = nodePos.isBoss;
                 node.isStartNode = nodePos.isStartNode;
-                node.position = nodePos.position; 
+                node.position = nodePos.position;
+                node.layerIndex = nodePos.layerIndex; // 设置节点层级
 
                 // --- 确保每一关的配置被正确塞入实例 ---
                 if (node.nodeType == NodeType.Dig)
@@ -309,7 +310,7 @@ namespace SlayTheSpireMap
                 else
                 {
                     // 如果手动模式没配，则尝试从池中随机生成（兼容混合模式）
-                    node.encounterData = GetRandomEncounterFromPool(node.nodeType, 0, layout);
+                    node.encounterData = GetRandomEncounterFromPool(node.nodeType, node.layerIndex, layout);
                     if (node.encounterData == null)
                     {
                         node.encounterData = CreateSimpleEncounter(node);
@@ -319,8 +320,8 @@ namespace SlayTheSpireMap
                 nodesResult.Add(node);
             }
             
-            // 2. 连接节点
-            LinkDataNodes(nodesResult, layout);
+            // 2. 连接节点 - 基于层级的连接
+            LinkDataNodesByLayer(nodesResult, layout);
             
             // 3. 解锁逻辑
             foreach (var node in nodesResult)
@@ -479,6 +480,83 @@ namespace SlayTheSpireMap
                 if (current.connectedNodes.Count == 0 && i < nodes.Count - 1)
                 {
                     current.AddConnectedNode(nodes[i + 1]);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 基于层级的节点连接逻辑
+        /// </summary>
+        private void LinkDataNodesByLayer(List<MapNodeData> nodes, MapLayoutSO layout)
+        {
+            // 按层级分组
+            var nodesByLayer = new Dictionary<int, List<MapNodeData>>();
+            foreach (var node in nodes)
+            {
+                if (!nodesByLayer.ContainsKey(node.layerIndex))
+                {
+                    nodesByLayer[node.layerIndex] = new List<MapNodeData>();
+                }
+                nodesByLayer[node.layerIndex].Add(node);
+            }
+            
+            // 获取所有层级并排序
+            var layers = new List<int>(nodesByLayer.Keys);
+            layers.Sort();
+            
+            // 遍历每个层级，将当前层级的节点连接到下一层级的节点
+            for (int i = 0; i < layers.Count - 1; i++)
+            {
+                int currentLayer = layers[i];
+                int nextLayer = layers[i + 1];
+                
+                var currentLayerNodes = nodesByLayer[currentLayer];
+                var nextLayerNodes = nodesByLayer[nextLayer];
+                
+                // 为当前层级的每个节点连接到下一层级的节点
+                foreach (var currentNode in currentLayerNodes)
+                {
+                    // 找到下一层级中距离最近的几个节点
+                    List<MapNodeData> closestNodes = new List<MapNodeData>();
+                    
+                    // 计算当前节点到下一层级所有节点的距离
+                    var distances = new List<(float distance, MapNodeData node)>();
+                    foreach (var nextNode in nextLayerNodes)
+                    {
+                        float distance = Vector2.Distance(currentNode.position, nextNode.position);
+                        distances.Add((distance, nextNode));
+                    }
+                    
+                    // 按距离排序
+                    distances.Sort((a, b) => a.distance.CompareTo(b.distance));
+                    
+                    // 取最近的节点
+                    int maxConnections = Mathf.Min(layout.maxConnections, nextLayerNodes.Count);
+                    for (int j = 0; j < maxConnections; j++)
+                    {
+                        if (j < distances.Count)
+                        {
+                            closestNodes.Add(distances[j].node);
+                        }
+                    }
+                    
+                    // 确定实际连接数量
+                    int minConn = Mathf.Max(1, layout.minConnections);
+                    int targetConnections = Random.Range(minConn, maxConnections + 1);
+                    
+                    // 随机选择连接
+                    for (int j = 0; j < targetConnections && closestNodes.Count > 0; j++)
+                    {
+                        int randomIndex = Random.Range(0, closestNodes.Count);
+                        currentNode.AddConnectedNode(closestNodes[randomIndex]);
+                        closestNodes.RemoveAt(randomIndex);
+                    }
+                    
+                    // 确保至少连接一个
+                    if (currentNode.connectedNodes.Count == 0 && nextLayerNodes.Count > 0)
+                    {
+                        currentNode.AddConnectedNode(nextLayerNodes[0]);
+                    }
                 }
             }
         }

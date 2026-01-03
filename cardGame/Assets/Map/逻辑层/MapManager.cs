@@ -508,7 +508,19 @@ public void RefreshAllMapNodesUI()
                         {
                             GameDataManager.Instance.CompleteNode(target.nodeId);
                             
-                            // 解锁连接的节点
+                            // 层级推进逻辑：标记当前层级的所有节点为已完成，不可再选
+                            int currentLayer = target.layerIndex;
+                            foreach (var node in allNodes)
+                            {
+                                if (node.layerIndex == currentLayer && !node.isCompleted)
+                                {
+                                    node.isCompleted = true;
+                                    GameDataManager.Instance.CompleteNode(node.nodeId);
+                                    OnNodeStatusChanged?.Invoke(node);
+                                }
+                            }
+                            
+                            // 解锁下一层级的节点
                             foreach (var nextNode in target.connectedNodes)
                             {
                                 if (nextNode != null)
@@ -547,7 +559,39 @@ public void RefreshAllMapNodesUI()
                 }
                 else
                 {
-                    Debug.LogError($"[MapManager] Could not find node with ID: {GameDataManager.Instance.currentNodeId}");
+                    Debug.LogWarning($"[MapManager] Could not find node with ID: {GameDataManager.Instance.currentNodeId}, trying to find alternative...");
+                    
+                    // 尝试找到已解锁的节点作为替代
+                    target = allNodes.FirstOrDefault(n => n.isUnlocked && !n.isCompleted);
+                    
+                    if (target != null)
+                    {
+                        Debug.Log($"[MapManager] Found alternative node: {target.nodeId}");
+                        currentNode = target;
+                        GameDataManager.Instance.currentNodeId = target.nodeId;
+                        OnCurrentNodeChanged?.Invoke(currentNode);
+                    }
+                    else
+                    {
+                        // 尝试找到起始节点作为替代
+                        target = allNodes.FirstOrDefault(n => n.isStartNode);
+                        
+                        if (target != null)
+                        {
+                            Debug.Log($"[MapManager] Found start node as alternative: {target.nodeId}");
+                            currentNode = target;
+                            GameDataManager.Instance.currentNodeId = target.nodeId;
+                            OnCurrentNodeChanged?.Invoke(currentNode);
+                        }
+                        else if (allNodes.Length > 0)
+                        {
+                            // 最后尝试：选择第一个节点
+                            Debug.Log($"[MapManager] Using first node as alternative: {allNodes[0].nodeId}");
+                            currentNode = allNodes[0];
+                            GameDataManager.Instance.currentNodeId = allNodes[0].nodeId;
+                            OnCurrentNodeChanged?.Invoke(currentNode);
+                        }
+                    }
                 }
             }
         }
@@ -701,7 +745,17 @@ private void SaveToPlayerPrefs(PlayerStateManager playerState, MapNodeData curre
             // 1. 如果节点已完成，不可交互（已通过）
             if (GameDataManager.Instance.completedNodeIds.Contains(node.nodeId)) return false;
             
-            // 2. 根据完成记录判断前沿
+            // 2. 检查节点所属层级是否已完成
+            // 获取已完成节点的层级
+            var completedNodes = allNodes.Where(n => GameDataManager.Instance.completedNodeIds.Contains(n.nodeId)).ToList();
+            if (completedNodes.Count > 0)
+            {
+                int maxCompletedLayer = completedNodes.Max(n => n.layerIndex);
+                // 如果节点层级小于等于已完成的最大层级，不可交互
+                if (node.layerIndex <= maxCompletedLayer) return false;
+            }
+            
+            // 3. 根据完成记录判断前沿
             var completedIds = GameDataManager.Instance.completedNodeIds;
             
             if (completedIds.Count == 0)

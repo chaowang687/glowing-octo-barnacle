@@ -110,8 +110,14 @@ private void EnterActualNode(MapNodeData node, MapManager mapManager)
                 return targetNode == mapManager.currentNode;
             }
 
-            // 情况 C：当前节点已完成 -> 目标必须是当前节点的下游邻居
-            return mapManager.currentNode.connectedNodes.Contains(targetNode);
+            // 情况 C：当前节点已完成 -> 目标必须是当前节点的下游邻居，且层级正确
+            // 检查目标节点是否是当前节点的下游邻居
+            bool isConnected = mapManager.currentNode.connectedNodes.Contains(targetNode);
+            
+            // 检查层级：目标节点的层级必须比当前节点的层级大1
+            bool isNextLayer = targetNode.layerIndex == mapManager.currentNode.layerIndex + 1;
+            
+            return isConnected && isNextLayer;
         }
 
         /// <summary>

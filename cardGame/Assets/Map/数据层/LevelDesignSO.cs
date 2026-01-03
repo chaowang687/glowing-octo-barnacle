@@ -67,6 +67,7 @@ namespace SlayTheSpireMap
         public class ManualNodePosition
         {
             public Vector2 position;
+            public int layerIndex = 0; // 节点所属层级
             public NodeType nodeType = NodeType.Combat; // 手动指定的类型
             public bool isFixedType = false; // 是否固定此类型
             

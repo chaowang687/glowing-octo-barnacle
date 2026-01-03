@@ -293,7 +293,7 @@ MonoBehaviour:
   mapUI: {fileID: 1906893038}
   saveLoad: {fileID: 185313446}
   ui: {fileID: 0}
-  currentMapLayout: {fileID: 11400000, guid: 901c2f308e4fa4f8581e73244c905144, type: 2}
+  currentMapLayout: {fileID: 11400000, guid: f0c05e657d4b3461189074875703d47c, type: 2}
   lineRenderer: {fileID: 0}
 --- !u!4 &185313452
 Transform:
