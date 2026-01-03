@@ -715,6 +715,33 @@ namespace Bag
                 CarriedItem = targetUI;
             }
         }
+        
+        /// <summary>
+        /// 彻底丢弃物品：从网格逻辑、数据列表和场景中同步移除
+        /// </summary>
+        /// <param name="ui">要丢弃的物品UI</param>
+        public void DropItem(ItemUI ui)
+        {
+            if (ui == null || ui.itemInstance == null) return;
+
+            // 1. 从逻辑网格数组中清理占位（防止产生透明的阻塞块）
+            if (CurrentGrid != null)
+            {
+                CurrentGrid.RemoveItem(ui.itemInstance);
+            }
+
+            // 2. 从 InventorySO 数据资源中移除物品实例
+            RemoveFromTracker(ui.itemInstance);
+
+            // 3. 释放管理器的引用，防止悬空指针
+            if (CarriedItem == ui) CarriedItem = null;
+            if (SelectedItem == ui) SelectedItem = null;
+
+            // 4. 销毁场景中的物体
+            Destroy(ui.gameObject);
+            
+            Debug.Log($"物品 {ui.itemInstance.data?.itemName} 已被丢弃并销毁");
+        }
 
         /// <summary>
         /// 查找物品对应的UI组件

@@ -184,18 +184,17 @@ namespace Bag
             if (InventoryManager.Instance.CurrentGrid != null) 
                 InventoryManager.Instance.CurrentGrid.ClearPreview();
 
-            // 检查是否拖拽到UI外（丢弃物品）
-            if (!EventSystem.current.IsPointerOverGameObject())
-            {
-                DropIntoWorld();
-                return;
-            }
-
-            // 获取目标网格
+            // 使用射线检测判断鼠标下方是否有网格
             InventoryGrid targetGrid = GetGridUnderMouse(eventData);
-            
-            if (targetGrid != null)
+
+            if (targetGrid == null)
             {
+                // 情况 A：释放位置在网格外部 -> 丢弃
+                InventoryManager.Instance.DropItem(this);
+            }
+            else
+            {
+                // 情况 B：在网格内部 -> 执行原有的放置逻辑
                 // 使用鼠标位置而不是物品当前位置来计算最终放置位置
                 // 这样可以确保与预览高亮区一致
                 Vector2 mousePos;
@@ -227,38 +226,38 @@ namespace Bag
                         return;
                     }
                 }
-            }
 
-            // 放置失败，返回原位置
-            if (originalGrid != null)
-            {
-                // 确保物品UI的父对象是正确的ItemContainer
-                if (transform.parent != InventoryManager.Instance.itemContainer)
+                // 放置失败，返回原位置
+                if (originalGrid != null)
                 {
-                    transform.SetParent(InventoryManager.Instance.itemContainer);
-                }
-                
-                if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
-                {
-                    originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
-                    SnapToGrid(originalGrid, originalPos);
-                    InventoryManager.Instance.AddItemToBag(itemInstance);
+                    // 确保物品UI的父对象是正确的ItemContainer
+                    if (transform.parent != InventoryManager.Instance.itemContainer)
+                    {
+                        transform.SetParent(InventoryManager.Instance.itemContainer);
+                    }
+                    
+                    if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
+                    {
+                        originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
+                        SnapToGrid(originalGrid, originalPos);
+                        InventoryManager.Instance.AddItemToBag(itemInstance);
+                    }
+                    else
+                    {
+                        // 如果原位置已被占用，寻找最近的可放置位置
+                        bool foundPlace = FindAndPlaceNearestPosition(originalGrid);
+                        if (!foundPlace)
+                        {
+                            Debug.LogWarning("无法找到可放置位置，物品将被销毁");
+                            Destroy(gameObject);
+                        }
+                    }
                 }
                 else
                 {
-                    // 如果原位置已被占用，寻找最近的可放置位置
-                    bool foundPlace = FindAndPlaceNearestPosition(originalGrid);
-                    if (!foundPlace)
-                    {
-                        Debug.LogWarning("无法找到可放置位置，物品将被销毁");
-                        Destroy(gameObject);
-                    }
+                    // 如果物品是外部生成的且没有原始网格，销毁它
+                    Destroy(gameObject);
                 }
-            }
-            else
-            {
-                // 如果物品是外部生成的且没有原始网格，销毁它
-                Destroy(gameObject);
             }
         }
 
@@ -329,30 +328,17 @@ namespace Bag
         /// </summary>
         private InventoryGrid GetGridUnderMouse(PointerEventData eventData)
         {
-            // 1. 首先尝试从eventData获取
-            if (eventData != null && eventData.pointerEnter != null)
+            List<RaycastResult> results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, results);
+            
+            foreach (var res in results)
             {
-                return eventData.pointerEnter.GetComponentInParent<InventoryGrid>();
+                // 查找父级是否有 InventoryGrid 组件
+                var grid = res.gameObject.GetComponentInParent<InventoryGrid>();
+                if (grid != null) return grid;
             }
             
-            // 2. 使用射线检测获取
-            PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
-            pointerEventData.position = Input.mousePosition;
-            
-            List<RaycastResult> raycastResults = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pointerEventData, raycastResults);
-            
-            foreach (RaycastResult result in raycastResults)
-            {
-                InventoryGrid grid = result.gameObject.GetComponentInParent<InventoryGrid>();
-                if (grid != null)
-                {
-                    return grid;
-                }
-            }
-            
-            // 3. 最后使用全局网格作为备用
-            return InventoryManager.Instance.CurrentGrid;
+            return null;
         }
 
         /// <summary>
