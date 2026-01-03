@@ -7,11 +7,20 @@ namespace Bag
     {
         public int energyAmount = 1;
 
-        public void OnTurnStart()
+        public void OnTurnStart(object cardSystemObj)
         {
-            // 这里替换成你战斗系统中增加能量的方法
-            // 例如：BattleManager.Instance.AddEnergy(energyAmount);
-            Debug.Log($"<color=cyan>[遗物效果]</color> 回合开始，增加能量: {energyAmount}");
+            // 使用反射调用AddEnergy方法，避免命名空间冲突
+            if (cardSystemObj != null)
+            {
+                // 获取AddEnergy方法
+                System.Reflection.MethodInfo addEnergyMethod = cardSystemObj.GetType().GetMethod("AddEnergy");
+                if (addEnergyMethod != null)
+                {
+                    // 调用AddEnergy方法
+                    addEnergyMethod.Invoke(cardSystemObj, new object[] { energyAmount });
+                    Debug.Log($"<color=cyan>[遗物效果]</color> 回合开始，增加能量: {energyAmount}");
+                }
+            }
         }
     }
 }

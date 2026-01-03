@@ -9,6 +9,7 @@ using TMPro;
 using System; 
 using ScavengingGame;
 using SlayTheSpireMap;
+using Bag;
 
 public class BattleManager : MonoBehaviour
 {
@@ -370,6 +371,12 @@ private IEnumerator Start()
         cardSystem.ResetEnergy(); 
         DiscardHandDisplays(); 
         cardSystem.DiscardHand(); 
+        
+        // 触发背包中物品的回合开始效果（移到ResetEnergy之后）
+        if (Bag.InventoryManager.Instance != null)
+        {
+            Bag.InventoryManager.Instance.TriggerTurnStartRelics();
+        }
         
         // VITAL: DrawCards now handles the final turn lock release
         DrawCards(cardsToDraw); 

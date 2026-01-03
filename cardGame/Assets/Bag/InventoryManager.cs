@@ -777,11 +777,44 @@ namespace Bag
         /// </summary>
         public void TriggerTurnStartRelics()
         {
+            // 获取CardSystem实例（使用更高效的方式）
+            object cardSystem = null;
+            // 使用FindObjectOfType直接查找CardSystem组件，避免遍历所有GameObject
+            var cardSystemComponent = FindObjectOfType(typeof(UnityEngine.Component)) as UnityEngine.Component;
+            if (cardSystemComponent != null)
+            {
+                // 尝试直接获取CardSystem组件
+                cardSystem = cardSystemComponent.gameObject.GetComponent("CardSystem");
+            }
+            
+            // 如果直接获取失败，使用更可靠的方式
+            if (cardSystem == null)
+            {
+                // 获取所有GameObject
+                UnityEngine.Object[] allObjects = GameObject.FindObjectsOfType(typeof(GameObject));
+                foreach (UnityEngine.Object obj in allObjects)
+                {
+                    GameObject go = obj as GameObject;
+                    if (go != null)
+                    {
+                        var comp = go.GetComponent("CardSystem");
+                        if (comp != null)
+                        {
+                            cardSystem = comp;
+                            break;
+                        }
+                    }
+                }
+            }
+            
             // 遍历背包中所有物品实例
             foreach (var itemInstance in AllItemsInBag)
             {
                 if (itemInstance.data == null || itemInstance.data.effects == null)
                     continue;
+                
+                // 标记是否触发了效果
+                bool effectTriggered = false;
                 
                 // 遍历物品的所有效果
                 foreach (var effectSO in itemInstance.data.effects)
@@ -789,7 +822,18 @@ namespace Bag
                     // 检查该效果是否实现了IItemEffect接口
                     if (effectSO is IItemEffect effect)
                     {
-                        effect.OnTurnStart();
+                        effect.OnTurnStart(cardSystem);
+                        effectTriggered = true;
+                    }
+                }
+                
+                // 如果触发了效果，显示外发光动画
+                if (effectTriggered)
+                {
+                    ItemUI itemUI = FindUIForItem(itemInstance);
+                    if (itemUI != null)
+                    {
+                        itemUI.ShowGlow();
                     }
                 }
             }

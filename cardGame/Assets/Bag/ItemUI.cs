@@ -18,6 +18,7 @@ namespace Bag
         private RectTransform rect;
         private CanvasGroup canvasGroup;
         private Image iconImage;
+        private Image glowImage;
         private Canvas canvas;
         
         private InventoryGrid originalGrid;
@@ -54,6 +55,9 @@ namespace Bag
                     iconRect.pivot = new Vector2(0.5f, 0.5f);
                 }
             }
+            
+            // 创建外发光效果
+            CreateGlowEffect();
         }
 
         private void Start()
@@ -365,6 +369,20 @@ namespace Bag
             int currentHeight = itemInstance.CurrentHeight;
             rect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
             
+            // 更新外发光效果的大小
+            if (glowImage != null)
+            {
+                RectTransform glowRect = glowImage.rectTransform;
+                if (glowRect != null)
+                {
+                    // 确保发光效果与物品UI大小一致
+                    glowRect.anchorMin = Vector2.zero;
+                    glowRect.anchorMax = Vector2.one;
+                    glowRect.offsetMin = Vector2.zero;
+                    glowRect.offsetMax = Vector2.zero;
+                }
+            }
+            
             // 设置图标
             if (iconImage != null)
             {
@@ -474,6 +492,104 @@ namespace Bag
         }
         
         /// <summary>
+        /// 创建外发光效果
+        /// </summary>
+        private void CreateGlowEffect()
+        {
+            // 检查是否已经存在发光效果
+            Transform glowTransform = transform.Find("Glow");
+            if (glowTransform == null)
+            {
+                // 创建发光效果的Image对象
+                GameObject glowObj = new GameObject("Glow");
+                glowObj.transform.SetParent(transform);
+                
+                // 设置锚点，使其与父对象大小一致
+                RectTransform glowRect = glowObj.AddComponent<RectTransform>();
+                glowRect.anchorMin = Vector2.zero;
+                glowRect.anchorMax = Vector2.one;
+                glowRect.pivot = new Vector2(0.5f, 0.5f);
+                glowRect.offsetMin = Vector2.zero;
+                glowRect.offsetMax = Vector2.zero;
+                glowRect.localScale = Vector3.one;
+                glowRect.localEulerAngles = Vector3.zero;
+                
+                // 创建Image组件
+                glowImage = glowObj.AddComponent<Image>();
+                glowImage.color = new Color(1f, 1f, 0f, 0.5f); // 黄色发光效果，半透明
+                glowImage.type = Image.Type.Simple;
+                glowImage.raycastTarget = false; // 不接收射线检测
+                glowImage.preserveAspect = false; // 不保持宽高比，自适应父对象大小
+                
+                // 设置发光效果的层级，使其在图标后面
+                glowObj.transform.SetSiblingIndex(0);
+                
+                // 初始隐藏发光效果
+                HideGlow();
+            }
+            else
+            {
+                glowImage = glowTransform.GetComponent<Image>();
+                HideGlow();
+            }
+        }
+        
+        /// <summary>
+        /// 显示外发光效果
+        /// </summary>
+        public void ShowGlow()
+        {
+            if (glowImage != null)
+            {
+                glowImage.enabled = true;
+                
+                // 添加简单的闪烁动画
+                StartCoroutine(GlowAnimation());
+            }
+        }
+        
+        /// <summary>
+        /// 隐藏外发光效果
+        /// </summary>
+        public void HideGlow()
+        {
+            if (glowImage != null)
+            {
+                glowImage.enabled = false;
+            }
+        }
+        
+        /// <summary>
+        /// 外发光动画
+        /// </summary>
+        private System.Collections.IEnumerator GlowAnimation()
+        {
+            if (glowImage == null) yield break;
+            
+            // 闪烁3次
+            for (int i = 0; i < 3; i++)
+            {
+                // 渐亮
+                for (float alpha = 0.3f; alpha <= 0.7f; alpha += 0.1f)
+                {
+                    glowImage.color = new Color(1f, 1f, 0f, alpha);
+                    yield return new WaitForSeconds(0.1f);
+                }
+                
+                // 渐暗
+                for (float alpha = 0.7f; alpha >= 0.3f; alpha -= 0.1f)
+                {
+                    glowImage.color = new Color(1f, 1f, 0f, alpha);
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            
+            // 恢复初始状态
+            glowImage.color = new Color(1f, 1f, 0f, 0.5f);
+            glowImage.enabled = false;
+        }
+        
+        /// <summary>
         /// 执行视觉旋转（只处理数据和UI，不处理逻辑判断）
         /// </summary>
         public void DoVisualRotate() 
@@ -491,10 +607,24 @@ namespace Bag
             int h = itemInstance.CurrentHeight;
             
             rect.sizeDelta = new Vector2(w * cellSize, h * cellSize);
+            
+            // 更新外发光效果的大小
+            if (glowImage != null)
+            {
+                RectTransform glowRect = glowImage.rectTransform;
+                if (glowRect != null)
+                {
+                    // 确保发光效果与物品UI大小一致
+                    glowRect.anchorMin = Vector2.zero;
+                    glowRect.anchorMax = Vector2.one;
+                    glowRect.offsetMin = Vector2.zero;
+                    glowRect.offsetMax = Vector2.zero;
+                }
+            }
 
             // 图标处理
             if (iconImage != null) 
-            {
+            { 
                 RectTransform iconRect = iconImage.rectTransform;
                 // 旋转 -90度 或 0度
                 iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;

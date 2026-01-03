@@ -195,6 +195,17 @@ public class CardSystem : MonoBehaviour
         // ⭐ 触发事件 ⭐
         OnEnergyChanged?.Invoke();
     }
+    
+    /// <summary>
+    /// 增加能量
+    /// </summary>
+    public void AddEnergy(int amount)
+    {
+        CurrentEnergy += amount;
+        Debug.Log($"DEBUG: Energy increased by {amount}. Current Energy: {CurrentEnergy}");
+        // ⭐ 触发事件 ⭐
+        OnEnergyChanged?.Invoke();
+    }
 
     /// <summary>
     /// 抽卡逻辑 (CardData.cs 依赖的方法)。如果抽牌堆空了，则洗入弃牌堆。
