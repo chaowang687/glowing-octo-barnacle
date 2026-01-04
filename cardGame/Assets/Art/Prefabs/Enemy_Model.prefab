@@ -69,6 +69,7 @@ MonoBehaviour:
   _maxHp: 3
   _currentHp: 3
   _currentBlock: 3
+  damagePopupPrefab: {fileID: 0}
   enemyLevel: 1
   baseDamage: 10
   experienceReward: 50
@@ -126,6 +127,7 @@ MonoBehaviour:
   _maxHp: 0
   _currentHp: 0
   _currentBlock: 0
+  damagePopupPrefab: {fileID: 1640490329420138578, guid: dfc21d4b1e53242678f2787acb3c180d, type: 3}
 --- !u!114 &3619975311576030457
 MonoBehaviour:
   m_ObjectHideFlags: 0

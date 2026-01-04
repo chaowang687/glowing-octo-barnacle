@@ -44,7 +44,7 @@ MonoBehaviour:
   layoutName: 
   sceneToLoad: 
   nodePositions:
-  - position: {x: 0, y: 300}
+  - position: {x: 200, y: 0}
     layerIndex: 0
     nodeType: 0
     isFixedType: 0
@@ -52,7 +52,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 1
-  - position: {x: 0, y: 600}
+  - position: {x: 400, y: 0}
     layerIndex: 1
     nodeType: 6
     isFixedType: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 900}
+  - position: {x: 600, y: 0}
     layerIndex: 2
     nodeType: 0
     isFixedType: 0
@@ -68,7 +68,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 1200}
+  - position: {x: 800, y: 0}
     layerIndex: 3
     nodeType: 0
     isFixedType: 0
@@ -76,7 +76,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 1500}
+  - position: {x: 1000, y: 0}
     layerIndex: 4
     nodeType: 0
     isFixedType: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 1600}
+  - position: {x: 1200, y: 0}
     layerIndex: 5
     nodeType: 0
     isFixedType: 0
@@ -92,7 +92,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 0, y: 1900}
+  - position: {x: 1400, y: 0}
     layerIndex: 6
     nodeType: 0
     isFixedType: 0
@@ -100,7 +100,7 @@ MonoBehaviour:
     isBoss: 0
     isElite: 0
     isStartNode: 0
-  - position: {x: 200, y: 900}
+  - position: {x: 1600, y: 0}
     layerIndex: 7
     nodeType: 0
     isFixedType: 0

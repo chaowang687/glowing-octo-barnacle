@@ -40,6 +40,9 @@ public float scaleMultiplier = 0.3f; // 最终缩放比例
 // public Ease jumpEase = Ease.OutQuad; // 跳跃缓动曲线
 public Ease flyEase = Ease.InQuad;   // 飞行缓动曲线
 
+[Header("挖掘粒子效果")]
+public ParticleSystem digParticleSystem; // 挖掘粒子系统预制体
+
 [Header("反馈动画参数")]
 public float bagPunchScale = 0.2f;   // 背包按钮抖动强度
 public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
@@ -310,11 +313,26 @@ public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
         state.currentHealth -= damage;
         UpdateTileVisual(pos, state);
         
+        // 播放挖掘粒子效果
+        PlayDigParticles(pos);
+        
         // 触发整体震动
         TriggerGridShake();
 
         if (state.currentHealth <= 0) {
             RevealTile(pos, state);
+        }
+    }
+    
+    // 播放挖掘粒子效果
+    private void PlayDigParticles(Vector2Int pos) {
+        if (digParticleSystem != null) {
+            Vector3 worldPos = GetWorldPosition(pos);
+            ParticleSystem particles = Instantiate(digParticleSystem, worldPos, Quaternion.identity);
+            particles.Play();
+            
+            // 自动销毁粒子系统对象
+            Destroy(particles.gameObject, particles.main.duration + particles.main.startLifetime.constant);
         }
     }
     

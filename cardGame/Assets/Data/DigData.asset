@@ -25,6 +25,16 @@ MonoBehaviour:
     spawnChance: 0
     maxPerScene: 2
     allowRotation: 0
+  - fossilData: {fileID: 11400000, guid: c25984b917f674fd3902f07c215a2459, type: 2}
+    fossilDataPath: 
+    spawnChance: 0
+    maxPerScene: 2
+    allowRotation: 0
+  - fossilData: {fileID: 11400000, guid: be3f314ac48cb4276b665b3fbe3a8b32, type: 2}
+    fossilDataPath: 
+    spawnChance: 0
+    maxPerScene: 2
+    allowRotation: 0
   minFossils: 2
   maxFossils: 3
   mapWidth: 6

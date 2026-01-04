@@ -25,6 +25,7 @@ public class CharacterBase : MonoBehaviour
     [SerializeField] protected int _maxHp;
     [SerializeField] protected int _currentHp;
     [SerializeField] protected int _currentBlock;
+    [SerializeField] public GameObject damagePopupPrefab;
     
     protected int blockDuration = 0;
     
@@ -117,6 +118,27 @@ public class CharacterBase : MonoBehaviour
         OnHealthChanged = delegate { };
         OnBlockChanged = delegate { };
         OnCharacterDied = delegate { };
+        
+        // 自动加载并赋值伤害数字预制体
+        if (damagePopupPrefab == null)
+        {
+            // 尝试从Resources加载
+            damagePopupPrefab = Resources.Load<GameObject>("damage_num");
+            
+            // 如果Resources加载失败，尝试从Art文件夹查找
+            if (damagePopupPrefab == null)
+            {
+                GameObject prefabInScene = GameObject.Find("damage_num");
+                if (prefabInScene != null)
+                {
+                    damagePopupPrefab = prefabInScene;
+                }
+                else
+                {
+                    Debug.LogWarning($"[{gameObject.name}] 无法找到 damagePopupPrefab！请在Inspector中手动赋值。");
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -167,6 +189,31 @@ public class CharacterBase : MonoBehaviour
     if (actualDamage > 0)
     {
         currentHp -= actualDamage;  // <-- 立即扣血
+        
+        // 显示伤害数字
+        if (damagePopupPrefab != null)
+        {
+            // 1. 在主画布下生成数字（不要直接 Instantiate 到世界坐标）
+            // 假设你的怪物已经在主 Canvas 某处，我们直接让数字生成为怪物的兄弟节点或子节点
+            GameObject popup = Instantiate(damagePopupPrefab, transform.parent);
+
+            // 2. 设置位置：既然怪物也是 UI 元素，我们直接取怪物的 RectTransform 位置
+            RectTransform enemyRect = GetComponent<RectTransform>();
+            RectTransform popupRect = popup.GetComponent<RectTransform>();
+
+            if (enemyRect != null && popupRect != null)
+            {
+                // 将数字置于怪物中心，向上偏移（像素单位，比如 100 像素）
+                popupRect.anchoredPosition = enemyRect.anchoredPosition + new Vector2(0, 100f);
+            }
+
+            // 3. 初始化动画脚本
+            var popupScript = popup.GetComponent<DamagePopupAnimation>();
+            if (popupScript != null)
+            {
+                popupScript.Setup(actualDamage);
+            }
+        }
     }
     
     // 伤害动画序列（但血条已经扣过了）
