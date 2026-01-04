@@ -19,7 +19,7 @@ public class DamagePopupAnimation : MonoBehaviour
             int index = c - '0'; 
 
             // 使用刚才定义好的 index 变量
-            spriteText += $"<sprite index={index}>";
+            spriteText += $"<sprite index={index}><space=5>";
         }
 
         // 将富文本赋值给 TMP 组件

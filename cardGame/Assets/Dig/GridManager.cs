@@ -167,7 +167,7 @@ public float bagPunchDuration = 0.2f; // 背包按钮抖动持续时间
         }
 
         // 尝试多次寻找合法位置，避免因随机旋转导致无法放置
-        int maxAttempts = 10;
+        int maxAttempts = 50;
         bool placedSuccessfully = false;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
