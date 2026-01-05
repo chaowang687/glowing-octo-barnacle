@@ -27,6 +27,12 @@ public class CharacterBase : MonoBehaviour
     [SerializeField] protected int _currentBlock;
     [SerializeField] public GameObject damagePopupPrefab;
     
+    // 在 CharacterBase.cs 中添加
+    [Header("UI 展现配置")]
+    public Sprite characterSprite; // 对应报错的 characterSprite
+    [TextArea]
+    public string description;     // 对应报错的 description
+
     protected int blockDuration = 0;
     
     // 状态效果管理

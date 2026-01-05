@@ -8,12 +8,20 @@ using System.Collections; // ⭐ 添加 System.Collections 命名空间 ⭐
 public class CharacterUIDisplay : MonoBehaviour
 {
     private CharacterBase character;
+    [Header("缓冲设置")]
     
     // UI 组件引用 (例如：血条 Image 或 Slider)
     [Header("UI Components")]
     public Slider hpSlider;
+    public Slider bufferSlider; // 缓冲血条 Slider
     public TextMeshProUGUI nameText;
     public TextMeshProUGUI hpValueText;
+    
+    // 缓冲血条配置
+    [Header("缓冲血条配置")]
+    [Tooltip("缓冲血条的收缩速度")]
+    public float shrinkSpeed = 2.0f;
+    private float currentBufferHp; // 缓冲血条当前值
 
     // ⭐ 格挡 UI 引用 ⭐
     [Header("格挡 UI 引用")]
@@ -60,6 +68,15 @@ public class CharacterUIDisplay : MonoBehaviour
             hpSlider.value = character.currentHp;
             Debug.Log($"血条Slider初始化: 最大值={character.maxHp}, 当前值={character.currentHp}");
         }
+        
+        // 2. 初始化缓冲血条
+        currentBufferHp = character.currentHp;
+        if (bufferSlider != null)
+        {
+            bufferSlider.maxValue = character.maxHp;
+            bufferSlider.value = currentBufferHp;
+        }
+        
         if (hpValueText != null)
         {
             hpValueText.text = $"{character.currentHp}/{character.maxHp}";
@@ -140,17 +157,36 @@ public class CharacterUIDisplay : MonoBehaviour
     /// <summary>
     /// 事件触发时调用的函数：更新血条。
     /// </summary>
-    private void UpdateHealthBar(int currentHp, int maxHp)
+   private void UpdateHealthBar(int currentHp, int maxHp)
+{
+    if (hpSlider != null)
     {
-        if (hpSlider != null)
+        // 1. 获取变化前的旧值
+        float oldHp = hpSlider.value;
+        
+        // 2. 主血条瞬间变化
+        hpSlider.value = currentHp; 
+
+        // 3. 处理缓冲逻辑
+        if (currentHp < oldHp) 
         {
-            hpSlider.value = currentHp; 
+            // 如果是受伤：让 currentBufferHp 维持在旧值 oldHp
+            // 这样 Update 里的 MoveTowards 就会从 oldHp 慢慢降到 currentHp
+            currentBufferHp = oldHp; 
         }
-        if (hpValueText != null)
+        else 
         {
-            hpValueText.text = $"{currentHp}/{maxHp}";
+            // 如果是回血：缓冲条直接同步，不播动画
+            currentBufferHp = currentHp;
+            if (bufferSlider != null) bufferSlider.value = currentHp;
         }
     }
+    
+    if (hpValueText != null)
+    {
+        hpValueText.text = $"{currentHp}/{maxHp}";
+    }
+}
     
     /// <summary>
     /// 刷新格挡 UI 的显示（包含图标和数值）。
@@ -220,5 +256,22 @@ public class CharacterUIDisplay : MonoBehaviour
     private void OnDestroy()
     {
         UnsubscribeEvents();
+    }
+    
+    /// <summary>
+    /// 每帧调用，用于更新缓冲血条的平滑动画
+    /// </summary>
+    private void Update()
+    {
+        if (character != null && hpSlider != null && bufferSlider != null)
+        {
+            // 如果缓冲血条的值大于当前生命值，则缓慢收缩
+            if (currentBufferHp > character.currentHp)
+            {
+                // 使用 Mathf.MoveTowards 实现平滑过渡
+                currentBufferHp = Mathf.MoveTowards(currentBufferHp, character.currentHp, shrinkSpeed * Time.deltaTime);
+                bufferSlider.value = currentBufferHp;
+            }
+        }
     }
 }

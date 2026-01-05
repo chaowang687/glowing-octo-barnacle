@@ -79,6 +79,7 @@
     <Compile Include="Assets/CS/动画控制/GameFlowManager.cs" />
     <Compile Include="Assets/Bag/EnergyOnTurnStartEffect.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryInputHandler.cs" />
+    <Compile Include="Assets/CharacterSelection/CharacterSelectionManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootGenerator.cs" />
     <Compile Include="Assets/Bag/ItemUI.cs" />
     <Compile Include="Assets/Map/数据层/MapNodeData.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/RewardManager.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/DeathRelay.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryDragDetector.cs" />
+    <Compile Include="Assets/Main/GameManager.cs" />
     <Compile Include="Assets/CS/对战AI/AI蓝图接口/IEnemyIntentStrategy.cs" />
     <Compile Include="Assets/CS/CardSystem/CardAction.cs" />
     <Compile Include="Assets/CS/EnemyEncounterData.cs" />
@@ -126,6 +128,7 @@
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
     <Compile Include="Assets/Bag/InventoryUtils.cs" />
     <Compile Include="Assets/Map/表现层/ContinueButtonUI.cs" />
+    <Compile Include="Assets/CharacterSelection/SelectionButton.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootItemData.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/ItemTooltipUI.cs" />
     <Compile Include="Assets/CS/对战AI/数据/EnemyData.cs" />
@@ -137,6 +140,7 @@
     <Compile Include="Assets/CS3/DiceManager.cs" />
     <Compile Include="Assets/Dig/DigUIManager.cs" />
     <Compile Include="Assets/Map/逻辑层/PlayerStateManager.cs" />
+    <Compile Include="Assets/Main/MainMenuController.cs" />
     <Compile Include="Assets/CS/Managers/CharacterManager.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryUIMain.cs" />
     <Compile Include="Assets/CS/动画控制/CharacterAnimatorController.cs" />

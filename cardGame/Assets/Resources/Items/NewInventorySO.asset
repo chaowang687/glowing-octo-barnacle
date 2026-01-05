@@ -12,4 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5a9c5d669a9e41cca6f9d654ed56ed1, type: 3}
   m_Name: NewInventorySO
   m_EditorClassIdentifier: 
-  items: []
+  items:
+  - data: {fileID: 11400000, guid: b2f74c86ef8334bb096248382de77824, type: 2}
+    posX: 0
+    posY: 0
+    isRotated: 0
+  - data: {fileID: 11400000, guid: 1b10a1e83d23d4b24937a6884f0247b2, type: 2}
+    posX: 2
+    posY: 0
+    isRotated: 0
+  - data: {fileID: 11400000, guid: 06d2812e8f44044479319eac2c04e654, type: 2}
+    posX: 4
+    posY: 0
+    isRotated: 0
+  - data: {fileID: 11400000, guid: 13e01f313086c423890ef87b15a2d4ba, type: 2}
+    posX: 5
+    posY: 0
+    isRotated: 0
