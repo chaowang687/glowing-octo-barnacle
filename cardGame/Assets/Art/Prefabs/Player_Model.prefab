@@ -65,6 +65,9 @@ MonoBehaviour:
   _maxHp: 50
   _currentHp: 50
   _currentBlock: 2
+  damagePopupPrefab: {fileID: 1640490329420138578, guid: dfc21d4b1e53242678f2787acb3c180d, type: 3}
+  characterSprite: {fileID: 0}
+  description: 
   baseEnergy: 5
   currentEnergy: 5
   hasShieldAbility: 0
@@ -88,6 +91,9 @@ MonoBehaviour:
   _maxHp: 60
   _currentHp: 60
   _currentBlock: 0
+  damagePopupPrefab: {fileID: 0}
+  characterSprite: {fileID: 0}
+  description: 
 --- !u!114 &8315614108976450875
 MonoBehaviour:
   m_ObjectHideFlags: 0

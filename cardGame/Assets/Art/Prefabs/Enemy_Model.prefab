@@ -69,7 +69,9 @@ MonoBehaviour:
   _maxHp: 3
   _currentHp: 3
   _currentBlock: 3
-  damagePopupPrefab: {fileID: 0}
+  damagePopupPrefab: {fileID: 1640490329420138578, guid: dfc21d4b1e53242678f2787acb3c180d, type: 3}
+  characterSprite: {fileID: 0}
+  description: 
   enemyLevel: 1
   baseDamage: 10
   experienceReward: 50
@@ -80,6 +82,7 @@ MonoBehaviour:
   deathEffectPrefab: {fileID: 0}
   deathSound: {fileID: 0}
   attackSound: {fileID: 0}
+  damagePopupOffset: {x: -50, y: 0}
 --- !u!114 &3039470121456602501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,6 +131,8 @@ MonoBehaviour:
   _currentHp: 0
   _currentBlock: 0
   damagePopupPrefab: {fileID: 1640490329420138578, guid: dfc21d4b1e53242678f2787acb3c180d, type: 3}
+  characterSprite: {fileID: 0}
+  description: 
 --- !u!114 &3619975311576030457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,6 +324,18 @@ PrefabInstance:
     - target: {fileID: 6306761720060471943, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
       propertyPath: m_Name
       value: Enemy Display Prefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 6306761720060471943, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8147319722073319746, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8147319722073319746, guid: 7c839c3c7112745f7890391e7cb9776e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

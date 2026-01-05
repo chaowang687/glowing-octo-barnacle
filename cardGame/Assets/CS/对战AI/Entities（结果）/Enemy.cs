@@ -23,6 +23,9 @@ public class Enemy : CharacterBase
     public AudioClip deathSound;
     public AudioClip attackSound;
     
+    [Header("Damage Popup Settings")]
+    public Vector2 damagePopupOffset = new Vector2(0, 0); // 敌人受击数字的偏移量
+    
     private AudioSource audioSource;
     
     // 修复：正确重写 Awake 方法
@@ -163,6 +166,15 @@ public class Enemy : CharacterBase
         
         // 调用基类的受伤害处理
         return base.TakeDamage(damage, isAttack);
+    }
+    
+    /// <summary>
+    /// 重写受击数字偏移量，允许单独调整敌人受击数字的位置
+    /// </summary>
+    protected override Vector2 GetDamagePopupOffset()
+    {
+        // 返回敌人特有的受击数字偏移量
+        return damagePopupOffset;
     }
     
     /// <summary>

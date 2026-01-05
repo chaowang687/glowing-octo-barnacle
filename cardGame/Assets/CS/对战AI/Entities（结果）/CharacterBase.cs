@@ -191,7 +191,7 @@ public class CharacterBase : MonoBehaviour
         }
     }
     
-    // 问题在这里！立即扣血，没有等待动画
+    // 立即扣血
     if (actualDamage > 0)
     {
         currentHp -= actualDamage;  // <-- 立即扣血
@@ -199,18 +199,25 @@ public class CharacterBase : MonoBehaviour
         // 显示伤害数字
         if (damagePopupPrefab != null)
         {
-            // 1. 在主画布下生成数字（不要直接 Instantiate 到世界坐标）
-            // 假设你的怪物已经在主 Canvas 某处，我们直接让数字生成为怪物的兄弟节点或子节点
+            // 1. 将伤害数字生成在与角色相同的父容器中，确保坐标系统一致
             GameObject popup = Instantiate(damagePopupPrefab, transform.parent);
 
-            // 2. 设置位置：既然怪物也是 UI 元素，我们直接取怪物的 RectTransform 位置
-            RectTransform enemyRect = GetComponent<RectTransform>();
+            // 2. 设置位置：确保伤害数字位于角色的正上方
+            RectTransform characterRect = GetComponent<RectTransform>();
             RectTransform popupRect = popup.GetComponent<RectTransform>();
 
-            if (enemyRect != null && popupRect != null)
+            if (characterRect != null && popupRect != null)
             {
-                // 将数字置于怪物中心，向上偏移（像素单位，比如 100 像素）
-                popupRect.anchoredPosition = enemyRect.anchoredPosition + new Vector2(0, 100f);
+                // 设置伤害数字的锚点和偏移，确保它始终在角色正上方
+                popupRect.anchorMin = new Vector2(0.5f, 0.5f);
+                popupRect.anchorMax = new Vector2(0.5f, 0.5f);
+                popupRect.pivot = new Vector2(0.5f, 0.5f);
+                
+                // 获取受击数字的偏移量，允许子类自定义
+                Vector2 popupOffset = GetDamagePopupOffset();
+                
+                // 设置伤害数字的位置，使其在角色正上方，并应用偏移量
+                popupRect.anchoredPosition = characterRect.anchoredPosition + new Vector2(0, 100f) + popupOffset;
             }
 
             // 3. 初始化动画脚本
@@ -222,7 +229,7 @@ public class CharacterBase : MonoBehaviour
         }
     }
     
-    // 伤害动画序列（但血条已经扣过了）
+    // 伤害动画序列
     damageSequence.Append(transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 1, 0.5f));
     damageSequence.AppendCallback(() => {
         string blockText = (damage - actualDamage > 0) ? $"（格挡吸收了 {damage - actualDamage} 点）" : "";
@@ -236,6 +243,15 @@ public class CharacterBase : MonoBehaviour
     
     return damageSequence;
 }
+    
+    /// <summary>
+    /// 获取受击数字的偏移量，允许子类自定义受击数字的位置
+    /// </summary>
+    protected virtual Vector2 GetDamagePopupOffset()
+    {
+        // 默认没有偏移量
+        return Vector2.zero;
+    }
     
     /// <summary>
     /// 处理死亡 - 现在是受保护的虚方法，子类可以重写
