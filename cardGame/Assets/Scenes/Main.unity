@@ -2919,6 +2919,7 @@ MonoBehaviour:
   nameText: {fileID: 0}
   descText: {fileID: 0}
   startButton: {fileID: 498354073}
+  inventorySOs: []
 --- !u!4 &1624707130
 Transform:
   m_ObjectHideFlags: 0

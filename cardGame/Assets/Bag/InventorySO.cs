@@ -19,6 +19,10 @@ namespace Bag
             if (items.Contains(item)) items.Remove(item);
         }
 
-        public void Clear() => items.Clear();
+        public void Clear() 
+        {
+            items.Clear();
+            Debug.Log($"InventorySO {name} has been cleared!");
+        }
     }
 }

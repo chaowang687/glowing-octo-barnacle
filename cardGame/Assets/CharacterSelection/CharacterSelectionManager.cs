@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
+using Bag;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -16,6 +17,9 @@ public class CharacterSelectionManager : MonoBehaviour
    
     [Header("开始游戏")]
     public GameObject startButton; 
+    
+    [Header("背包数据")]
+    public InventorySO[] inventorySOs; // 可以手动指定要清理的InventorySO，也可以在代码中自动查找
 
     private CharacterBase selectedCharacter;
     private SelectionButton lastSelectedButton;
@@ -66,6 +70,57 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             // 确保你已经创建了 GameManager.cs
             GameManager.PlayerStartData = selectedCharacter;
+            
+            // 直接删除所有 PlayerPrefs 数据，确保开始新游戏
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+            
+            // 优化后的清理逻辑，防止空指针错误
+            // 1. 先停掉所有可能干扰的逻辑
+            // 2. 彻底清理 SO (确保在 Inspector 赋值了)
+            if (inventorySOs != null && inventorySOs.Length > 0)
+            {
+                foreach (var inventorySO in inventorySOs)
+                {
+                    if (inventorySO != null)
+                    {
+                        inventorySO.Clear();
+                        Debug.Log($"已清空指定的InventorySO: {inventorySO.name}");
+                    }
+                }
+            }
+            else
+            {
+                // 自动查找并清理所有InventorySO资源
+                var allInventorySOs = Resources.FindObjectsOfTypeAll<InventorySO>();
+                foreach (var inventorySO in allInventorySOs)
+                {
+                    if (inventorySO != null)
+                    {
+                        inventorySO.Clear();
+                        Debug.Log($"已清空InventorySO: {inventorySO.name}");
+                    }
+                }
+            }
+
+            // 3. 强力删除存档文件
+            string inventoryPath = System.IO.Path.Combine(Application.persistentDataPath, "inventory.json");
+            if (System.IO.File.Exists(inventoryPath))
+            {
+                System.IO.File.Delete(inventoryPath);
+                Debug.Log("背包存档文件已删除");
+            }
+
+            // 4. 关键：直接销毁旧的单例，不要调用它的方法
+            // 因为调用它的方法可能会触发 UI 刷新，而此时 UI 正在销毁，极易报错
+            if (InventoryManager.Instance != null)
+            {
+                Destroy(InventoryManager.Instance.gameObject);
+                Debug.Log("背包管理器实例已销毁");
+            }
+
+            // 5. 最后跳转
+            Debug.Log("已删除所有存档数据，开始新游戏");
             SceneManager.LoadScene("MapScene");
         }
     }

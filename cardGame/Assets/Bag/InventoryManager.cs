@@ -584,6 +584,18 @@ namespace Bag
         }
         
         /// <summary>
+        /// 重置背包数据
+        /// </summary>
+        public void ResetInventoryData()
+        {
+            if (inventoryData != null)
+            {
+                inventoryData.Clear();
+                Debug.Log("背包数据已重置");
+            }
+        }
+        
+        /// <summary>
         /// 场景加载时调用
         /// </summary>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

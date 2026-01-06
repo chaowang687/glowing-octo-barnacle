@@ -410,6 +410,22 @@ namespace SlayTheSpireMap
             
             ClearBattleData();
             
+            // 清理背包数据
+            try
+            {
+                // 检查背包管理器是否存在
+                if (Bag.InventoryManager.Instance != null)
+                {
+                    // 清空背包数据
+                    Bag.InventoryManager.Instance.ClearInventory(null);
+                    Debug.Log("背包数据已清空");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"清理背包数据时出错: {e.Message}");
+            }
+            
             SaveGameData();
             Debug.Log("游戏数据已重置为默认值");
         }
