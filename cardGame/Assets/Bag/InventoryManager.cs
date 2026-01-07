@@ -60,6 +60,59 @@ namespace Bag
             }
         }
         
+        private void OnApplicationQuit()
+        {
+            SaveInventory();
+            // 同时也让地图数据保存
+            if(SlayTheSpireMap.GameDataManager.Instance != null)
+                SlayTheSpireMap.GameDataManager.Instance.SaveGameData();
+        }
+        
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                // 在应用暂停时同步背包数据到GameDataManager
+                SyncWithGameDataManager();
+            }
+        }
+        
+        /// <summary>
+        /// 与GameDataManager同步背包数据
+        /// </summary>
+        public void SyncWithGameDataManager()
+        {
+            try
+            {
+                if (SlayTheSpireMap.GameDataManager.Instance != null && inventoryData != null)
+                {
+                    // 获取GameDataManager实例
+                    SlayTheSpireMap.GameDataManager gdm = SlayTheSpireMap.GameDataManager.Instance;
+                    
+                    // 清空现有的relicIds列表
+                    gdm.playerData.relicIds.Clear();
+                    
+                    // 遍历背包中的所有物品，将遗物数据同步到GameDataManager
+                    foreach (var item in inventoryData.items)
+                    {
+                        if (item != null && item.data != null)
+                        {
+                            // 将物品ID添加到relicIds列表
+                            // 这里假设所有背包物品都是遗物，实际项目中可能需要根据物品类型过滤
+                            gdm.playerData.relicIds.Add(item.data.name);
+                            Debug.Log($"SyncWithGameDataManager: 同步物品 {item.data.name} 到GameDataManager");
+                        }
+                    }
+                    
+                    Debug.Log($"背包数据已同步到GameDataManager，同步了 {gdm.playerData.relicIds.Count} 个遗物");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"同步背包数据到GameDataManager时出错: {e.Message}");
+            }
+        }
+        
         private void Start()
         {
             Debug.Log("InventoryManager: Start - 开始初始化");
@@ -398,6 +451,9 @@ namespace Bag
             Debug.Log($"AddItemToBag: 物品 {item.data?.itemName} 已添加到inventoryData，当前物品数量: {inventoryData.items.Count}");
             
             OnItemChanged?.Invoke(item, true);
+            
+            // 同步到GameDataManager
+            SyncWithGameDataManager();
         }
         
         /// <summary>
@@ -410,40 +466,64 @@ namespace Bag
             
             inventoryData.RemoveItem(item); // 丢弃即更新
             OnItemChanged?.Invoke(item, false);
+            
+            // 同步到GameDataManager
+            SyncWithGameDataManager();
         }
         
         /// <summary>
         /// 保存背包数据到文件
         /// </summary>
-        public void SaveInventory()
+        /// <param name="slotIndex">存档槽位索引，默认0表示当前存档</param>
+        public void SaveInventory(int slotIndex = 0)
         {
-            if (inventoryData == null) return;
+            Debug.Log($"InventoryManager: SaveInventory - 开始保存背包数据，槽位: {slotIndex}");
+            
+            if (inventoryData == null)
+            {
+                Debug.LogError("InventoryManager: SaveInventory - inventoryData为null，无法保存背包数据");
+                return;
+            }
             
             InventorySaveData saveData = new InventorySaveData();
             
             // 收集所有物品数据
+            Debug.Log($"InventoryManager: SaveInventory - 开始收集物品数据，当前背包物品数量: {inventoryData.items.Count}");
             foreach (var item in inventoryData.items) 
             {
+                if (item == null || item.data == null)
+                {
+                    Debug.LogWarning("InventoryManager: SaveInventory - 跳过无效物品");
+                    continue;
+                }
+                
+                // 使用资源文件名作为itemID，确保与Resources.Load路径匹配
+                string itemID = item.data.name; // 使用资源的实际文件名作为ID
                 saveData.items.Add(new ItemSaveEntry {
-                    itemID = item.data.itemName, // 或者使用唯一的 GUID
+                    itemID = itemID, // 使用资源文件名作为唯一ID
                     posX = item.posX,
                     posY = item.posY,
                     isRotated = item.isRotated
                 });
+                Debug.Log($"InventoryManager: SaveInventory - 添加物品到存档: {itemID}，位置: ({item.posX}, {item.posY})");
             }
 
             // 保存到文件
-            string savePath = System.IO.Path.Combine(Application.persistentDataPath, "inventory.json");
+            string fileName = slotIndex == 0 ? "inventory.json" : $"inventory_{slotIndex}.json";
+            string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
             string json = JsonUtility.ToJson(saveData, true);
+            
+            Debug.Log($"InventoryManager: SaveInventory - 生成的JSON数据: {json}");
             
             try
             {
                 System.IO.File.WriteAllText(savePath, json);
-                Debug.Log($"存档已保存至: {savePath}");
+                Debug.Log($"InventoryManager: SaveInventory - 背包存档已成功保存至: {savePath}");
+                Debug.Log($"InventoryManager: SaveInventory - 保存的物品数量: {saveData.items.Count}");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"保存存档失败: {e.Message}");
+                Debug.LogError($"InventoryManager: SaveInventory - 保存背包存档失败: {e.Message}");
             }
         }
         
@@ -451,32 +531,67 @@ namespace Bag
         /// 从文件加载背包数据
         /// </summary>
         /// <param name="grid">目标网格</param>
-        public void LoadInventory(InventoryGrid grid)
+        /// <param name="slotIndex">存档槽位索引，默认0表示当前存档</param>
+        public void LoadInventory(InventoryGrid grid, int slotIndex = 0)
         {
-            if (grid == null || itemPrefab == null || inventoryData == null) return;
+            Debug.Log($"InventoryManager: LoadInventory - 开始加载背包数据，槽位: {slotIndex}");
             
-            string savePath = System.IO.Path.Combine(Application.persistentDataPath, "inventory.json");
-            if (!System.IO.File.Exists(savePath)) return;
+            if (grid == null)
+            {
+                Debug.LogError("InventoryManager: LoadInventory - grid为null，无法加载背包数据");
+                return;
+            }
+            if (itemPrefab == null)
+            {
+                Debug.LogError("InventoryManager: LoadInventory - itemPrefab为null，无法加载背包数据");
+                return;
+            }
+            if (inventoryData == null)
+            {
+                Debug.LogError("InventoryManager: LoadInventory - inventoryData为null，无法加载背包数据");
+                return;
+            }
+            
+            // 构建存档文件路径
+            string fileName = slotIndex == 0 ? "inventory.json" : $"inventory_{slotIndex}.json";
+            string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            
+            Debug.Log($"InventoryManager: LoadInventory - 查找存档文件: {savePath}");
+            
+            if (!System.IO.File.Exists(savePath))
+            {
+                Debug.LogWarning($"InventoryManager: LoadInventory - 存档文件不存在: {savePath}");
+                return;
+            }
 
             try
             {
+                Debug.Log($"InventoryManager: LoadInventory - 读取存档文件");
                 string json = System.IO.File.ReadAllText(savePath);
+                Debug.Log($"InventoryManager: LoadInventory - 读取到JSON数据: {json}");
+                
                 InventorySaveData saveData = JsonUtility.FromJson<InventorySaveData>(json);
+                Debug.Log($"InventoryManager: LoadInventory - 解析成功，包含物品数量: {saveData.items.Count}");
 
                 // 清空现有物品
+                Debug.Log($"InventoryManager: LoadInventory - 清空现有物品");
                 ClearInventory(grid);
                 
                 // 清空静态数据
+                Debug.Log($"InventoryManager: LoadInventory - 清空静态数据，当前物品数量: {inventoryData.items.Count}");
                 inventoryData.Clear();
                 
                 // 加载物品
+                int loadedCount = 0;
                 foreach (var entry in saveData.items)
                 {
+                    Debug.Log($"InventoryManager: LoadInventory - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 是否旋转={entry.isRotated}");
+                    
                     // 1. 根据 ID 加载配置
                     ItemData data = Resources.Load<ItemData>($"Items/{entry.itemID}");
                     if (data == null)
                     {
-                        Debug.LogWarning($"找不到物品配置: {entry.itemID}");
+                        Debug.LogWarning($"InventoryManager: LoadInventory - 找不到物品配置: {entry.itemID}");
                         continue;
                     }
                     
@@ -488,6 +603,7 @@ namespace Bag
                     };
 
                     // 3. 实例化 UI 并对齐
+                    Debug.Log($"InventoryManager: LoadInventory - 实例化物品UI: {entry.itemID}");
                     GameObject go = Instantiate(itemPrefab, itemContainer);
                     ItemUI ui = go.GetComponent<ItemUI>();
                     if (ui != null)
@@ -499,17 +615,177 @@ namespace Bag
                         
                         // 添加到物品列表
                         AddItemToBag(newItem);
+                        loadedCount++;
+                        Debug.Log($"InventoryManager: LoadInventory - 成功加载物品: {entry.itemID}，已加载数量: {loadedCount}");
                     }
                     else
                     {
-                        Debug.LogError("ItemUI组件不存在于预制体中！");
+                        Debug.LogError("InventoryManager: LoadInventory - ItemUI组件不存在于预制体中！");
                         Destroy(go);
                     }
                 }
+                
+                Debug.Log($"InventoryManager: LoadInventory - 背包数据加载完成，总共加载: {loadedCount} 个物品，当前背包物品数量: {inventoryData.items.Count}");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"加载存档失败: {e.Message}");
+                Debug.LogError($"InventoryManager: LoadInventory - 加载存档失败: {e.Message}");
+                Debug.LogError($"InventoryManager: LoadInventory - 异常堆栈: {e.StackTrace}");
+            }
+        }
+        
+        /// <summary>
+        /// 从文件加载背包数据（用于UI显示，不实例化UI）
+        /// </summary>
+        /// <param name="slotIndex">存档槽位索引</param>
+        public void LoadInventoryData(int slotIndex = 0)
+        {
+            Debug.Log($"InventoryManager: LoadInventoryData - 开始加载背包数据，槽位: {slotIndex}");
+            
+            if (inventoryData == null)
+            {
+                Debug.LogError("InventoryManager: LoadInventoryData - inventoryData为null，无法加载背包数据");
+                return;
+            }
+            
+            // 构建存档文件路径
+            string fileName = slotIndex == 0 ? "inventory.json" : $"inventory_{slotIndex}.json";
+            string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            
+            Debug.Log($"InventoryManager: LoadInventoryData - 查找存档文件: {savePath}");
+            
+            if (!System.IO.File.Exists(savePath))
+            {
+                Debug.LogWarning($"InventoryManager: LoadInventoryData - 存档文件不存在: {savePath}，保持现有物品数据不变");
+                // 不再清空物品列表，保持现有数据不变
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"InventoryManager: LoadInventoryData - 读取存档文件");
+                string json = System.IO.File.ReadAllText(savePath);
+                
+                if (string.IsNullOrEmpty(json) || json.Trim() == "{}" || json.Trim() == "[]")
+                {
+                    Debug.LogWarning($"InventoryManager: LoadInventoryData - 存档内容为空，保持现有物品数据不变");
+                    return;
+                }
+                
+                InventorySaveData saveData = JsonUtility.FromJson<InventorySaveData>(json);
+                
+                if (saveData == null || saveData.items == null)
+                {
+                    Debug.LogWarning($"InventoryManager: LoadInventoryData - 存档解析失败，保持现有物品数据不变");
+                    return;
+                }
+                
+                Debug.Log($"InventoryManager: LoadInventoryData - 解析成功，包含物品数量: {saveData.items.Count}");
+                
+                // 如果存档中没有物品，保持现有物品数据不变
+                if (saveData.items.Count == 0)
+                {
+                    Debug.LogWarning($"InventoryManager: LoadInventoryData - 存档中没有物品，保持现有物品数据不变");
+                    return;
+                }
+                
+                // 只有当存档有效且包含物品时，才清空并重新加载
+                Debug.Log($"InventoryManager: LoadInventoryData - 清空现有背包数据，当前物品数量: {inventoryData.items.Count}");
+                inventoryData.Clear();
+                
+                // 加载物品数据
+                int loadedCount = 0;
+                foreach (var entry in saveData.items)
+                {
+                    Debug.Log($"InventoryManager: LoadInventoryData - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 是否旋转={entry.isRotated}");
+                    
+                    // 解决资源引用丢失问题：尝试多种资源加载方式
+                    ItemData data = null;
+                    
+                    // 1. 尝试直接加载
+                    data = Resources.Load<ItemData>("Items/" + entry.itemID);
+                    
+                    // 2. 如果失败，尝试去掉路径前缀
+                    if (data == null)
+                    {
+                        data = Resources.Load<ItemData>(entry.itemID);
+                    }
+                    
+                    // 3. 如果失败，尝试全小写
+                    if (data == null)
+                    {
+                        data = Resources.Load<ItemData>("Items/" + entry.itemID.ToLower());
+                    }
+                    
+                    // 4. 如果失败，尝试去掉路径前缀并全小写
+                    if (data == null)
+                    {
+                        data = Resources.Load<ItemData>(entry.itemID.ToLower());
+                    }
+                    
+                    if (data == null)
+                    {
+                        Debug.LogWarning($"InventoryManager: LoadInventoryData - 找不到物品配置: {entry.itemID}");
+                        continue;
+                    }
+                    
+                    // 创建实例
+                    ItemInstance newItem = new ItemInstance(data) {
+                        posX = entry.posX,
+                        posY = entry.posY,
+                        isRotated = entry.isRotated
+                    };
+                    
+                    // 添加到物品列表
+                    inventoryData.AddItem(newItem);
+                    loadedCount++;
+                    Debug.Log($"InventoryManager: LoadInventoryData - 成功加载物品: {entry.itemID}，已加载数量: {loadedCount}");
+                }
+                
+                Debug.Log($"InventoryManager: LoadInventoryData - 背包数据加载完成，总共加载: {loadedCount} 个物品，当前背包物品数量: {inventoryData.items.Count}");
+                
+                // 延迟一帧刷新 UI，确保 Grid 已经就绪
+                StartCoroutine(DelayRefreshUI());
+                
+                // 同步到GameDataManager
+                SyncWithGameDataManager();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"InventoryManager: LoadInventoryData - 加载背包数据失败: {e.Message}");
+                Debug.LogError($"InventoryManager: LoadInventoryData - 异常堆栈: {e.StackTrace}");
+                // 加载失败时确保背包状态正确
+                inventoryData.Clear();
+                // 同步到GameDataManager
+                SyncWithGameDataManager();
+            }
+        }
+        
+        /// <summary>
+        /// 延迟刷新UI，确保Grid已经就绪
+        /// </summary>
+        private System.Collections.IEnumerator DelayRefreshUI()
+        {
+            yield return new WaitForEndOfFrame(); // 等待所有Awake完成
+            Debug.Log("InventoryManager: DelayRefreshUI - 开始刷新UI");
+            
+            // 确保CurrentGrid和itemContainer已被正确初始化
+            if (CurrentGrid == null)
+            {
+                CurrentGrid = FindObjectOfType<InventoryGrid>();
+                Debug.Log($"InventoryManager: DelayRefreshUI - 查找CurrentGrid: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
+            }
+            
+            if (CurrentGrid != null && itemContainer == null)
+            {
+                itemContainer = CurrentGrid.transform;
+                Debug.Log($"InventoryManager: DelayRefreshUI - 设置itemContainer为CurrentGrid.transform: {itemContainer.name}");
+            }
+            
+            if (itemContainer != null)
+            {
+                Debug.Log($"InventoryManager: DelayRefreshUI - 调用RefreshItemsInContainer刷新物品UI");
+                RefreshItemsInContainer();
             }
         }
         
@@ -600,38 +876,40 @@ namespace Bag
         /// </summary>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            Debug.Log($"InventoryManager: OnSceneLoaded - 场景 {scene.name} 已加载");
+            
+            // 等待一帧，确保所有组件都已初始化
+            StartCoroutine(DelayInitializeAndRefresh(scene.name));
+        }
+        
+        /// <summary>
+        /// 延迟初始化和刷新，解决场景加载时的时间差问题
+        /// </summary>
+        private System.Collections.IEnumerator DelayInitializeAndRefresh(string sceneName)
+        {
+            // 等待一帧，确保所有组件都已初始化
+            yield return new WaitForEndOfFrame();
+            
             // 尝试查找CurrentGrid
             CurrentGrid = FindObjectOfType<InventoryGrid>();
+            Debug.Log($"InventoryManager: DelayInitializeAndRefresh - 查找CurrentGrid结果: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
             
             // 寻找新场景中的容器
             if (CurrentGrid != null)
             {
                 itemContainer = CurrentGrid.transform;
-                Debug.Log($"找到CurrentGrid，设置itemContainer为: {itemContainer.name}");
+                Debug.Log($"InventoryManager: DelayInitializeAndRefresh - 设置itemContainer为: {itemContainer.name}");
             }
             else
             {
-                Debug.LogWarning("OnSceneLoaded: 没有找到CurrentGrid");
-                
-                // 尝试直接查找itemContainer
-                InventoryManager[] managers = FindObjectsOfType<InventoryManager>();
-                if (managers.Length > 0 && managers[0] != this)
-                {
-                    // 如果有其他InventoryManager实例，使用它的itemContainer
-                    itemContainer = managers[0].itemContainer;
-                    Debug.Log($"使用其他InventoryManager的itemContainer: {itemContainer?.name}");
-                }
+                Debug.LogWarning("InventoryManager: DelayInitializeAndRefresh - 没有找到CurrentGrid，保持现有物品数据不变");
             }
             
-            // 容器找回后，再执行物品加载
+            // 容器找回后，刷新UI但不重新加载存档
             if (itemContainer != null)
             {
-                Debug.Log("OnSceneLoaded: 调用RefreshItemsInContainer");
+                Debug.Log("InventoryManager: DelayInitializeAndRefresh - 调用RefreshItemsInContainer刷新UI");
                 RefreshItemsInContainer();
-            }
-            else
-            {
-                Debug.LogWarning("OnSceneLoaded: itemContainer为null，无法刷新物品");
             }
         }
         

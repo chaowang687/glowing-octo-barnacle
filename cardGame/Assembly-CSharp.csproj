@@ -161,6 +161,7 @@
     <Compile Include="Assets/Dig/GridManager.cs" />
     <Compile Include="Assets/CS3/ClockUIController.cs" />
     <Compile Include="Assets/CS/UIManager.cs" />
+    <Compile Include="Assets/Main/SaveSlotUI.cs" />
     <Compile Include="Assets/CS/DamagePopupAnimation.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Data/EquipmentData.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/EquipmentSlotUI.cs" />

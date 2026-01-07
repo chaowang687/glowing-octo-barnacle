@@ -186,6 +186,14 @@ public class GameFlowManager : MonoBehaviour
     /// </summary>
     private void SaveVictoryResult()
     {
+        // 确保 BattleDataManager 实例存在
+        if (BattleDataManager.Instance == null)
+        {
+            Debug.LogWarning("[GameFlowManager] BattleDataManager.Instance 为 null！正在创建新实例...");
+            GameObject bdmObject = new GameObject("BattleDataManager");
+            bdmObject.AddComponent<BattleDataManager>();
+        }
+        
         if (BattleDataManager.Instance != null)
         {
             // 计算胜利奖励
@@ -204,12 +212,19 @@ public class GameFlowManager : MonoBehaviour
                  
                  BattleUIManager.Instance.ShowRewardDisplay(goldReward, rewardOptions, (selectedCard) => {
                      // 玩家选择卡牌后的回调
-                     BattleDataManager.Instance.SaveBattleResult(true, goldReward, selectedCard.cardID);
-                     
+                     if (BattleDataManager.Instance != null)
+                     {
+                         BattleDataManager.Instance.SaveBattleResult(true, goldReward, selectedCard.cardID);
+                     }
+                     else
+                     {
+                         Debug.LogError("存档失败：场景中缺少 BattleDataManager 实例，请检查初始化顺序！");
+                     }
+                      
                      // 变更：不再直接调用 ShowVictoryPanel，而是让奖励页面的继续按钮接管跳转
                      // ShowVictoryPanel("VICTORY"); 
                      // BattleUIManager.Instance.ShowVictoryPanel("VICTORY");
-                     
+                      
                      // 这里什么都不做，或者只记录状态，等待玩家点击 RewardPanel 上的 Continue 按钮
                      Debug.Log("Reward selected. Waiting for player to click Continue.");
                  });
@@ -305,6 +320,14 @@ public class GameFlowManager : MonoBehaviour
     /// </summary>
     private void SaveDefeatResult()
     {
+        // 确保 BattleDataManager 实例存在
+        if (BattleDataManager.Instance == null)
+        {
+            Debug.LogWarning("[GameFlowManager] BattleDataManager.Instance 为 null！正在创建新实例...");
+            GameObject bdmObject = new GameObject("BattleDataManager");
+            bdmObject.AddComponent<BattleDataManager>();
+        }
+        
         if (BattleDataManager.Instance != null)
         {
             BattleDataManager.Instance.SaveBattleResult(false);
@@ -392,6 +415,23 @@ public class GameFlowManager : MonoBehaviour
         if (BattleUIManager.Instance != null)
         {
             BattleUIManager.Instance.HideAllResultPanels();
+        }
+        
+        // 保存所有数据
+        if (SlayTheSpireMap.GameDataManager.Instance != null)
+        {
+            SlayTheSpireMap.GameDataManager.Instance.SaveGameData();
+        }
+        
+        if (Bag.InventoryManager.Instance != null)
+        {
+            Bag.InventoryManager.Instance.SaveInventory();
+        }
+        
+        // 关键：手动清理 SO 内存，防止下次点“开始游戏”带入旧数据
+        if (Bag.InventoryManager.Instance != null && Bag.InventoryManager.Instance.inventoryData != null)
+        {
+            Bag.InventoryManager.Instance.inventoryData.Clear();
         }
         
         // 返回主菜单

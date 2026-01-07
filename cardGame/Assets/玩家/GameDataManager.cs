@@ -1,24 +1,19 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-using System.Linq; // 必须添加这个引用
+using System.Linq;
 namespace SlayTheSpireMap
 {
     public class GameDataManager : MonoBehaviour
     {
-
-
-
-        public string characterName = "勇者"; // 添加这个字段
+        public string characterName = "勇者";
         public static GameDataManager Instance { get; private set; }
-        
 
-
-        // 玩家状态数据
         [System.Serializable]
         public class PlayerStateData
         {
-            public string characterName = "铁甲卫士"; // 添加这一行
+            public string characterName = "铁甲卫士";
+            public string saveTime;
             public int health = 30;
             public int maxHealth = 30;
             public int gold = 100;
@@ -27,20 +22,10 @@ namespace SlayTheSpireMap
         }
         
         [Header("游戏配置")]
-        public CharacterStarterData defaultCharacterData; // 静态配置资产
-        // public int defaultMaxHealth = 80; // Deprecated
-        // public int defaultGold = 99;      // Deprecated
-
-        /* [Header("默认配置")]
-        public List<string> defaultStartingDeckIds = new List<string> 
-        { 
-            "B_FRENZY", "B_FRENZY", "B_FRENZY", "B_FRENZY", 
-            "B_BLOCK", "B_BLOCK", "B_BLOCK", "B_BLOCK", 
-            "B_EXECUTE" 
-        }; */
+        public CharacterStarterData defaultCharacterData;
 
         [Header("玩家数据")]
-        public PlayerStateData playerData = new PlayerStateData(); // 改为 public
+        public PlayerStateData playerData = new PlayerStateData();
         
         [Header("地图进度")]
         public string currentNodeId = "";
@@ -51,12 +36,12 @@ namespace SlayTheSpireMap
         public string battleNodeId = "";
         public EncounterData battleEncounterData;
         public DigData digData;
-        // 在 GameDataManager.cs 中添加或检查
+        
         public void InitializeNewGame()
         {
             ResetToDefault();
         }
-        // 属性访问器
+        
         public int Health 
         { 
             get => playerData.health; 
@@ -100,13 +85,31 @@ namespace SlayTheSpireMap
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                LoadGameData();
-                Debug.Log("GameDataManager 初始化完成");
+                
+                // 自动加载当前存档，这样场景切换时会自动加载背包数据
+                // 只在非主菜单场景加载，主菜单场景由SaveSlotUI手动管理
+                string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                if (currentScene != "MainMenu" && currentScene != "CharacterSelection")
+                {
+                    Debug.Log("GameDataManager 初始化完成，开始加载当前存档");
+                    LoadGameData(0); // 加载当前存档
+                }
+                else
+                {
+                    Debug.Log("GameDataManager 初始化完成，当前是主菜单场景，不自动加载存档");
+                }
+                
+                Application.quitting += OnApplicationQuitting;
             }
             else
             {
                 Destroy(gameObject);
             }
+        }
+        
+        void OnDestroy()
+        {
+            Application.quitting -= OnApplicationQuitting;
         }
         
         void OnApplicationQuit()
@@ -117,6 +120,12 @@ namespace SlayTheSpireMap
         void OnApplicationPause(bool pauseStatus)
         {
             if (pauseStatus) SaveGameData();
+        }
+        
+        void OnApplicationQuitting()
+        {
+            SaveGameData();
+            Debug.Log("游戏数据已在退出时保存");
         }
         
         [ContextMenu("Clear Save Data")]
@@ -159,17 +168,9 @@ namespace SlayTheSpireMap
         
         public void AddCard(string cardId)
         {
-            // 修复：Slay the Spire 允许重复卡牌，所以移除 Contains 检查
-            // if (!playerData.cardIds.Contains(cardId))
-            {
-                playerData.cardIds.Add(cardId);
-                
-                // 核心修复：更新内存后，必须同步更新 PlayerPrefs
-                // SaveGameData() 内部会调用 SaveListToPlayerPrefs("PlayerCardIds", playerData.cardIds);
-                SaveGameData();
-                
-                Debug.Log($"[GameDataManager] 获得卡牌: {cardId}。当前卡组数量: {playerData.cardIds.Count}");
-            }
+            playerData.cardIds.Add(cardId);
+            SaveGameData();
+            Debug.Log($"[GameDataManager] 获得卡牌: {cardId}。当前卡组数量: {playerData.cardIds.Count}");
         }
         
         public void RemoveCard(string cardId)
@@ -199,9 +200,8 @@ namespace SlayTheSpireMap
         
         public void CompleteNode(string nodeId)
         {
-            Debug.Log($"[GameDataManager] Request to complete node: {nodeId}");
             
-            // 无论是否已经包含，都尝试执行完成逻辑，以防之前的逻辑未完整执行
+            
             if (!completedNodeIds.Contains(nodeId))
             {
                 completedNodeIds.Add(nodeId);
@@ -212,15 +212,12 @@ namespace SlayTheSpireMap
                 Debug.Log($"[GameDataManager] Node {nodeId} was already in Completed list.");
             }
 
-            // 安全检查：确保 MapManager 存在再尝试解锁邻居
             if (MapManager.Instance != null && MapManager.Instance.allNodes != null)
                 {
                     Debug.Log($"[GameDataManager] CompleteNode: MapManager found. Processing node {nodeId}...");
-                    // 根据地图实际连接关系解锁下一关
                     MapNodeData nodeData = MapManager.Instance.allNodes.FirstOrDefault(n => n.nodeId == nodeId);
                     if (nodeData != null)
                     {
-                        // 1. 解锁所有邻居
                         foreach (var neighbor in nodeData.connectedNodes)
                         {
                             if (!unlockedNodeIds.Contains(neighbor.nodeId))
@@ -230,14 +227,10 @@ namespace SlayTheSpireMap
                             }
                         }
 
-                        // 2. 核心修复：自动推进当前节点指针
-                        // 如果当前完成的节点正是记录中的“当前节点”，则自动指向下一个
                         if (currentNodeId == nodeId)
                         {
                             if (nodeData.connectedNodes != null && nodeData.connectedNodes.Count > 0)
                             {
-                                // 默认选中第一个邻居作为新的当前节点
-                                // 玩家后续可以点击其他已解锁邻居来改变这个选择
                                 currentNodeId = nodeData.connectedNodes[0].nodeId;
                                 Debug.Log($"[GameDataManager] 进度推进：CurrentNodeId 已从 {nodeId} 更新为 {currentNodeId}");
                             }
@@ -303,65 +296,188 @@ namespace SlayTheSpireMap
         
         #region 数据持久化
         
-        public void SaveGameData()
+        public void SaveGameData(int slotIndex = 0)
         {
+            Debug.Log($"[GameDataManager] SaveGameData - 开始保存游戏数据，槽位: {slotIndex}");
             try
             {
-                // 保存玩家基础数据
-                PlayerPrefs.SetInt("PlayerHealth", playerData.health);
-                PlayerPrefs.SetInt("PlayerMaxHealth", playerData.maxHealth);
-                PlayerPrefs.SetInt("PlayerGold", playerData.gold);
-                PlayerPrefs.SetString("CurrentNodeId", currentNodeId);
+                playerData.saveTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 
-                // 保存列表数据
-                SaveListToPlayerPrefs("PlayerCardIds", playerData.cardIds);
-                SaveListToPlayerPrefs("PlayerRelicIds", playerData.relicIds);
-                SaveListToPlayerPrefs("CompletedNodeIds", completedNodeIds);
-                SaveListToPlayerPrefs("UnlockedNodeIds", unlockedNodeIds);
+                GameSaveData saveData = new GameSaveData();
+                saveData.playerData = playerData;
+                saveData.currentNodeId = currentNodeId;
+                saveData.completedNodeIds = completedNodeIds;
+                saveData.unlockedNodeIds = unlockedNodeIds;
+                
+                string fileName = slotIndex == 0 ? "save_current.json" : $"save_{slotIndex}.json";
+                string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+                string json = JsonUtility.ToJson(saveData, true);
+                System.IO.File.WriteAllText(savePath, json);
+                
+                Debug.Log($"[GameDataManager] SaveGameData - 成功保存玩家数据到: {savePath}");
+                
+                // 保存背包数据
+                if (Bag.InventoryManager.Instance != null)
+                {
+                    Debug.Log($"[GameDataManager] SaveGameData - 调用InventoryManager保存背包数据，槽位: {slotIndex}");
+                    Bag.InventoryManager.Instance.SaveInventory(slotIndex);
+                }
+                else
+                {
+                    Debug.LogWarning("[GameDataManager] SaveGameData - InventoryManager.Instance为null，无法保存背包数据");
+                }
                 
                 PlayerPrefs.Save();
-                Debug.Log("游戏数据已保存");
+                
+                Debug.Log($"[GameDataManager] SaveGameData - 游戏数据已保存到存档槽 {slotIndex}: {savePath}");
+                Debug.Log($"[GameDataManager] SaveGameData - 存档时间: {playerData.saveTime}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"保存游戏数据失败: {e.Message}");
+                Debug.LogError($"[GameDataManager] SaveGameData - 保存游戏数据失败: {e.Message}");
             }
         }
         
-        public void LoadGameData()
+        [System.Serializable]
+        private class GameSaveData
+        {
+            public PlayerStateData playerData;
+            public string currentNodeId;
+            public List<string> completedNodeIds;
+            public List<string> unlockedNodeIds;
+        }
+        
+        private void SaveInventoryData()
         {
             try
             {
-                // 检查是否有存档
-                if (!PlayerPrefs.HasKey("PlayerHealth"))
+                if (Bag.InventoryManager.Instance != null)
                 {
-                    Debug.Log("[GameDataManager] 无存档数据，使用默认值初始化");
-                    ResetToDefault();
-                    return;
+                    Bag.InventoryManager.Instance.SaveInventory();
                 }
-                
-                Debug.Log("[GameDataManager] 发现现有存档，正在加载...");
-                
-                // 加载玩家基础数据
-                playerData.health = PlayerPrefs.GetInt("PlayerHealth", 30);
-                playerData.maxHealth = PlayerPrefs.GetInt("PlayerMaxHealth", 30);
-                playerData.gold = PlayerPrefs.GetInt("PlayerGold", 100);
-                currentNodeId = PlayerPrefs.GetString("CurrentNodeId", "");
-                
-                // 加载列表数据
-                playerData.cardIds = LoadListFromPlayerPrefs("PlayerCardIds");
-                playerData.relicIds = LoadListFromPlayerPrefs("PlayerRelicIds");
-                completedNodeIds = LoadListFromPlayerPrefs("CompletedNodeIds");
-                unlockedNodeIds = LoadListFromPlayerPrefs("UnlockedNodeIds");
-                
-                Debug.Log("游戏数据已加载");
-                PrintDebugInfo();
             }
             catch (Exception e)
             {
-                Debug.LogError($"加载游戏数据失败: {e.Message}");
-                ResetToDefault();
+                Debug.LogError($"保存背包数据失败: {e.Message}");
             }
+        }
+        
+        private void LoadInventoryData(int slotIndex = 0)
+        {
+            Debug.Log($"[GameDataManager] LoadInventoryData - 开始加载背包数据，槽位: {slotIndex}");
+            try
+            {
+                if (Bag.InventoryManager.Instance != null)
+                {
+                    Debug.Log($"[GameDataManager] LoadInventoryData - InventoryManager.Instance存在，调用LoadInventoryData，槽位: {slotIndex}");
+                    Bag.InventoryManager.Instance.LoadInventoryData(slotIndex);
+                    Debug.Log("[GameDataManager] LoadInventoryData - 背包数据已通过 InventoryManager 加载");
+                }
+                else
+                {
+                    Debug.LogWarning("[GameDataManager] LoadInventoryData - InventoryManager.Instance为null，无法加载背包数据");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[GameDataManager] 加载背包数据失败: {e.Message}");
+                Debug.LogError($"[GameDataManager] 异常堆栈: {e.StackTrace}");
+            }
+        }
+        
+        public void LoadGameData(int slotIndex = 0)
+        {
+            Debug.Log($"[GameDataManager] LoadGameData - 开始加载游戏数据，槽位: {slotIndex}");
+            string fileName = slotIndex == 0 ? "save_current.json" : $"save_{slotIndex}.json";
+            string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            
+            Debug.Log($"[GameDataManager] LoadGameData - 查找存档文件: {savePath}");
+            
+            if (!System.IO.File.Exists(savePath))
+            {
+                Debug.LogError($"[GameDataManager] 尝试加载槽位 {slotIndex} 失败：文件不存在！路径: {savePath}");
+                // 如果是从主菜单点进来的，这里不应该重置数据，应该报错让玩家知道
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"[GameDataManager] LoadGameData - 读取存档文件");
+                string jsonContent = System.IO.File.ReadAllText(savePath);
+                Debug.Log($"[GameDataManager] LoadGameData - 读取到JSON数据: {jsonContent}");
+                
+                GameSaveData loadedSaveData = JsonUtility.FromJson<GameSaveData>(jsonContent);
+                Debug.Log($"[GameDataManager] LoadGameData - 解析成功");
+                
+                // 覆盖当前内存数据
+                playerData = loadedSaveData.playerData;
+                currentNodeId = loadedSaveData.currentNodeId;
+                completedNodeIds = loadedSaveData.completedNodeIds;
+                unlockedNodeIds = loadedSaveData.unlockedNodeIds;
+                
+                // 加载背包数据
+                Debug.Log($"[GameDataManager] LoadGameData - 调用LoadInventoryData，槽位: {slotIndex}");
+                LoadInventoryData(slotIndex);
+                
+                Debug.Log($"<color=green>[GameDataManager] 成功从槽位 {slotIndex} 加载存档数据</color>");
+                PrintDebugInfo();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[GameDataManager] JSON解析失败: {e.Message}");
+                Debug.LogError($"[GameDataManager] 异常堆栈: {e.StackTrace}");
+                // 这里不应该重置数据，而是让玩家知道加载失败
+            }
+        }
+        
+        public PlayerStateData LoadPlayerDataForSlot(int slotIndex)
+        {
+            try
+            {
+                string fileName = $"save_{slotIndex}.json";
+                string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+                
+                // 优先加载指定槽位的存档
+                if (System.IO.File.Exists(savePath))
+                {
+                    string jsonContent = System.IO.File.ReadAllText(savePath);
+                    GameSaveData loadedSave = JsonUtility.FromJson<GameSaveData>(jsonContent);
+                    
+                    return loadedSave.playerData;
+                }
+                
+                // 如果指定槽位存档不存在，尝试加载当前存档
+                string currentSavePath = System.IO.Path.Combine(Application.persistentDataPath, "save_current.json");
+                if (System.IO.File.Exists(currentSavePath))
+                {
+                    string jsonContent = System.IO.File.ReadAllText(currentSavePath);
+                    GameSaveData currentSave = JsonUtility.FromJson<GameSaveData>(jsonContent);
+                    return currentSave.playerData;
+                }
+                
+                return null;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"加载存档槽 {slotIndex} 数据失败: {e.Message}");
+                return null;
+            }
+        }
+        
+        public bool HasSaveData(int slotIndex)
+        {
+            string fileName = $"save_{slotIndex}.json";
+            string savePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            
+            // 检查指定槽位存档是否存在
+            if (System.IO.File.Exists(savePath))
+            {
+                return true;
+            }
+            
+            // 如果指定槽位存档不存在，检查当前存档是否存在
+            string currentSavePath = System.IO.Path.Combine(Application.persistentDataPath, "save_current.json");
+            return System.IO.File.Exists(currentSavePath);
         }
         
         public void ResetToDefault()
@@ -378,7 +494,6 @@ namespace SlayTheSpireMap
                     relicIds = new List<string>(defaultCharacterData.startingRelicIds)
                 };
 
-                // 从配置资产中提取卡牌文件名作为 ID
                 foreach (var card in defaultCharacterData.startingCards)
                 {
                     if (card != null)
@@ -392,7 +507,6 @@ namespace SlayTheSpireMap
             else
             {
                 Debug.LogWarning("[GameDataManager] defaultCharacterData 未赋值！使用硬编码默认值作为后备。");
-                // Fallback hardcoded defaults
                 playerData = new PlayerStateData()
                 {
                     characterName = "铁甲卫士",
@@ -410,13 +524,10 @@ namespace SlayTheSpireMap
             
             ClearBattleData();
             
-            // 清理背包数据
             try
             {
-                // 检查背包管理器是否存在
                 if (Bag.InventoryManager.Instance != null)
                 {
-                    // 清空背包数据
                     Bag.InventoryManager.Instance.ClearInventory(null);
                     Debug.Log("背包数据已清空");
                 }

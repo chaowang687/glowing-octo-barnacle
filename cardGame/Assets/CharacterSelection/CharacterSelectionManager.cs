@@ -111,12 +111,12 @@ public class CharacterSelectionManager : MonoBehaviour
                 Debug.Log("背包存档文件已删除");
             }
 
-            // 4. 关键：直接销毁旧的单例，不要调用它的方法
-            // 因为调用它的方法可能会触发 UI 刷新，而此时 UI 正在销毁，极易报错
+            // 4. 重置背包数据，而不是销毁实例
+            // 这样可以保持InventoryManager的全局存在，同时清空背包数据
             if (InventoryManager.Instance != null)
             {
-                Destroy(InventoryManager.Instance.gameObject);
-                Debug.Log("背包管理器实例已销毁");
+                InventoryManager.Instance.ResetInventoryData();
+                Debug.Log("背包数据已重置");
             }
 
             // 5. 最后跳转

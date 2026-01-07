@@ -110,7 +110,16 @@ public class BattleManager : MonoBehaviour
 private IEnumerator Start()
     {
         Debug.Log("[Battle] 正在初始化战斗场景...");
-
+        
+        // 确保 BattleDataManager 实例存在
+        if (BattleDataManager.Instance == null)
+        {
+            Debug.LogWarning("[Battle] BattleDataManager.Instance 为 null！正在创建新实例...");
+            // 创建一个新的 BattleDataManager 游戏对象
+            GameObject bdmObject = new GameObject("BattleDataManager");
+            BattleDataManager bdm = bdmObject.AddComponent<BattleDataManager>();
+        }
+        
         // 1. 【核心修复】不再使用 Mock Hero，而是从全局数据生成真正的英雄
         if (GameFlowManager.Instance != null)
         {
@@ -1050,7 +1059,7 @@ private IEnumerator StartEnemyTurn()
                     }
                     else
                     {
-                        Debug.LogError("[BattleManager] BattleDataManager.Instance 为 null！无法保存奖励。");
+                        Debug.LogError("存档失败：场景中缺少 BattleDataManager 实例，请检查初始化顺序！");
                     }
                     
                     // 显示最终胜利结算 (包含继续按钮)
@@ -1101,6 +1110,10 @@ private IEnumerator StartEnemyTurn()
             {
                 // 失败不保存奖励，但可能需要更新状态
                 BattleDataManager.Instance.SaveBattleResult(false, 0, null);
+            }
+            else
+            {
+                Debug.LogError("存档失败：场景中缺少 BattleDataManager 实例，请检查初始化顺序！");
             }
             GameFlowManager.Instance.ShowDefeatPanel("DEFEAT");
         }

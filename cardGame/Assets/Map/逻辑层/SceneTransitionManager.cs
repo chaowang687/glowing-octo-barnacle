@@ -75,8 +75,32 @@ namespace SlayTheSpireMap
         /// </summary>
         public void GoToScene(string sceneName)
         {
-            Debug.Log($"跳转到场景: {sceneName}");
+            // === 新增：每当发生场景切换（推进关卡）时自动存档 ===
+            AutoSaveCurrentProgress();
+
+            Debug.Log($"跳转到场景: {sceneName}，已自动存档");
             SceneManager.LoadScene(sceneName);
+        }
+        
+        /// <summary>
+        /// 自动保存当前进度
+        /// </summary>
+        private void AutoSaveCurrentProgress()
+        {
+            // 1. 保存地图进度、血量、金币等
+            if (SlayTheSpireMap.GameDataManager.Instance != null)
+            {
+                SlayTheSpireMap.GameDataManager.Instance.SaveGameData();
+            }
+
+            // 2. 保存背包物品
+            if (Bag.InventoryManager.Instance != null)
+            {
+                Bag.InventoryManager.Instance.SaveInventory();
+            }
+            
+            // 3. 强制 PlayerPrefs 写入磁盘（防止强行关闭导致丢失）
+            PlayerPrefs.Save();
         }
         
         /// <summary>
@@ -98,6 +122,20 @@ namespace SlayTheSpireMap
         /// </summary>
         public void ReturnToMainMenu()
         {
+            // 保存所有数据
+            if (Bag.InventoryManager.Instance != null)
+            {
+                Bag.InventoryManager.Instance.SaveInventory();
+                Debug.Log("SceneTransitionManager: 背包数据已保存");
+            }
+            
+            if (GameDataManager.Instance != null)
+            {
+                GameDataManager.Instance.SaveGameData();
+                Debug.Log("SceneTransitionManager: 游戏数据已保存");
+            }
+            
+            // 注意：不要清理任何资源引用，保持资源引用，这样下次加载游戏时资源仍然可用
             GoToScene(MAIN_MENU_SCENE);
         }
         
