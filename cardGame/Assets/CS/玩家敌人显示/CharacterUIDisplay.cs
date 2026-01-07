@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Linq; 
 using TMPro;
 using System.Collections; // ⭐ 添加 System.Collections 命名空间 ⭐
+using UnityEngine.Localization; // 必须引用
 
 public class CharacterUIDisplay : MonoBehaviour
 {

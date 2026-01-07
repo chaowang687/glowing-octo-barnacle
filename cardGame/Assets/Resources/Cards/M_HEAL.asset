@@ -15,6 +15,8 @@ MonoBehaviour:
   cardID: M_HEAL
   cardName: Health
   description: Restore 10 health points
+  cardNameKey: card_M_HEAL_name
+  descriptionKey: card_M_HEAL_description
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 1
   requiredClass: 2
@@ -26,6 +28,7 @@ MonoBehaviour:
   - effectType: 3
     targetType: 1
     value: 10
+    repeatCount: 0
     scalesWithStatus: 0
     statusEffect: 0
     duration: 0

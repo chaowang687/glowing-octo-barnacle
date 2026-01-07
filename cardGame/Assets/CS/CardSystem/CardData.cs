@@ -11,8 +11,13 @@ public class CardData : ScriptableObject
 {
     [Header("核心信息")]
     public string cardID = "";
-    public string cardName = "新卡牌";
-    [TextArea] public string description = "描述";
+    public string cardName = "新卡牌"; // 备份字段，用于初始化本地化键
+    [TextArea] public string description = "描述"; // 备份字段，用于初始化本地化键
+    
+    [Header("本地化设置")]
+    public string cardNameKey = "card_default_name";
+    public string descriptionKey = "card_default_description";
+    
     public Sprite artwork;
 
     [Header("分类与稀有度")]

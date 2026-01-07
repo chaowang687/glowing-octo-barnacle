@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using SlayTheSpireMap;
+using UnityEngine.Localization; // 必须引用
 
 /// <summary>
 /// 存档槽UI脚本，用于显示存档信息

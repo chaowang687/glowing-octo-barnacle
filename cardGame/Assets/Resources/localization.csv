@@ -1,0 +1,37 @@
+key,zh-CN,en-US
+main_menu_title,卡牌冒险,Card Adventure
+main_menu_new_game,新游戏,New Game
+main_menu_load_game,加载游戏,Load Game
+main_menu_settings,设置,Settings
+main_menu_quit,退出,Quit
+character_selection_title,角色选择,Character Selection
+character_warrior,铁甲卫士,Ironclad
+character_rogue,沉默刺客,Silent
+character_mage,元素法师,Defect
+character_hunter,猎手,Huntress
+btn_confirm,确认,Confirm
+btn_cancel,取消,Cancel
+btn_back,返回,Back
+health,生命值,Health
+max_health,最大生命值,Max Health
+gold,金币,Gold
+attack,攻击,Attack
+defense,防御,Defense
+card,卡牌,Card
+relic,遗物,Relic
+victory,胜利,Victory
+defeat,失败,Defeat
+continue,继续,Continue
+exit_to_menu,返回主菜单,Exit to Menu
+shop_title,商店,Shop
+event_title,事件,Event
+battle_title,战斗,Battle
+dig_title,挖掘,Dig
+map_title,地图,Map
+level_up,升级,Level Up
+reward,奖励,Reward
+damage,伤害,Damage
+heal,治疗,Heal
+block,格挡,Block
+win,获胜,Win
+lose,失败,Lose

@@ -16,6 +16,8 @@ MonoBehaviour:
   cardName: Execute
   description: Deal 15 damage. If the target is vulnerable, the damage will be significantly
     increased
+  cardNameKey: card_B_EXECUTE_name
+  descriptionKey: card_B_EXECUTE_description
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 2
   requiredClass: 0

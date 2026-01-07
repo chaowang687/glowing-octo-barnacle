@@ -6,7 +6,8 @@ using DG.Tweening;
 using UnityEngine.EventSystems; 
 using System.Collections; 
 using TMPro; 
-using System; 
+using System;
+using UnityEngine.Localization.Components; 
 
 // ----------------------------------------------------------------------
 // 修正后的 CardDisplay 组件 (已更新 TryPlayCard 的调用方式)
@@ -34,7 +35,11 @@ public class CardDisplay : MonoBehaviour,
     public TextMeshProUGUI costText;
     public TextMeshProUGUI descriptionText;
     public TextMeshProUGUI typeText; 
-    public Image artworkImage;        
+    public Image artworkImage;
+    
+    [Header("Localization")]
+    public LocalizeStringEvent nameLocalizeEvent;
+    public LocalizeStringEvent descriptionLocalizeEvent;
     
     private RectTransform rectTransform;
 
@@ -61,11 +66,91 @@ public class CardDisplay : MonoBehaviour,
             return;
         }
 
-        if (nameText != null) nameText.text = data.cardName;
+        // 成本和类型不需要本地化，直接设置
         if (costText != null) costText.text = data.energyCost.ToString();
-        if (descriptionText != null) descriptionText.text = data.description; 
         if (typeText != null) typeText.text = data.type.ToString();
-
+        
+        // 卡牌名称本地化
+        if (nameLocalizeEvent != null)
+        {
+            // 检查是否使用了默认本地化键
+            if (data.cardNameKey == "card_default_name" || data.cardNameKey == "card_default_description")
+            {
+                // 使用默认文本，不使用本地化
+                if (nameText != null)
+                {
+                    nameText.text = data.cardName;
+                }
+            }
+            else
+            {
+                // 使用本地化 - 卡牌专用表格
+                nameLocalizeEvent.StringReference.TableReference = "Card";
+                nameLocalizeEvent.StringReference.TableEntryReference = data.cardNameKey;
+                
+                // 确保OnUpdateString事件已配置
+                if (nameLocalizeEvent.OnUpdateString.GetPersistentEventCount() == 0 && nameText != null)
+                {
+                    nameLocalizeEvent.OnUpdateString.AddListener(nameText.SetText);
+                }
+            }
+        }
+        else if (nameText != null)
+        {
+            // 备选方案：直接使用LocalizationManager获取本地化文本
+            if (LocalizationManager.Instance != null && 
+                data.cardNameKey != "card_default_name" && 
+                data.cardNameKey != "card_default_description")
+            {
+                nameText.text = LocalizationManager.Instance.GetLocalizedString(data.cardNameKey);
+            }
+            else
+            {
+                nameText.text = data.cardName; // 回退到默认文本
+            }
+        }
+        
+        // 卡牌描述本地化
+        if (descriptionLocalizeEvent != null)
+        {
+            // 检查是否使用了默认本地化键
+            if (data.descriptionKey == "card_default_name" || data.descriptionKey == "card_default_description")
+            {
+                // 使用默认文本，不使用本地化
+                if (descriptionText != null)
+                {
+                    descriptionText.text = data.description;
+                }
+            }
+            else
+            {
+                // 使用本地化 - 卡牌专用表格
+                descriptionLocalizeEvent.StringReference.TableReference = "Card";
+                descriptionLocalizeEvent.StringReference.TableEntryReference = data.descriptionKey;
+                
+                // 确保OnUpdateString事件已配置
+                if (descriptionLocalizeEvent.OnUpdateString.GetPersistentEventCount() == 0 && descriptionText != null)
+                {
+                    descriptionLocalizeEvent.OnUpdateString.AddListener(descriptionText.SetText);
+                }
+            }
+        }
+        else if (descriptionText != null)
+        {
+            // 备选方案：直接使用LocalizationManager获取本地化文本
+            if (LocalizationManager.Instance != null && 
+                data.descriptionKey != "card_default_name" && 
+                data.descriptionKey != "card_default_description")
+            {
+                descriptionText.text = LocalizationManager.Instance.GetLocalizedString(data.descriptionKey);
+            }
+            else
+            {
+                descriptionText.text = data.description; // 回退到默认文本
+            }
+        }
+        
+        // 卡牌图片设置（不需要本地化）
         if (artworkImage != null)
         {
             if (data.artwork != null)

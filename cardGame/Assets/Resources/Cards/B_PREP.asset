@@ -16,6 +16,8 @@ MonoBehaviour:
   cardName: Prep
   description: When you get 6 blocks, you will gain 1 energy at the start of the
     next round
+  cardNameKey: card_B_PREP_name
+  descriptionKey: card_B_PREP_description
   artwork: {fileID: -466895919, guid: 10872a12ea433435ba667575fa710858, type: 3}
   rarity: 0
   requiredClass: 0
