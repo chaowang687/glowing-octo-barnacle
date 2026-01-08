@@ -14,12 +14,16 @@ namespace Bag
         private bool isDragging = false;
         public bool IsDragging { get { return isDragging; } private set { isDragging = value; } }
         
+        // 添加一个标志位，用于控制是否允许拖拽
+        public bool allowDrag = true;
+        
         public ItemInstance itemInstance;
         private RectTransform rect;
         private CanvasGroup canvasGroup;
-        private Image iconImage;
+        [SerializeField] private Image iconImage;
         private Image glowImage;
         private Canvas canvas;
+        private float cellSize = 50f; // 保存初始化时的cellSize，默认50f
         
         private InventoryGrid originalGrid;
         private Vector2Int originalPos;
@@ -40,13 +44,19 @@ namespace Bag
             canvasGroup.interactable = true;
             canvasGroup.alpha = 1f;
             
-            // 缓存图标引用，避免重复查找
-            Transform iconTransform = transform.Find("Icon");
-            if (iconTransform != null)
+            // 如果iconImage未通过Inspector赋值，尝试查找
+            if (iconImage == null)
             {
-                iconImage = iconTransform.GetComponent<Image>();
-                
-                // 初始化Icon的锚点设置为中心点，避免拉伸冲突
+                Transform iconTransform = transform.Find("Icon");
+                if (iconTransform != null)
+                {
+                    iconImage = iconTransform.GetComponent<Image>();
+                }
+            }
+            
+            // 初始化Icon的锚点设置为中心点，避免拉伸冲突
+            if (iconImage != null)
+            {
                 RectTransform iconRect = iconImage.rectTransform;
                 if (iconRect != null)
                 {
@@ -60,9 +70,16 @@ namespace Bag
             CreateGlowEffect();
         }
 
+        // 移除Start方法中的UpdateVisual调用，因为Initialize方法已经包含了完整的UI更新逻辑
+        // 避免在未完成初始化时调用导致的大小错误
         private void Start()
         {
-            UpdateVisual();
+            // 如果Initialize方法没有被调用，手动初始化
+            if (itemInstance == null)
+            {
+                Debug.LogWarning($"[ItemUI] Start: itemInstance 未初始化，物体: {gameObject.name}");
+            }
+            // 否则，不执行任何操作，因为Initialize方法已经处理了视觉更新
         }
 
         /// <summary>
@@ -98,7 +115,7 @@ namespace Bag
         /// </summary>
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (itemInstance == null) return;
+            if (itemInstance == null || !allowDrag) return;
             
             IsDragging = true; // 标记开始拖拽
             canvasGroup.blocksRaycasts = false;
@@ -131,7 +148,7 @@ namespace Bag
         /// </summary>
         public void OnDrag(PointerEventData eventData)
         {
-            if (itemInstance == null) return;
+            if (itemInstance == null || !allowDrag) return;
             
             Vector2 mousePos;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -177,7 +194,7 @@ namespace Bag
         /// </summary>
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (itemInstance == null) return;
+            if (itemInstance == null || !allowDrag) return;
             
             IsDragging = false; // 标记结束拖拽
             canvasGroup.blocksRaycasts = true;
@@ -193,8 +210,37 @@ namespace Bag
 
             if (targetGrid == null)
             {
-                // 情况 A：释放位置在网格外部 -> 丢弃
-                InventoryManager.Instance.DropItem(this);
+                // 情况 A：释放位置在网格外部 -> 返回原位置，而不是丢弃
+                if (originalGrid != null)
+                {
+                    // 确保物品UI的父对象是正确的ItemContainer
+                    if (transform.parent != InventoryManager.Instance.itemContainer)
+                    {
+                        transform.SetParent(InventoryManager.Instance.itemContainer);
+                    }
+                    
+                    if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
+                    {
+                        originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
+                        SnapToGrid(originalGrid, originalPos);
+                        InventoryManager.Instance.AddItemToBag(itemInstance);
+                    }
+                    else
+                    {
+                        // 如果原位置已被占用，寻找最近的可放置位置
+                        bool foundPlace = FindAndPlaceNearestPosition(originalGrid);
+                        if (!foundPlace)
+                        {
+                            Debug.LogWarning("无法找到可放置位置，物品将被销毁");
+                            Destroy(gameObject);
+                        }
+                    }
+                }
+                else
+                {
+                    // 如果物品是外部生成的且没有原始网格，销毁它
+                    Destroy(gameObject);
+                }
             }
             else
             {
@@ -360,16 +406,40 @@ namespace Bag
         /// </summary>
         public void UpdateVisual()
         {
-            if (itemInstance == null || itemInstance.data == null) return;
+            // 1. 强制初始化基础组件引用 (确保安全)
+            if (rect == null) rect = GetComponent<RectTransform>();
+            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+            if (canvas == null) canvas = GetComponentInParent<Canvas>();
             
-            float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
+            // 2. 确保 iconImage 的引用
+            if (iconImage == null)
+            {
+                Transform iconTransform = transform.Find("Icon");
+                if (iconTransform != null) iconImage = iconTransform.GetComponent<Image>();
+                else iconImage = GetComponentInChildren<Image>();
+            }
             
-            // 使用CurrentWidth和CurrentHeight来计算旋转后的尺寸
+            // 3. 数据安全性检查
+            if (itemInstance == null || itemInstance.data == null)
+            {
+                Debug.LogWarning($"[ItemUI] UpdateVisual: 无效的物品数据，跳过更新。物体: {gameObject.name}");
+                return;
+            }
+            
+            // 4. 使用保存的cellSize
+            float cellSize = this.cellSize;
+            
+            // 5. 使用CurrentWidth和CurrentHeight来计算旋转后的尺寸
             int currentWidth = itemInstance.CurrentWidth;
             int currentHeight = itemInstance.CurrentHeight;
-            rect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
             
-            // 更新外发光效果的大小
+            // 6. 执行UI更新 (现在访问rect是安全的)
+            if (rect != null)
+            {
+                rect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
+            }
+            
+            // 7. 更新外发光效果的大小
             if (glowImage != null)
             {
                 RectTransform glowRect = glowImage.rectTransform;
@@ -383,7 +453,7 @@ namespace Bag
                 }
             }
             
-            // 设置图标
+            // 8. 设置图标
             if (iconImage != null)
             {
                 iconImage.sprite = itemInstance.data.icon;
@@ -428,30 +498,50 @@ namespace Bag
         /// </summary>
         public void Initialize(ItemInstance item, float cellSize)
         {
-            this.itemInstance = item;
-            if (item == null) return;
+            // 1. 强制初始化基础组件引用 (手动补齐 Awake 的工作)
+            if (rect == null) rect = GetComponent<RectTransform>();
+            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
             
-            // 设置尺寸
+            // 2. 确保 iconImage 的引用 (处理 Prefab 动态生成)
+            if (iconImage == null)
+            {
+                Transform iconTransform = transform.Find("Icon");
+                if (iconTransform != null) iconImage = iconTransform.GetComponent<Image>();
+                else iconImage = GetComponentInChildren<Image>();
+            }
+
+            // 3. 保存cellSize
+            this.cellSize = cellSize;
+
+            // 4. 数据安全性检查
+            if (item == null)
+            {
+                Debug.LogError($"[ItemUI] 错误: 传入的 ItemInstance 为空！物体: {gameObject.name}");
+                return;
+            }
+            this.itemInstance = item;
+
+            if (item.data == null)
+            {
+                Debug.LogError($"[ItemUI] 错误: 物品 {item} 的 data 属性未赋值！");
+                return;
+            }
+
+            // 5. 执行 UI 更新 (现在访问 rect 是 100% 安全的)
             rect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
             
-            // 初始化Icon的旋转和大小
             if (iconImage != null)
             {
                 iconImage.sprite = item.data.icon;
-                
+                // ... 原有的其余初始化逻辑
                 RectTransform iconRect = iconImage.rectTransform;
                 if (iconRect != null)
                 {
-                    // 旋转 Icon 角度
                     iconRect.localEulerAngles = item.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
-                    
-                    // 手动设置 Icon 的大小
                     if (item.isRotated)
-                    {
                         iconRect.sizeDelta = new Vector2(item.CurrentHeight * cellSize, item.CurrentWidth * cellSize);
-                    } else {
+                    else
                         iconRect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
-                    }
                 }
             }
         }
@@ -600,7 +690,7 @@ namespace Bag
             itemInstance.isRotated = !itemInstance.isRotated;
 
             // --- 视觉变更 ---
-            float cellSize = InventoryManager.Instance.CurrentGrid?.cellSize ?? 50f;
+            float cellSize = this.cellSize;
             
             // 重新计算宽高
             int w = itemInstance.CurrentWidth;

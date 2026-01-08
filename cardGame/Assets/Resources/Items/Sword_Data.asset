@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ffc123dcab2e45fca8b9efaae4cc736, type: 3}
   m_Name: Sword_Data
   m_EditorClassIdentifier: 
-  itemName: Sword_Data
+  itemID: Sword_Data
+  itemName: Sword
+  description: A Potion
   width: 1
   height: 4
   icon: {fileID: 21300000, guid: d656b45edc7eb4653b65a7d6f22449d7, type: 3}
   worldPrefab: {fileID: 0}
+  effects: []

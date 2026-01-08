@@ -96,6 +96,7 @@
     <Compile Include="Assets/Dig/TileView.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/Item.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/CharacterUIDisplay.cs" />
+    <Compile Include="Assets/Bag/UI/CodexButtonController.cs" />
     <Compile Include="Assets/CS/CardSystem/CardDataEnums.cs" />
     <Compile Include="Assets/Map/表现层/MainMenuController.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/工具提示/InventoryInfoManager.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Assets/CS3/FollowCamer.cs" />
     <Compile Include="Assets/CS/Managers/BattleVisualizer.cs" />
     <Compile Include="Assets/Bag/BagSave.cs" />
+    <Compile Include="Assets/Bag/ItemCodexSO.cs" />
     <Compile Include="Assets/Map/逻辑层/MapGenerator.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAI.cs" />
     <Compile Include="Assets/CS2/ScavengingController.cs" />
@@ -125,6 +127,7 @@
     <Compile Include="Assets/CS2/宝箱搜刮/Data/ItemData.cs" />
     <Compile Include="Assets/CS/CardSystem/CardVisualManager.cs" />
     <Compile Include="Assets/CS/动画控制/AnimationDebugger.cs" />
+    <Compile Include="Assets/Bag/UI/ItemDetailPanel.cs" />
     <Compile Include="Assets/CS2/背包系统/UI/UI/InventoryManager.cs" />
     <Compile Include="Assets/Bag/InventoryUtils.cs" />
     <Compile Include="Assets/Map/表现层/ContinueButtonUI.cs" />
@@ -157,6 +160,7 @@
     <Compile Include="Assets/CS/对战AI/Entities（结果）/Hero.cs" />
     <Compile Include="Assets/Bag/ItemData.cs" />
     <Compile Include="Assets/Bag/InventoryGrid.cs" />
+    <Compile Include="Assets/Bag/ItemCodexManager.cs" />
     <Compile Include="Assets/CS/Managers/BattleManager.cs" />
     <Compile Include="Assets/Dig/FossilData.cs" />
     <Compile Include="Assets/Dig/GridManager.cs" />
@@ -176,6 +180,7 @@
     <Compile Include="Assets/CS/CardSystem/CardDisplay.cs" />
     <Compile Include="Assets/CS3/PlayerRunner.cs" />
     <Compile Include="Assets/Bag/IItemEffect.cs" />
+    <Compile Include="Assets/Bag/UI/ItemCodexUI.cs" />
     <Compile Include="Assets/CS2/测试工具/LootDataDebugger.cs" />
     <Compile Include="Assets/CS/对战AI/使用说明.cs" />
     <Compile Include="Assets/Bag/TrashCanSlot.cs" />
@@ -185,6 +190,7 @@
     <Compile Include="Assets/Map/数据层/NodeType.cs" />
     <Compile Include="Assets/CS4/WorldSegmentItem.cs" />
     <Compile Include="Assets/CS2/MapGridManager.cs" />
+    <Compile Include="Assets/Bag/UI/ItemCodexEntry.cs" />
     <Compile Include="Assets/CS2/测试工具/InventoryTester.cs" />
     <Compile Include="Assets/CS2/DiceController.cs" />
     <Compile Include="Assets/Map/逻辑层/NodeInteractionManager.cs" />
@@ -715,12 +721,12 @@
       <HintPath>Library/PackageCache/com.unity.visualscripting/Runtime/VisualScripting.Flow/Dependencies/NCalc/Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Mono.Cecil">
-      <HintPath>Library/PackageCache/com.unity.nuget.mono-cecil/Mono.Cecil.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>Library/PackageCache/com.unity.nuget.newtonsoft-json/Runtime/Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>Library/PackageCache/com.unity.nuget.mono-cecil/Mono.Cecil.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.iOS.Extensions.Xcode">
@@ -1219,12 +1225,12 @@
       <HintPath>Library/ScriptAssemblies/Unity.InputSystem.ForUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEditor.UI">
-      <HintPath>Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Addressables.Editor">
       <HintPath>Library/ScriptAssemblies/Unity.Addressables.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEditor.UI">
+      <HintPath>Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Searcher.Editor">
@@ -1395,6 +1401,10 @@
       <HintPath>Library/ScriptAssemblies/Unity.VisualScripting.State.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Localization.Editor">
+      <HintPath>Library/ScriptAssemblies/Unity.Localization.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.2D.Sprite.Editor">
       <HintPath>Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1411,10 +1421,6 @@
       <HintPath>Library/ScriptAssemblies/Unity.Burst.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Localization.Editor">
-      <HintPath>Library/ScriptAssemblies/Unity.Localization.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Burst">
       <HintPath>Library/ScriptAssemblies/Unity.Burst.dll</HintPath>
       <Private>False</Private>
@@ -1423,12 +1429,12 @@
       <HintPath>Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.Runtime">
-      <HintPath>Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualScripting.Flow">
       <HintPath>Library/ScriptAssemblies/Unity.VisualScripting.Flow.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Rendering.LightTransport.Runtime">

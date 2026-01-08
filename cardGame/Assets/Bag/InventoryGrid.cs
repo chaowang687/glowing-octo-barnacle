@@ -172,12 +172,19 @@ namespace Bag
         public void PlaceItem(ItemInstance item, int x, int y) {
             if (item == null || IsOutOfBounds(x, y, item.CurrentWidth, item.CurrentHeight)) return;
             
+            // --- 新增保护代码 ---
+            if (gridSlots == null) {
+                Debug.LogWarning("gridSlots 为空，正在紧急初始化...");
+                gridSlots = new ItemInstance[width, height];
+            }
+            // ------------------
+            
             // 在数组中登记
             for (int i = x; i < x + item.CurrentWidth; i++) {
-                for (int j = y; j < y + item.CurrentHeight; j++) {
-                    gridSlots[i, j] = item;
-                }
+            for (int j = y; j < y + item.CurrentHeight; j++) {
+                gridSlots[i, j] = item;
             }
+        }
             
             // 更新物品位置信息
             item.posX = x;

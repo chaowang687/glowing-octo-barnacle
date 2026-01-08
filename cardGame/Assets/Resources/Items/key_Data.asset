@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ffc123dcab2e45fca8b9efaae4cc736, type: 3}
   m_Name: key_Data
   m_EditorClassIdentifier: 
-  itemName: key_Data
+  itemID: key_Data
+  itemName: key
+  description: A Key
   width: 2
   height: 1
   icon: {fileID: 21300000, guid: 94102a43b61f14301b5f9379870f31ff, type: 3}
   worldPrefab: {fileID: 0}
+  effects: []

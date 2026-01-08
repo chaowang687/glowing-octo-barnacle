@@ -5,7 +5,11 @@ namespace Bag
 {
    [CreateAssetMenu]
 public class ItemData : ScriptableObject {
-    public string itemName;
+    [Header("基本信息")]
+    public string itemID; // 物品唯一标识符，与物品名称分开
+    public string itemName; // 物品显示名称
+    [TextArea] // 支持多行文本输入
+    public string description; // 物品描述
     public int width = 1;
     public int height = 1;
     public Sprite icon;

@@ -120,7 +120,7 @@ namespace Bag
             // 尝试初始化CurrentGrid和itemContainer
             if (CurrentGrid == null)
             {
-                CurrentGrid = FindObjectOfType<InventoryGrid>();
+                CurrentGrid = FindObjectOfType<InventoryGrid>(true);
                 Debug.Log($"InventoryManager: Start - 尝试查找CurrentGrid: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
             }
             
@@ -772,7 +772,7 @@ namespace Bag
             // 确保CurrentGrid和itemContainer已被正确初始化
             if (CurrentGrid == null)
             {
-                CurrentGrid = FindObjectOfType<InventoryGrid>();
+                CurrentGrid = FindObjectOfType<InventoryGrid>(true);
                 Debug.Log($"InventoryManager: DelayRefreshUI - 查找CurrentGrid: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
             }
             
@@ -782,10 +782,14 @@ namespace Bag
                 Debug.Log($"InventoryManager: DelayRefreshUI - 设置itemContainer为CurrentGrid.transform: {itemContainer.name}");
             }
             
-            if (itemContainer != null)
+            if (itemContainer != null && CurrentGrid != null && itemPrefab != null)
             {
                 Debug.Log($"InventoryManager: DelayRefreshUI - 调用RefreshItemsInContainer刷新物品UI");
                 RefreshItemsInContainer();
+            }
+            else
+            {
+                Debug.LogError("InventoryManager: DelayRefreshUI - 引用缺失！请检查Inspector面板。");
             }
         }
         
@@ -890,8 +894,8 @@ namespace Bag
             // 等待一帧，确保所有组件都已初始化
             yield return new WaitForEndOfFrame();
             
-            // 尝试查找CurrentGrid
-            CurrentGrid = FindObjectOfType<InventoryGrid>();
+            // 尝试查找CurrentGrid，包括隐藏对象
+            CurrentGrid = FindObjectOfType<InventoryGrid>(true);
             Debug.Log($"InventoryManager: DelayInitializeAndRefresh - 查找CurrentGrid结果: {(CurrentGrid != null ? CurrentGrid.name : "未找到")}");
             
             // 寻找新场景中的容器
@@ -906,10 +910,26 @@ namespace Bag
             }
             
             // 容器找回后，刷新UI但不重新加载存档
-            if (itemContainer != null)
+            if (itemContainer != null && CurrentGrid != null && itemPrefab != null)
             {
                 Debug.Log("InventoryManager: DelayInitializeAndRefresh - 调用RefreshItemsInContainer刷新UI");
                 RefreshItemsInContainer();
+            }
+            else
+            {
+                // 检查具体哪个引用缺失
+                if (itemPrefab == null)
+                {
+                    Debug.LogError("InventoryManager: DelayInitializeAndRefresh - itemPrefab引用缺失！请在Inspector面板中赋值。");
+                }
+                else
+                {
+                    // 在某些场景中（如图鉴场景），可能不需要InventoryGrid，这是正常的
+                    string missingRefs = "";
+                    if (CurrentGrid == null) missingRefs += " CurrentGrid";
+                    if (itemContainer == null) missingRefs += " itemContainer";
+                    Debug.LogWarning($"InventoryManager: DelayInitializeAndRefresh - 场景 {sceneName} 中缺少引用:{missingRefs}，这在部分场景中是正常的。");
+                }
             }
         }
         

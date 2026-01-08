@@ -21,12 +21,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-zh-CN
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: de6f0ea8735bc47bca8fc61b0e0e4755
-    m_Address: SourceHanSansSC-Regular SDF
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - Locale-zh-CN
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 1
   m_Settings: {fileID: 11400000, guid: 7590da273928c4ad3b1c11748845ad0c, type: 2}
   m_SchemaSet:

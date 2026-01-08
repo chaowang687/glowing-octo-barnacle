@@ -65,6 +65,7 @@ MonoBehaviour:
     posX: 0
     posY: 0
     isRotated: 0
+  iconImage: {fileID: 4490829758820601717}
 --- !u!225 &8554690048169421316
 CanvasGroup:
   m_ObjectHideFlags: 0
