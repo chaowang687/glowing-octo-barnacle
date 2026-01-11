@@ -164,6 +164,18 @@ namespace SlayTheSpireMap
                     GameDataManager.Instance.unlockedNodeIds.Add(node.nodeId);
                 }
             }
+            
+            // 确保节点0默认解锁
+            if (allNodes.Count > 0)
+            {
+                MapNodeData node0 = allNodes[0];
+                node0.isUnlocked = true;
+                node0.isStartNode = true;
+                if (GameDataManager.Instance != null && !GameDataManager.Instance.unlockedNodeIds.Contains(node0.nodeId))
+                {
+                    GameDataManager.Instance.unlockedNodeIds.Add(node0.nodeId);
+                }
+            }
 
             LogNodeTypes(allNodes);
             return allNodes.ToArray();
@@ -335,6 +347,18 @@ namespace SlayTheSpireMap
                         if (!GameDataManager.Instance.unlockedNodeIds.Contains(node.nodeId))
                             GameDataManager.Instance.unlockedNodeIds.Add(node.nodeId);
                     }
+                }
+            }
+            
+            // 确保节点0默认解锁
+            if (nodesResult.Count > 0)
+            {
+                MapNodeData node0 = nodesResult[0];
+                node0.isUnlocked = true;
+                node0.isStartNode = true;
+                if (GameDataManager.Instance != null && !GameDataManager.Instance.unlockedNodeIds.Contains(node0.nodeId))
+                {
+                    GameDataManager.Instance.unlockedNodeIds.Add(node0.nodeId);
                 }
             }
             

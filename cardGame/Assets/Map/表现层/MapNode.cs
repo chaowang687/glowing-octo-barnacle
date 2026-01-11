@@ -175,8 +175,8 @@ namespace SlayTheSpireMap
             // 2. 根据状态设置颜色
             if (nodeIcon != null)
             {
-                // 如果节点已解锁或已访问，显示原色；否则置灰
-                nodeIcon.color = (isSelectable || isVisited) ? Color.white : new Color(0.2f, 0.2f, 0.2f, 0.8f);
+                // 如果节点已解锁或已访问，显示原色；否则置灰（去掉不透明度控制）
+                nodeIcon.color = (isSelectable || isVisited) ? Color.white : new Color(0.2f, 0.2f, 0.2f);
                 
                 // 根据类型设置图标
                 Sprite targetSprite = null;
@@ -296,7 +296,7 @@ namespace SlayTheSpireMap
                 // 如果不再是当前节点，确保动画停止（双重保险）
                 StopCurrentNodeAnimation();
                 
-                // 颜色状态处理
+                // 颜色状态处理（去掉不透明度控制）
                 if (isSelectable)
                 {
                      if (nodeIcon != null) nodeIcon.color = new Color(0.8f, 0.8f, 0.8f);
@@ -308,7 +308,7 @@ namespace SlayTheSpireMap
                 else
                 {
                      // 不可达且未访问（未来的节点），变暗
-                     if (nodeIcon != null) nodeIcon.color = new Color(0.6f, 0.6f, 0.6f);
+                     if (nodeIcon != null) nodeIcon.color = new Color(0.2f, 0.2f, 0.2f);
                 }
             }
         }
