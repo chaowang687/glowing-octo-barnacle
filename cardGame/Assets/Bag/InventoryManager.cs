@@ -247,32 +247,35 @@ namespace Bag
             InventoryGrid grid = CurrentGrid;
             Vector2Int spawnPos = gridPos;
             
+            // 创建物品实例
+            ItemInstance newItem = new ItemInstance(itemData);
+            
             // 如果启用自动寻找空位
             if (autoFindSpace)
             {
-                spawnPos = FindEmptySpace(grid, itemData);
+                int bestRotation;
+                spawnPos = FindEmptySpace(grid, itemData, out bestRotation);
                 if (spawnPos.x < 0 || spawnPos.y < 0)
                 {
                     Debug.LogWarning($"没有足够的空间放置物品: {itemData.itemName}");
                     return null;
                 }
+                // 设置最佳旋转角度
+                newItem.rotation = bestRotation;
             }
             else
             {
-                // 检查指定位置是否可以放置
-                if (!grid.CanPlace(spawnPos.x, spawnPos.y, itemData.width, itemData.height))
+                // 检查指定位置是否可以放置（使用异形物品检查方法）
+                if (!grid.CanPlace(newItem, spawnPos.x, spawnPos.y))
                 {
                     Debug.LogWarning($"位置 ({spawnPos.x}, {spawnPos.y}) 无法放置物品");
                     return null;
                 }
             }
             
-            // 创建物品实例
-            ItemInstance newItem = new ItemInstance(itemData)
-            {
-                posX = spawnPos.x,
-                posY = spawnPos.y
-            };
+            // 设置物品位置
+            newItem.posX = spawnPos.x;
+            newItem.posY = spawnPos.y;
             
             // 实例化UI
             GameObject go = Instantiate(itemPrefab, itemContainer);
@@ -291,7 +294,7 @@ namespace Bag
             // 初始化UI
             ui.Initialize(newItem, grid.cellSize);
             
-            // 放置到网格
+            // 放置到网格（使用异形物品放置方法）
             grid.PlaceItem(newItem, spawnPos.x, spawnPos.y);
             ui.SnapToGrid(grid, spawnPos);
             
@@ -363,35 +366,34 @@ namespace Bag
         /// </summary>
         /// <param name="grid">目标网格</param>
         /// <param name="itemData">物品数据</param>
+        /// <param name="bestRotation">找到的最佳旋转角度</param>
         /// <returns>找到的空位坐标，未找到则返回(-1,-1)</returns>
-        private Vector2Int FindEmptySpace(InventoryGrid grid, ItemData itemData)
+        public Vector2Int FindEmptySpace(InventoryGrid grid, ItemData itemData, out int bestRotation)
         {
+            bestRotation = 0;
             if (grid == null || itemData == null) return new Vector2Int(-1, -1);
             
-            int width = itemData.width;
-            int height = itemData.height;
+            // 创建一个临时物品实例，用于检查旋转后的形状
+            ItemInstance tempItem = new ItemInstance(itemData);
             
-            // 优化搜索算法：从左上角开始，逐行搜索
-            for (int y = 0; y <= grid.height - height; y++)
+            // 尝试4个旋转角度
+            for (int rotation = 0; rotation < 360; rotation += 90)
             {
-                for (int x = 0; x <= grid.width - width; x++)
+                tempItem.rotation = rotation;
+                
+                // 获取旋转后的实际形状和尺寸
+                bool[,] shape = tempItem.GetActualShape();
+                int shapeWidth = shape.GetLength(0);
+                int shapeHeight = shape.GetLength(1);
+                
+                // 优化搜索算法：从左上角开始，逐行搜索
+                for (int y = 0; y <= grid.height - shapeHeight; y++)
                 {
-                    if (grid.CanPlace(x, y, width, height))
+                    for (int x = 0; x <= grid.width - shapeWidth; x++)
                     {
-                        return new Vector2Int(x, y);
-                    }
-                }
-            }
-            
-            // 尝试旋转物品后搜索
-            if (width != height) // 如果物品不是正方形
-            {
-                for (int y = 0; y <= grid.height - width; y++)
-                {
-                    for (int x = 0; x <= grid.width - height; x++)
-                    {
-                        if (grid.CanPlace(x, y, height, width))
+                        if (grid.CanPlace(tempItem, x, y))
                         {
+                            bestRotation = rotation;
                             return new Vector2Int(x, y);
                         }
                     }
@@ -399,6 +401,18 @@ namespace Bag
             }
             
             return new Vector2Int(-1, -1); // 没有找到空位
+        }
+        
+        /// <summary>
+        /// 寻找网格中的空位（优化：从左上角开始搜索）
+        /// </summary>
+        /// <param name="grid">目标网格</param>
+        /// <param name="itemData">物品数据</param>
+        /// <returns>找到的空位坐标，未找到则返回(-1,-1)</returns>
+        public Vector2Int FindEmptySpace(InventoryGrid grid, ItemData itemData)
+        {
+            int dummyRotation;
+            return FindEmptySpace(grid, itemData, out dummyRotation);
         }
 
         /// <summary>
@@ -414,7 +428,7 @@ namespace Bag
             if (item == null || targetGrid == null) return false;
             
             // 只检查空间是否足够，不允许交换物品
-            if (targetGrid.CanPlace(x, y, item.CurrentWidth, item.CurrentHeight)) 
+            if (targetGrid.CanPlace(item, x, y)) 
             {
                 targetGrid.PlaceItem(item, x, y);
                 
@@ -503,9 +517,10 @@ namespace Bag
                     itemID = itemID, // 使用资源文件名作为唯一ID
                     posX = item.posX,
                     posY = item.posY,
-                    isRotated = item.isRotated
+                    rotation = item.rotation
                 });
-                Debug.Log($"InventoryManager: SaveInventory - 添加物品到存档: {itemID}，位置: ({item.posX}, {item.posY})");
+                Debug.Log($"InventoryManager: SaveInventory - 添加物品到存档: {itemID}，位置: ({item.posX}, {item.posY})，旋转: {item.rotation}");
+                
             }
 
             // 保存到文件
@@ -585,7 +600,7 @@ namespace Bag
                 int loadedCount = 0;
                 foreach (var entry in saveData.items)
                 {
-                    Debug.Log($"InventoryManager: LoadInventory - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 是否旋转={entry.isRotated}");
+                    Debug.Log($"InventoryManager: LoadInventory - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 旋转角度={entry.rotation}");
                     
                     // 1. 根据 ID 加载配置
                     ItemData data = Resources.Load<ItemData>($"Items/{entry.itemID}");
@@ -599,7 +614,7 @@ namespace Bag
                     ItemInstance newItem = new ItemInstance(data) {
                         posX = entry.posX,
                         posY = entry.posY,
-                        isRotated = entry.isRotated
+                        rotation = entry.rotation
                     };
 
                     // 3. 实例化 UI 并对齐
@@ -697,7 +712,7 @@ namespace Bag
                 int loadedCount = 0;
                 foreach (var entry in saveData.items)
                 {
-                    Debug.Log($"InventoryManager: LoadInventoryData - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 是否旋转={entry.isRotated}");
+                    Debug.Log($"InventoryManager: LoadInventoryData - 处理物品条目: ID={entry.itemID}, 位置=({entry.posX}, {entry.posY}), 旋转角度={entry.rotation}");
                     
                     // 解决资源引用丢失问题：尝试多种资源加载方式
                     ItemData data = null;
@@ -733,7 +748,7 @@ namespace Bag
                     ItemInstance newItem = new ItemInstance(data) {
                         posX = entry.posX,
                         posY = entry.posY,
-                        isRotated = entry.isRotated
+                        rotation = entry.rotation
                     };
                     
                     // 添加到物品列表
@@ -1004,27 +1019,7 @@ namespace Bag
             }
         }
         
-        /// <summary>
-        /// 拿起物品并开始拖拽
-        /// </summary>
-        /// <param name="item">物品实例</param>
-        private void PickUpItem(ItemInstance item) 
-        {
-            if (item == null) return;
-            
-            // 查找该物品对应的 UI 对象
-            ItemUI targetUI = FindUIForItem(item); 
-            
-            if (targetUI != null) 
-            {
-                // 模拟拖拽开始的操作
-                PointerEventData eventData = new PointerEventData(null);
-                targetUI.OnBeginDrag(eventData);
-                
-                // 将该 UI 设为当前跟随鼠标的对象
-                CarriedItem = targetUI;
-            }
-        }
+
         
         /// <summary>
         /// 彻底丢弃物品：从网格逻辑、数据列表和场景中同步移除

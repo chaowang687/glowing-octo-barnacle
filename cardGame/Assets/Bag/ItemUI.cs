@@ -8,11 +8,11 @@ namespace Bag
     /// <summary>
     /// 物品UI组件，负责处理物品的交互逻辑
     /// </summary>
-    public class ItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+    public class ItemUI : MonoBehaviour, IPointerClickHandler
     {
         // 添加一个公开属性判断是否在拖拽
         private bool isDragging = false;
-        public bool IsDragging { get { return isDragging; } private set { isDragging = value; } }
+        public bool IsDragging { get { return isDragging; } set { isDragging = value; } }
         
         // 添加一个标志位，用于控制是否允许拖拽
         public bool allowDrag = true;
@@ -25,6 +25,7 @@ namespace Bag
         private Canvas canvas;
         private float cellSize = 50f; // 保存初始化时的cellSize，默认50f
         
+        // 拖拽相关变量
         private InventoryGrid originalGrid;
         private Vector2Int originalPos;
         private Vector2 dragOffset;
@@ -40,9 +41,14 @@ namespace Bag
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
             
             // 初始化CanvasGroup状态
-            canvasGroup.blocksRaycasts = true;
-            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = false; // 不阻止射线检测，让底层Slot接收点击事件
+            canvasGroup.interactable = false; // 不可交互，让底层Slot处理交互
             canvasGroup.alpha = 1f;
+            
+            // 初始化ItemUI的锚点为左上角，与InventoryGrid.GetPositionFromGrid方法匹配
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
             
             // 如果iconImage未通过Inspector赋值，尝试查找
             if (iconImage == null)
@@ -64,6 +70,9 @@ namespace Bag
                     iconRect.anchorMax = new Vector2(0.5f, 0.5f);
                     iconRect.pivot = new Vector2(0.5f, 0.5f);
                 }
+                
+                // 确保物品图片不接收点击事件，让底层的Slot组件处理点击
+                iconImage.raycastTarget = false;
             }
             
             // 创建外发光效果
@@ -82,264 +91,15 @@ namespace Bag
             // 否则，不执行任何操作，因为Initialize方法已经处理了视觉更新
         }
 
-        /// <summary>
-        /// 获取对齐到网格的位置
-        /// </summary>
-        private Vector2 GetSnappedPosition(Vector2 currentPos, InventoryGrid grid, bool snapToCenter = false)
-        {
-            if (itemInstance == null) return currentPos;
-            
-            // 转换为网格坐标
-            Vector2Int gridPos = grid.GetGridFromPosition(currentPos);
-            
-            // 确保在边界内
-            gridPos.x = Mathf.Clamp(gridPos.x, 0, grid.width - itemInstance.CurrentWidth);
-            gridPos.y = Mathf.Clamp(gridPos.y, 0, grid.height - itemInstance.CurrentHeight);
-            
-            // 获取对齐后的位置
-            Vector2 snappedPos = grid.GetPositionFromGrid(gridPos.x, gridPos.y);
-            
-            // 如果需要中心对齐（更友好）
-            if (snapToCenter)
-            {
-                // 加上物品尺寸的一半偏移，让鼠标在物品中心
-                snappedPos.x += (itemInstance.CurrentWidth * grid.cellSize) / 2;
-                snappedPos.y -= (itemInstance.CurrentHeight * grid.cellSize) / 2;
-            }
-            
-            return snappedPos;
-        }
 
-        /// <summary>
-        /// 开始拖拽事件
-        /// </summary>
-        public void OnBeginDrag(PointerEventData eventData)
-        {
-            if (itemInstance == null || !allowDrag) return;
-            
-            IsDragging = true; // 标记开始拖拽
-            canvasGroup.blocksRaycasts = false;
-            canvasGroup.alpha = 0.7f;
-            transform.SetAsLastSibling();
 
-            // 记录拖拽偏移（鼠标在物品上的位置）
-            Vector2 localMousePos;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rect.parent as RectTransform,
-                eventData.position,
-                eventData.pressEventCamera,
-                out localMousePos))
-            {
-                dragOffset = rect.anchoredPosition - localMousePos;
-            }
-            
-            // 记录原始信息并从网格中移除占位
-            originalGrid = GetGridUnderMouse(eventData);
-            if (originalGrid != null)
-            {
-                originalPos = originalGrid.GetGridFromPosition(rect.anchoredPosition);
-                originalGrid.RemoveItem(itemInstance);
-                InventoryManager.Instance.RemoveFromTracker(itemInstance);
-            }
-        }
 
-        /// <summary>
-        /// 拖拽中事件
-        /// </summary>
-        public void OnDrag(PointerEventData eventData)
-        {
-            if (itemInstance == null || !allowDrag) return;
-            
-            Vector2 mousePos;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rect.parent as RectTransform,
-                eventData.position,
-                eventData.pressEventCamera,
-                out mousePos))
-            {
-                return;
-            }
-            
-            // 应用偏移
-            mousePos += dragOffset;
-            
-            // 获取当前网格
-            InventoryGrid grid = GetGridUnderMouse(eventData);
-            
-            if (grid != null)
-            {
-                // 智能吸附：当靠近网格时自动对齐
-                Vector2 snappedPos = GetSnappedPosition(mousePos, grid, true);
-                
-                // 平滑过渡到吸附位置
-                rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, snappedPos, 0.3f);
-                
-                // 更新预览 - 使用鼠标实际位置，而不是物品当前位置，确保判定准确
-                grid.ShowPlacementPreview(itemInstance, mousePos);
-            }
-            else
-            {
-                // 不在网格上时直接跟随鼠标
-                rect.anchoredPosition = mousePos;
-                
-                // 清除所有网格的预览
-                if (originalGrid != null) originalGrid.ClearPreview();
-                if (InventoryManager.Instance.CurrentGrid != null) 
-                    InventoryManager.Instance.CurrentGrid.ClearPreview();
-            }
-        }
 
-        /// <summary>
-        /// 结束拖拽事件
-        /// </summary>
-        public void OnEndDrag(PointerEventData eventData)
-        {
-            if (itemInstance == null || !allowDrag) return;
-            
-            IsDragging = false; // 标记结束拖拽
-            canvasGroup.blocksRaycasts = true;
-            canvasGroup.alpha = 1f;
 
-            // 清除所有预览
-            if (originalGrid != null) originalGrid.ClearPreview();
-            if (InventoryManager.Instance.CurrentGrid != null) 
-                InventoryManager.Instance.CurrentGrid.ClearPreview();
 
-            // 使用射线检测判断鼠标下方是否有网格
-            InventoryGrid targetGrid = GetGridUnderMouse(eventData);
 
-            if (targetGrid == null)
-            {
-                // 情况 A：释放位置在网格外部 -> 返回原位置，而不是丢弃
-                if (originalGrid != null)
-                {
-                    // 确保物品UI的父对象是正确的ItemContainer
-                    if (transform.parent != InventoryManager.Instance.itemContainer)
-                    {
-                        transform.SetParent(InventoryManager.Instance.itemContainer);
-                    }
-                    
-                    if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
-                    {
-                        originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
-                        SnapToGrid(originalGrid, originalPos);
-                        InventoryManager.Instance.AddItemToBag(itemInstance);
-                    }
-                    else
-                    {
-                        // 如果原位置已被占用，寻找最近的可放置位置
-                        bool foundPlace = FindAndPlaceNearestPosition(originalGrid);
-                        if (!foundPlace)
-                        {
-                            Debug.LogWarning("无法找到可放置位置，物品将被销毁");
-                            Destroy(gameObject);
-                        }
-                    }
-                }
-                else
-                {
-                    // 如果物品是外部生成的且没有原始网格，销毁它
-                    Destroy(gameObject);
-                }
-            }
-            else
-            {
-                // 情况 B：在网格内部 -> 执行原有的放置逻辑
-                // 使用鼠标位置而不是物品当前位置来计算最终放置位置
-                // 这样可以确保与预览高亮区一致
-                Vector2 mousePos;
-                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    rect.parent as RectTransform,
-                    eventData.position,
-                    eventData.pressEventCamera,
-                    out mousePos))
-                {
-                    // 应用偏移
-                    mousePos += dragOffset;
-                    
-                    // 获取基于鼠标位置的网格坐标
-                    Vector2Int targetPos = targetGrid.GetGridFromPosition(mousePos);
-                    
-                    // 确保在边界内
-                    targetPos.x = Mathf.Clamp(targetPos.x, 0, targetGrid.width - itemInstance.CurrentWidth);
-                    targetPos.y = Mathf.Clamp(targetPos.y, 0, targetGrid.height - itemInstance.CurrentHeight);
-                    
-                    // 尝试放置
-                    if (InventoryManager.Instance.TryPlace(itemInstance, targetPos.x, targetPos.y, targetGrid))
-                    {
-                        // 确保物品UI的父对象是正确的ItemContainer
-                        if (transform.parent != InventoryManager.Instance.itemContainer)
-                        {
-                            transform.SetParent(InventoryManager.Instance.itemContainer);
-                        }
-                        SnapToGrid(targetGrid, targetPos);
-                        return;
-                    }
-                }
 
-                // 放置失败，返回原位置
-                if (originalGrid != null)
-                {
-                    // 确保物品UI的父对象是正确的ItemContainer
-                    if (transform.parent != InventoryManager.Instance.itemContainer)
-                    {
-                        transform.SetParent(InventoryManager.Instance.itemContainer);
-                    }
-                    
-                    if (originalGrid.CanPlace(originalPos.x, originalPos.y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
-                    {
-                        originalGrid.PlaceItem(itemInstance, originalPos.x, originalPos.y);
-                        SnapToGrid(originalGrid, originalPos);
-                        InventoryManager.Instance.AddItemToBag(itemInstance);
-                    }
-                    else
-                    {
-                        // 如果原位置已被占用，寻找最近的可放置位置
-                        bool foundPlace = FindAndPlaceNearestPosition(originalGrid);
-                        if (!foundPlace)
-                        {
-                            Debug.LogWarning("无法找到可放置位置，物品将被销毁");
-                            Destroy(gameObject);
-                        }
-                    }
-                }
-                else
-                {
-                    // 如果物品是外部生成的且没有原始网格，销毁它
-                    Destroy(gameObject);
-                }
-            }
-        }
 
-        /// <summary>
-        /// 查找并放置到最近的可用位置
-        /// </summary>
-        private bool FindAndPlaceNearestPosition(InventoryGrid grid)
-        {
-            if (itemInstance == null) return false;
-            
-            // 在网格中寻找最近的可放置位置
-            for (int y = 0; y < grid.height; y++)
-            {
-                for (int x = 0; x < grid.width; x++)
-                {
-                    if (grid.CanPlace(x, y, itemInstance.CurrentWidth, itemInstance.CurrentHeight))
-                    {
-                        // 确保物品UI的父对象是正确的ItemContainer
-                        if (transform.parent != InventoryManager.Instance.itemContainer)
-                        {
-                            transform.SetParent(InventoryManager.Instance.itemContainer);
-                        }
-                        
-                        grid.PlaceItem(itemInstance, x, y);
-                        SnapToGrid(grid, new Vector2Int(x, y));
-                        InventoryManager.Instance.AddItemToBag(itemInstance);
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
 
         /// <summary>
         /// 将物品丢弃到世界中
@@ -373,23 +133,7 @@ namespace Bag
             }
         }
 
-        /// <summary>
-        /// 获取鼠标下的网格
-        /// </summary>
-        private InventoryGrid GetGridUnderMouse(PointerEventData eventData)
-        {
-            List<RaycastResult> results = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(eventData, results);
-            
-            foreach (var res in results)
-            {
-                // 查找父级是否有 InventoryGrid 组件
-                var grid = res.gameObject.GetComponentInParent<InventoryGrid>();
-                if (grid != null) return grid;
-            }
-            
-            return null;
-        }
+
 
         /// <summary>
         /// 将物品对齐到网格
@@ -458,24 +202,26 @@ namespace Bag
             {
                 iconImage.sprite = itemInstance.data.icon;
                 
-                // 确保图标正确适应旋转后的尺寸
-                // 检查图标Image组件的设置
+                // 1. 设置图片类型和保持宽高比
                 iconImage.type = Image.Type.Simple;
-                iconImage.preserveAspect = true;
+                iconImage.preserveAspect = true; // 保持原始宽高比，不拉伸图片
                 
                 // 设置图标旋转和大小
                 RectTransform iconRect = iconImage.rectTransform;
                 if (iconRect != null)
                 {
-                    // 旋转 Icon 角度
-                    iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
+                    // 旋转 Icon 角度，支持360度旋转
+                    iconRect.localEulerAngles = new Vector3(0, 0, itemInstance.rotation);
                     
-                    // 手动设置 Icon 的大小
-                    if (itemInstance.isRotated)
+                    // 2. 保持图标锚点为中心点，避免拉伸冲突
+                    iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    iconRect.pivot = new Vector2(0.5f, 0.5f);
+                    
+                    // 3. 确保图标大小不为0，使用物品原始宽高
+                    if (iconRect.sizeDelta.x == 0 || iconRect.sizeDelta.y == 0)
                     {
-                        iconRect.sizeDelta = new Vector2(currentHeight * cellSize, currentWidth * cellSize);
-                    } else {
-                        iconRect.sizeDelta = new Vector2(currentWidth * cellSize, currentHeight * cellSize);
+                        iconRect.sizeDelta = new Vector2(itemInstance.data.width * cellSize, itemInstance.data.height * cellSize);
                     }
                 }
             }
@@ -533,15 +279,26 @@ namespace Bag
             if (iconImage != null)
             {
                 iconImage.sprite = item.data.icon;
-                // ... 原有的其余初始化逻辑
+                
+                // 1. 设置图片类型和保持宽高比
+                iconImage.type = Image.Type.Simple;
+                iconImage.preserveAspect = true; // 保持原始宽高比，不拉伸图片
+                
+                // 2. 设置图标旋转和锚点
                 RectTransform iconRect = iconImage.rectTransform;
                 if (iconRect != null)
                 {
-                    iconRect.localEulerAngles = item.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
-                    if (item.isRotated)
-                        iconRect.sizeDelta = new Vector2(item.CurrentHeight * cellSize, item.CurrentWidth * cellSize);
-                    else
-                        iconRect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
+                    // 支持360度旋转
+                    iconRect.localEulerAngles = new Vector3(0, 0, item.rotation);
+                    
+                    // 3. 保持图标锚点为中心点，避免拉伸冲突
+                    iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    iconRect.pivot = new Vector2(0.5f, 0.5f);
+                    
+                    // 4. 设置图标初始大小，确保宽高不为0
+                    // 使用物品原始宽高作为图标大小，避免宽高变成0
+                    iconRect.sizeDelta = new Vector2(item.data.width * cellSize, item.data.height * cellSize);
                 }
             }
         }
@@ -683,19 +440,21 @@ namespace Bag
         /// 执行视觉旋转（只处理数据和UI，不处理逻辑判断）
         /// </summary>
         public void DoVisualRotate() 
-        { 
+        {
             if (itemInstance == null) return;
 
             // --- 核心数据变更 ---
-            itemInstance.isRotated = !itemInstance.isRotated;
+            // 旋转90度
+            itemInstance.Rotate();
 
             // --- 视觉变更 ---
             float cellSize = this.cellSize;
             
-            // 重新计算宽高
+            // 重新计算宽高，旋转后宽高互换
             int w = itemInstance.CurrentWidth;
             int h = itemInstance.CurrentHeight;
             
+            // 更新布局区域（绿框）宽高，确保ItemUI_Prefab(Clone)的宽高正确变化
             rect.sizeDelta = new Vector2(w * cellSize, h * cellSize);
             
             // 更新外发光效果的大小
@@ -712,22 +471,36 @@ namespace Bag
                 }
             }
 
+            // 确保 iconImage 的引用
+            if (iconImage == null)
+            {
+                Transform iconTransform = transform.Find("Icon");
+                if (iconTransform != null) iconImage = iconTransform.GetComponent<Image>();
+                else iconImage = GetComponentInChildren<Image>();
+            }
+
             // 图标处理
             if (iconImage != null) 
-            { 
+            {
                 RectTransform iconRect = iconImage.rectTransform;
-                // 旋转 -90度 或 0度
-                iconRect.localEulerAngles = itemInstance.isRotated ? new Vector3(0, 0, -90) : Vector3.zero;
                 
-                // 修正图标尺寸匹配父容器
-                // 注意：如果 Icon 旋转了90度，它的 width 对应父物体的 height
-                if (itemInstance.isRotated)
+                // 1. 设置图片类型和保持宽高比
+                iconImage.type = Image.Type.Simple;
+                iconImage.preserveAspect = true; // 保持原始宽高比，不拉伸图片
+                
+                // 2. 旋转图片（只旋转，不改变宽高）
+                iconRect.localEulerAngles = new Vector3(0, 0, itemInstance.rotation);
+                
+                // 3. 保持图标锚点为中心点，避免拉伸冲突
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+                
+                // 4. 确保图标大小不为0
+                if (iconRect.sizeDelta.x == 0 || iconRect.sizeDelta.y == 0)
                 {
-                    iconRect.sizeDelta = new Vector2(h * cellSize, w * cellSize);
-                }
-                else
-                {
-                    iconRect.sizeDelta = new Vector2(w * cellSize, h * cellSize);
+                    // 使用物品原始宽高，确保图标大小不为0
+                    iconRect.sizeDelta = new Vector2(itemInstance.data.width * cellSize, itemInstance.data.height * cellSize);
                 }
             }
         }
@@ -740,17 +513,10 @@ namespace Bag
         { 
             if (Input.GetKeyDown(KeyCode.R)) 
             { 
-                // 只有当前选中的物品或正在拖拽的物品才允许旋转
-                // 1. 如果正在拖拽，直接旋转
+                // 只有正在拖拽的物品才允许旋转
                 if (IsDragging)
                 {
                     Debug.Log("ItemUI: 拖拽中按R键旋转物品");
-                    InventoryManager.Instance.TryRotateItem(this);
-                }
-                // 2. 如果是当前选中的物品，直接旋转
-                else if (InventoryManager.Instance.SelectedItem == this)
-                {
-                    Debug.Log("ItemUI: 选中状态按R键旋转物品");
                     InventoryManager.Instance.TryRotateItem(this);
                 }
             } 

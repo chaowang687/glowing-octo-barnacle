@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fossilName: 
   rewardItem: {fileID: 11400000, guid: 1b10a1e83d23d4b24937a6884f0247b2, type: 2}
-  fossilSprite: {fileID: 21300000, guid: 94102a43b61f14301b5f9379870f31ff, type: 3}
+  fossilSprite: {fileID: 21300000, guid: 08b2891006b96402c825e49cae28ff6a, type: 3}
   shapeOffsets:
   - {x: 0, y: 0}
-  - {x: 1, y: 0}
+  - {x: 0, y: 1}

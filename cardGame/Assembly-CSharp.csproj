@@ -66,10 +66,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets/CS2/ScriptableObject/ceEnemyEncounterData_q.cs" />
+    <Compile Include="Assets/Bag/InventoryGridShapePreview.cs" />
     <Compile Include="Assets/CS/动画控制/EnemyAnimationManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/LootSlot.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestLootData.cs" />
     <Compile Include="Assets/CS3/资源/LampController.cs" />
+    <Compile Include="Assets/Tests/ShapeTest.cs" />
     <Compile Include="Assets/玩家/GameDataManager.cs" />
     <Compile Include="Assets/CS2/宝箱搜刮/ChestInteractable.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/IntentIconConfig.cs" />
@@ -197,6 +199,7 @@
     <Compile Include="Assets/CS/动画控制/EnemyDisplay.cs" />
     <Compile Include="Assets/CS/玩家敌人显示/CharacterDisplay.cs" />
     <Compile Include="Assets/Dig/TileData.cs" />
+    <Compile Include="Assets/Bag/Slot.cs" />
     <Compile Include="Assets/CS4/PointLight2D.cs" />
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/Bag/AutomatedTest.cs" />

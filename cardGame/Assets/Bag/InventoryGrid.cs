@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 namespace Bag
 {
@@ -11,42 +12,134 @@ namespace Bag
         public int width = 10;
         public int height = 8;
         public float cellSize = 50f;
+        public GameObject slotPrefab; // Slot预制体
         
-        [Header("视觉设置")]
-        public RectTransform ghostPreview; // 预览用的 Image
+        private ItemInstance[,] gridItems;
+        private List<Slot> slots = new List<Slot>();
+        private RectTransform gridRect;
+        private GridLayoutGroup gridLayout;
         
-        private ItemInstance[,] gridSlots;
-        private Image previewImage;
+        // Slot容器，用于存放所有生成的Slot
+        private GameObject slotContainer;
+    private InventoryGridShapePreview shapePreview;
+    
+    private void Start()
+    {
+        // 获取形状预览组件
+        shapePreview = GetComponent<InventoryGridShapePreview>();
+        if (shapePreview == null)
+        {
+            // 如果没有形状预览组件，自动添加
+            shapePreview = gameObject.AddComponent<InventoryGridShapePreview>();
+        }
+    }
         
         private void Awake() 
+    {
+        // 初始化网格数组
+        gridItems = new ItemInstance[width, height];
+        
+        // 获取RectTransform
+        gridRect = GetComponent<RectTransform>();
+        
+        // 创建Slot容器
+        CreateSlotContainer();
+        
+        // 生成Slot
+        GenerateSlots();
+    }    
+    
+    /// <summary>
+    /// 创建Slot容器
+    /// </summary>
+    private void CreateSlotContainer()
+    {
+        // 查找或创建Slot容器
+        slotContainer = transform.Find("SlotContainer")?.gameObject;
+        if (slotContainer == null)
         {
-            // 初始化网格数组
-            gridSlots = new ItemInstance[width, height];
+            slotContainer = new GameObject("SlotContainer");
+            slotContainer.transform.SetParent(transform);
             
-            // 初始化预览组件
-            InitializePreview();
+            // 设置Slot容器的RectTransform
+            RectTransform slotContainerRect = slotContainer.AddComponent<RectTransform>();
+            slotContainerRect.anchorMin = Vector2.zero;
+            slotContainerRect.anchorMax = Vector2.one;
+            slotContainerRect.offsetMin = Vector2.zero;
+            slotContainerRect.offsetMax = Vector2.zero;
+            slotContainerRect.localScale = Vector3.one;
+            
+            // 添加GridLayoutGroup组件
+            gridLayout = slotContainer.AddComponent<GridLayoutGroup>();
+            gridLayout.cellSize = new Vector2(cellSize, cellSize);
+            gridLayout.spacing = Vector2.zero;
+            gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            gridLayout.childAlignment = TextAnchor.UpperLeft;
+            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridLayout.constraintCount = width;
+        }
+    }
+    
+    /// <summary>
+    /// 生成Slot
+    /// </summary>
+    private void GenerateSlots()
+    {
+        // 清理现有Slot
+        foreach (Slot slot in slots)
+        {
+            Destroy(slot.gameObject);
+        }
+        slots.Clear();
+        
+        // 如果没有Slot预制体，创建一个默认的
+        if (slotPrefab == null)
+        {
+            slotPrefab = new GameObject("DefaultSlot");
+            slotPrefab.AddComponent<RectTransform>();
+            Image image = slotPrefab.AddComponent<Image>();
+            image.color = new Color(0, 0, 0, 0.1f);
+            slotPrefab.AddComponent<Slot>();
         }
         
-        /// <summary>
-        /// 初始化预览组件
-        /// </summary>
-        private void InitializePreview()
+        // 生成Slot
+        for (int y = 0; y < height; y++)
         {
-            if (ghostPreview != null)
+            for (int x = 0; x < width; x++)
             {
-                previewImage = ghostPreview.GetComponent<Image>();
-                ghostPreview.gameObject.SetActive(false);
+                GameObject slotObj = Instantiate(slotPrefab, slotContainer.transform);
+                Slot slot = slotObj.GetComponent<Slot>();
+                if (slot != null)
+                {
+                    slot.SetGridPosition(x, y);
+                    slot.inventoryGrid = this;
+                    slots.Add(slot);
+                }
             }
         }
+    }
+    
+    /// <summary>
+    /// 清理Slot
+    /// </summary>
+    private void ClearSlots()
+    {
+        foreach (Slot slot in slots)
+        {
+            Destroy(slot.gameObject);
+        }
+        slots.Clear();
+    }
         
         /// <summary>
         /// 清除放置预览
         /// </summary>
         public void ClearPreview() 
         {
-            if (ghostPreview != null)
+            if (shapePreview != null)
             {
-                ghostPreview.gameObject.SetActive(false);
+                shapePreview.HidePreview();
             }
         }
         
@@ -104,37 +197,24 @@ namespace Bag
             if (item == null) return;
             
             Vector2Int gridPos = GetGridFromPosition(localPos);
-            int itemWidth = item.CurrentWidth;
-            int itemHeight = item.CurrentHeight;
+            
+            // 获取实际形状和尺寸
+            bool[,] shape = item.GetActualShape();
+            int shapeWidth = shape.GetLength(0);
+            int shapeHeight = shape.GetLength(1);
             
             // 确保在边界内
-            gridPos.x = Mathf.Clamp(gridPos.x, 0, width - itemWidth);
-            gridPos.y = Mathf.Clamp(gridPos.y, 0, height - itemHeight);
+            gridPos.x = Mathf.Clamp(gridPos.x, 0, width - shapeWidth);
+            gridPos.y = Mathf.Clamp(gridPos.y, 0, height - shapeHeight);
             
-            // 检查是否可以放置（只允许放在空格子上）
-            bool canPlace = CanPlace(gridPos.x, gridPos.y, itemWidth, itemHeight);
+            // 检查是否可以放置
+            bool canPlace = CanPlace(item, gridPos.x, gridPos.y);
             
-            // 绘制预览（只有在空格子上才显示绿色预览）
-            DrawPreviewGhost(gridPos, itemWidth, itemHeight, canPlace);
-        }
-        
-        /// <summary>
-        /// 绘制预览幽灵
-        /// </summary>
-        private void DrawPreviewGhost(Vector2Int pos, int width, int height, bool isValid) 
-        {
-            if (ghostPreview == null || previewImage == null) return;
-            
-            ghostPreview.gameObject.SetActive(true);
-            
-            // 设置大小
-            ghostPreview.sizeDelta = new Vector2(width * cellSize, height * cellSize);
-            
-            // 设置位置
-            ghostPreview.anchoredPosition = GetPositionFromGrid(pos.x, pos.y);
-            
-            // 设置颜色：合法为绿，非法为红
-            previewImage.color = isValid ? new Color(0, 1, 0, 0.3f) : new Color(1, 0, 0, 0.3f);
+            // 使用形状预览组件显示预览
+            if (shapePreview != null)
+            {
+                shapePreview.ShowShapePreview(item, gridPos, canPlace);
+            }
         }
         
         /// <summary>
@@ -155,14 +235,45 @@ namespace Bag
             }
             
             for (int i = x; i < x + w; i++) {
-            for (int j = y; j < y + h; j++) {
-                if (gridSlots[i, j] != null) {
-                    // 打印出到底是谁占了位置
-                    Debug.Log($"格子 [{i},{j}] 已被 {gridSlots[i, j].data.itemName} 占用");
-                    return false;
+                for (int j = y; j < y + h; j++) {
+                    if (gridItems[i, j] != null) {
+                        // 打印出到底是谁占了位置
+                        Debug.Log($"格子 [{i},{j}] 已被 {gridItems[i, j].data.itemName} 占用");
+                        return false;
+                    }
                 }
             }
-    }
+            return true;
+        }
+        
+        /// <summary>
+        /// 检查异形物品是否可以放置在指定位置
+        /// </summary>
+        public bool CanPlace(ItemInstance item, int x, int y) {
+            // 获取旋转后的实际形状和尺寸
+            bool[,] shape = item.GetActualShape();
+            int shapeWidth = shape.GetLength(0);
+            int shapeHeight = shape.GetLength(1);
+            
+            // 检查边界
+            if (IsOutOfBounds(x, y, shapeWidth, shapeHeight)) {
+                Debug.Log($"异形物品越界失败: {x},{y} Size:{shapeWidth}x{shapeHeight}");
+                return false;
+            }
+            
+            // 检查每个占用格子
+            for (int i = 0; i < shapeWidth; i++) {
+                for (int j = 0; j < shapeHeight; j++) {
+                    if (shape[i, j]) {
+                        int gridX = x + i;
+                        int gridY = y + j;
+                        if (gridItems[gridX, gridY] != null) {
+                            Debug.Log($"异形物品格子 [{gridX},{gridY}] 已被 {gridItems[gridX, gridY].data.itemName} 占用");
+                            return false;
+                        }
+                    }
+                }
+            }
             return true;
         }
         
@@ -170,21 +281,36 @@ namespace Bag
         /// 放置物品到指定位置
         /// </summary>
         public void PlaceItem(ItemInstance item, int x, int y) {
-            if (item == null || IsOutOfBounds(x, y, item.CurrentWidth, item.CurrentHeight)) return;
+            if (item == null) return;
             
             // --- 新增保护代码 ---
-            if (gridSlots == null) {
-                Debug.LogWarning("gridSlots 为空，正在紧急初始化...");
-                gridSlots = new ItemInstance[width, height];
+            if (gridItems == null) {
+                Debug.LogWarning("gridItems 为空，正在紧急初始化...");
+                gridItems = new ItemInstance[width, height];
             }
             // ------------------
             
-            // 在数组中登记
-            for (int i = x; i < x + item.CurrentWidth; i++) {
-            for (int j = y; j < y + item.CurrentHeight; j++) {
-                gridSlots[i, j] = item;
+            // 检查位置是否可用，包括边界和碰撞检测
+            if (!CanPlace(item, x, y)) {
+                Debug.LogWarning($"无法放置物品 {item.data.itemName} 到位置 ({x},{y})，位置已被占用或越界");
+                return;
             }
-        }
+            
+            // 获取旋转后的实际形状和尺寸
+            bool[,] shape = item.GetActualShape();
+            int shapeWidth = shape.GetLength(0);
+            int shapeHeight = shape.GetLength(1);
+            
+            // 在数组中登记，只占用实际形状为true的格子
+            for (int i = 0; i < shapeWidth; i++) {
+                for (int j = 0; j < shapeHeight; j++) {
+                    if (shape[i, j]) {
+                        int gridX = x + i;
+                        int gridY = y + j;
+                        gridItems[gridX, gridY] = item;
+                    }
+                }
+            }
             
             // 更新物品位置信息
             item.posX = x;
@@ -197,13 +323,13 @@ namespace Bag
         public void RemoveItem(ItemInstance item) {
             if (item == null) return;
             
-            // 检查物品位置是否有效
-            if (IsOutOfBounds(item.posX, item.posY, item.CurrentWidth, item.CurrentHeight)) return;
-            
-            // 清除数组中的引用
-            for (int i = item.posX; i < item.posX + item.CurrentWidth; i++) {
-                for (int j = item.posY; j < item.posY + item.CurrentHeight; j++) {
-                    gridSlots[i, j] = null;
+            // 遍历整个网格，清除所有指向该物品的引用
+            // 这样可以避免因旋转状态变化导致的清除不完整问题
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    if (gridItems[i, j] == item) {
+                        gridItems[i, j] = null;
+                    }
                 }
             }
         }
@@ -213,19 +339,22 @@ namespace Bag
         /// </summary> 
         public bool CheckRotateValidity(ItemInstance item) 
         { 
-            // 1. 获取旋转后的预期尺寸 
-            // 注意：这里取反来模拟旋转后的宽 
-            int newW = item.isRotated ? item.data.width : item.data.height; 
-            int newH = item.isRotated ? item.data.height : item.data.width; 
+            // 1. 保存当前旋转状态 
+            int currentRotation = item.rotation; 
     
             // 2. 暂时移除物品（为了避免检测时和自己当前的占用冲突） 
             RemoveItem(item); 
     
-            // 3. 检查位置是否可用 
-            bool canPlace = CanPlace(item.posX, item.posY, newW, newH); 
+            // 3. 模拟旋转后的状态 
+            item.rotation = (currentRotation + 90) % 360; 
     
-            // 4. 无论结果如何，先把物品放回去（保持状态原样） 
-            // 注意：这时用 item.CurrentWidth/Height 还是原来的尺寸，因为我们还没改 isRotated 
+            // 4. 检查位置是否可用 
+            bool canPlace = CanPlace(item, item.posX, item.posY); 
+    
+            // 5. 恢复原始旋转状态 
+            item.rotation = currentRotation; 
+    
+            // 6. 无论结果如何，先把物品放回去（保持状态原样） 
             PlaceItem(item, item.posX, item.posY); 
     
             return canPlace; 
@@ -240,7 +369,7 @@ namespace Bag
             ItemInstance found = null;
             for (int i = x; i < x + w; i++) {
                 for (int j = y; j < y + h; j++) {
-                    ItemInstance itemAtPos = gridSlots[i, j];
+                    ItemInstance itemAtPos = gridItems[i, j];
                     if (itemAtPos != null) {
                         if (found == null) {
                             found = itemAtPos;
@@ -261,14 +390,14 @@ namespace Bag
         /// <returns>物品实例</returns>
         public ItemInstance GetItemAt(int x, int y) {
             if (x < 0 || x >= width || y < 0 || y >= height) return null;
-            return gridSlots[x, y];
+            return gridItems[x, y];
         }
         
         /// <summary>
         /// 清空网格数据
         /// </summary>
         public void ClearGrid() {
-            gridSlots = new ItemInstance[width, height];
+            gridItems = new ItemInstance[width, height];
         }
         
         /// <summary>

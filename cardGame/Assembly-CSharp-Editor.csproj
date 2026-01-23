@@ -79,6 +79,7 @@
     <Compile Include="Assets/Other/TutorialInfo/Scripts/Editor/ReadmeEditor.cs" />
     <Compile Include="Assets/Editor/CardLocalizationHelper.cs" />
     <Compile Include="Assets/Editor/LocalizationBatchProcessor.cs" />
+    <Compile Include="Assets/Bag/Editor/ShapeDataDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
