@@ -684,8 +684,11 @@ namespace Bag
         /// </summary>
         public void OnPointerEnter(PointerEventData eventData)
         {
-            // 显示星星
-            ShowStars();
+            // 只有在没有物品被拖拽时才显示星星
+            if (InventoryManager.Instance == null || !InventoryManager.Instance.IsAnyItemDragging)
+            {
+                ShowStars();
+            }
         }
         
         /// <summary>
@@ -693,8 +696,11 @@ namespace Bag
         /// </summary>
         public void OnPointerExit(PointerEventData eventData)
         {
-            // 隐藏星星
-            HideStars();
+            // 只有在没有物品被拖拽时才隐藏星星
+            if (InventoryManager.Instance == null || !InventoryManager.Instance.IsAnyItemDragging)
+            {
+                HideStars();
+            }
         }
         
         /// <summary>
@@ -957,49 +963,68 @@ namespace Bag
             // 这样既可以显示星星，又不影响拖拽和旋转功能
             if (gameObject.activeSelf && rect != null && itemInstance != null)
             {
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    rect, 
-                    Input.mousePosition, 
-                    null, 
-                    out Vector2 localPoint);
-                
-                // 检查鼠标是否在物品范围内
-                bool isMouseOver = rect.rect.Contains(localPoint);
-                bool isOverShape = false;
-                
-                if (isMouseOver)
+                // 检查是否正在拖拽任何物品（如果有拖拽状态，跳过其他物品的星星激活）
+                if (IsDragging)
                 {
-                    // 进一步检查鼠标是否在物品的实际形状内（针对异形物品）
-                    float cellSize = this.cellSize;
-                    int currentWidth = itemInstance.CurrentWidth;
-                    int currentHeight = itemInstance.CurrentHeight;
-                    
-                    // 将本地坐标转换为物品内部的网格坐标
-                    // 注意：物品UI的pivot在左上角，Y轴向下为负
-                    int gridX = Mathf.FloorToInt(localPoint.x / cellSize);
-                    int gridY = Mathf.FloorToInt(-localPoint.y / cellSize);
-                    
-                    // 检查网格坐标是否在物品形状范围内
-                    if (gridX >= 0 && gridX < currentWidth && gridY >= 0 && gridY < currentHeight)
+                    // 如果当前物品正在被拖拽，显示星星
+                    ShowStars();
+                }
+                else
+                {
+                    // 检查是否有其他物品正在被拖拽（通过InventoryManager全局状态）
+                    if (InventoryManager.Instance != null && InventoryManager.Instance.IsAnyItemDragging)
                     {
-                        // 获取物品的实际形状
-                        bool[,] shape = itemInstance.GetActualShape();
-                        if (shape != null && shape.GetLength(0) > gridX && shape.GetLength(1) > gridY)
+                        // 如果有其他物品正在被拖拽，隐藏当前物品的星星
+                        HideStars();
+                    }
+                    else
+                    {
+                        // 正常的鼠标检测逻辑
+                        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                            rect, 
+                            Input.mousePosition, 
+                            null, 
+                            out Vector2 localPoint);
+                        
+                        // 检查鼠标是否在物品范围内
+                        bool isMouseOver = rect.rect.Contains(localPoint);
+                        bool isOverShape = false;
+                        
+                        if (isMouseOver)
                         {
-                            // 检查该网格位置是否为实心
-                            isOverShape = shape[gridX, gridY];
+                            // 进一步检查鼠标是否在物品的实际形状内（针对异形物品）
+                            float cellSize = this.cellSize;
+                            int currentWidth = itemInstance.CurrentWidth;
+                            int currentHeight = itemInstance.CurrentHeight;
+                            
+                            // 将本地坐标转换为物品内部的网格坐标
+                            // 注意：物品UI的pivot在左上角，Y轴向下为负
+                            int gridX = Mathf.FloorToInt(localPoint.x / cellSize);
+                            int gridY = Mathf.FloorToInt(-localPoint.y / cellSize);
+                            
+                            // 检查网格坐标是否在物品形状范围内
+                            if (gridX >= 0 && gridX < currentWidth && gridY >= 0 && gridY < currentHeight)
+                            {
+                                // 获取物品的实际形状
+                                bool[,] shape = itemInstance.GetActualShape();
+                                if (shape != null && shape.GetLength(0) > gridX && shape.GetLength(1) > gridY)
+                                {
+                                    // 检查该网格位置是否为实心
+                                    isOverShape = shape[gridX, gridY];
+                                }
+                            }
+                        }
+                        
+                        // 更新星星显示状态
+                        if (isOverShape)
+                        {
+                            // 将物品移到最上层
+                            transform.SetAsLastSibling();
+                            ShowStars();
+                        } else {
+                            HideStars();
                         }
                     }
-                }
-                
-                // 更新星星显示状态
-                if (isOverShape)
-                {
-                    // 将物品移到最上层
-                    transform.SetAsLastSibling();
-                    ShowStars();
-                } else {
-                    HideStars();
                 }
             }
         }

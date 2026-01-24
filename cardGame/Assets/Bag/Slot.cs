@@ -89,6 +89,9 @@ namespace Bag
                     // 设置物品UI的拖拽状态为true，确保TryRotateItem方法能正确识别
                     itemUI.IsDragging = true;
                     
+                    // 设置全局拖拽状态
+                    InventoryManager.Instance.CarriedItem = itemUI;
+                    
                     // 记录拖拽偏移
                     Vector2 localMousePos;
                     // 使用InventoryGrid的RectTransform来计算本地坐标，确保与拖拽过程中使用的坐标系一致
@@ -209,6 +212,9 @@ namespace Bag
                         
                         // 更新物品UI的拖拽状态
                         itemUI.IsDragging = false;
+                        
+                        // 清除全局拖拽状态
+                        InventoryManager.Instance.CarriedItem = null;
                     }
                     else
                     {
@@ -231,6 +237,9 @@ namespace Bag
                             
                             // 更新物品UI的拖拽状态
                             itemUI.IsDragging = false;
+                            
+                            // 清除全局拖拽状态
+                            InventoryManager.Instance.CarriedItem = null;
                         }
                         else
                         {
@@ -259,10 +268,13 @@ namespace Bag
                             {
                                 // 没有找到可用位置，销毁物品
                                 // 更新物品UI的拖拽状态
-                                itemUI.IsDragging = false;
-                                
-                                // 销毁物品UI
-                                Destroy(itemUI.gameObject);
+                            itemUI.IsDragging = false;
+                            
+                            // 清除全局拖拽状态
+                            InventoryManager.Instance.CarriedItem = null;
+                            
+                            // 销毁物品UI
+                            Destroy(itemUI.gameObject);
                             }
                         }
                     }

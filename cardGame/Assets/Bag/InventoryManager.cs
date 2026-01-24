@@ -41,6 +41,11 @@ namespace Bag
         public ItemUI SelectedItem { get; set; }
         
         /// <summary>
+        /// 是否有任何物品正在被拖拽
+        /// </summary>
+        public bool IsAnyItemDragging => CarriedItem != null;
+        
+        /// <summary>
         /// 背包物品变化事件
         /// </summary>
         public System.Action<ItemInstance, bool> OnItemChanged; // 参数：物品实例，是否添加
