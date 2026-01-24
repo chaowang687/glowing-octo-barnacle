@@ -278,6 +278,89 @@ namespace Bag
         }
         
         /// <summary>
+        /// 检查物品星星槽位的相邻情况
+        /// </summary>
+        public Dictionary<Vector2Int, ItemInstance> CheckStarAdjacency(ItemInstance item) {
+            Dictionary<Vector2Int, ItemInstance> adjacentItems = new Dictionary<Vector2Int, ItemInstance>();
+            
+            // 保护检查：确保gridItems已初始化
+            if (gridItems == null) {
+                Debug.LogWarning("[InventoryGrid] gridItems数组未初始化，无法检查星星槽位相邻情况");
+                return adjacentItems;
+            }
+            
+            // 保护检查：确保item不为空
+            if (item == null) {
+                Debug.LogWarning("[InventoryGrid] 传入的item为空，无法检查星星槽位相邻情况");
+                return adjacentItems;
+            }
+            
+            List<Vector2Int> starPositions = item.GetStarPositions();
+            
+            // 调试：打印当前物品的标签
+            string itemTags = item.data.tags != null ? string.Join(", ", item.data.tags) : "无标签";
+            Debug.Log($"[InventoryGrid] 检查物品 {item.data.itemName} 的星星槽位相邻情况，物品标签: {itemTags}");
+            
+            foreach (Vector2Int starPos in starPositions) {
+                Debug.Log($"[InventoryGrid] 检查星星位置: {starPos}");
+                if (IsValidPosition(starPos)) {
+                    ItemInstance adjacentItem = gridItems[starPos.x, starPos.y];
+                    if (adjacentItem != null && adjacentItem != item) {
+                        Debug.Log($"[InventoryGrid] 星星位置 {starPos} 有相邻物品: {adjacentItem.data.itemName}");
+                        
+                        // 检查相邻物品是否有相关标签
+                        bool hasRelatedTag = false;
+                        
+                        // 调试：打印相邻物品的标签
+                        string adjacentTags = adjacentItem.data.tags != null ? string.Join(", ", adjacentItem.data.tags) : "无标签";
+                        Debug.Log($"[InventoryGrid] 相邻物品 {adjacentItem.data.itemName} 标签: {adjacentTags}");
+                        
+                        // 简化检查：只有当两个物品都有标签且至少有一个相同标签时才认为相关
+                        if (adjacentItem.data.tags != null && adjacentItem.data.tags.Count > 0 && 
+                            item.data.tags != null && item.data.tags.Count > 0) {
+                            
+                            Debug.Log($"[InventoryGrid] 开始检查标签匹配");
+                            foreach (string tag in adjacentItem.data.tags) {
+                                if (item.data.tags.Contains(tag)) {
+                                    hasRelatedTag = true;
+                                    Debug.Log($"[InventoryGrid] 标签匹配成功: {tag}");
+                                    break;
+                                }
+                            }
+                        } else {
+                            Debug.Log("[InventoryGrid] 物品没有标签或标签为空，不匹配");
+                        }
+                        
+                        if (hasRelatedTag) {
+                            adjacentItems.Add(starPos, adjacentItem);
+                            Debug.Log($"[InventoryGrid] 添加相邻物品到结果: {starPos} -> {adjacentItem.data.itemName}");
+                        } else {
+                            Debug.Log($"[InventoryGrid] 标签不匹配，不添加到结果");
+                        }
+                    } else {
+                        if (adjacentItem == item) {
+                            Debug.Log($"[InventoryGrid] 星星位置 {starPos} 是物品自身，跳过");
+                        } else {
+                            Debug.Log($"[InventoryGrid] 星星位置 {starPos} 没有物品");
+                        }
+                    }
+                } else {
+                    Debug.Log($"[InventoryGrid] 星星位置 {starPos} 无效");
+                }
+            }
+            
+            Debug.Log($"[InventoryGrid] 最终相邻物品数量: {adjacentItems.Count}");
+            return adjacentItems;
+        }
+        
+        /// <summary>
+        /// 检查位置是否有效
+        /// </summary>
+        private bool IsValidPosition(Vector2Int pos) {
+            return pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
+        }
+        
+        /// <summary>
         /// 放置物品到指定位置
         /// </summary>
         public void PlaceItem(ItemInstance item, int x, int y) {

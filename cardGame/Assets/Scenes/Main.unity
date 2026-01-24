@@ -10663,6 +10663,7 @@ MonoBehaviour:
   width: 10
   height: 10
   cellSize: 50
+  slotPrefab: {fileID: 0}
 --- !u!1 &1532992457
 GameObject:
   m_ObjectHideFlags: 0
@@ -14422,6 +14423,7 @@ MonoBehaviour:
   width: 10
   height: 10
   cellSize: 80
+  slotPrefab: {fileID: 0}
 --- !u!114 &313207480391782489
 MonoBehaviour:
   m_ObjectHideFlags: 0

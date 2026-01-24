@@ -110,6 +110,38 @@ namespace Bag
         public void Rotate() {
             rotation = (rotation + 90) % 360;
         }
+        
+        /// <summary>
+        /// 获取旋转后的星星绝对坐标
+        /// </summary>
+        public List<Vector2Int> GetStarPositions() {
+            List<Vector2Int> starPositions = new List<Vector2Int>();
+            
+            // 获取物品当前宽高
+            int currentWidth = CurrentWidth;
+            int currentHeight = CurrentHeight;
+            
+            foreach (Vector2Int offset in data.starOffsets) {
+                Vector2Int rotatedOffset = offset;
+                
+                // 根据旋转角度调整偏移量，使用与物品形状一致的旋转逻辑
+                switch (rotation) {
+                    case 90: // 90度顺时针旋转
+                        rotatedOffset = new Vector2Int(offset.y, currentHeight - 1 - offset.x);
+                        break;
+                    case 180: // 180度旋转
+                        rotatedOffset = new Vector2Int(currentWidth - 1 - offset.x, currentHeight - 1 - offset.y);
+                        break;
+                    case 270: // 270度顺时针旋转
+                        rotatedOffset = new Vector2Int(currentWidth - 1 - offset.y, offset.x);
+                        break;
+                }
+                
+                // 计算绝对坐标
+                starPositions.Add(new Vector2Int(posX + rotatedOffset.x, posY + rotatedOffset.y));
+            }
+            return starPositions;
+        }
     }
 
    

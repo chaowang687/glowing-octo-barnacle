@@ -211,12 +211,15 @@ namespace Bag
                 {
                     // 2. 如果合法：先从网格移除旧数据
                     CurrentGrid.RemoveItem(ui.itemInstance);
-        
+
                     // 3. 执行旋转（修改数据 + UI）
                     ui.DoVisualRotate();
-        
+
                     // 4. 以新形态重新放入网格
                     CurrentGrid.PlaceItem(ui.itemInstance, ui.itemInstance.posX, ui.itemInstance.posY);
+                    
+                    // 更新所有物品的星星高亮状态
+                    UpdateAllStarHighlights();
                     
                     Debug.Log("物品旋转成功");
                 } 
@@ -435,10 +438,26 @@ namespace Bag
                 // 添加到物品列表
                 AddItemToBag(item);
                 
+                // 更新所有物品的星星高亮状态
+                UpdateAllStarHighlights();
+                
                 return true;
             }
 
             return false;
+        }
+        
+        /// <summary>
+        /// 更新所有物品的星星高亮状态
+        /// </summary>
+        public void UpdateAllStarHighlights() 
+        {
+            // 查找所有物品UI并更新星星高亮
+            ItemUI[] allItems = FindObjectsOfType<ItemUI>();
+            foreach (ItemUI itemUI in allItems) 
+            {
+                itemUI.UpdateStarHighlight();
+            }
         }
 
         /// <summary>

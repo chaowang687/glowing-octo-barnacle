@@ -8,7 +8,7 @@ namespace Bag
     /// <summary>
     /// 物品UI组件，负责处理物品的交互逻辑
     /// </summary>
-    public class ItemUI : MonoBehaviour, IPointerClickHandler
+    public class ItemUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         // 添加一个公开属性判断是否在拖拽
         private bool isDragging = false;
@@ -21,9 +21,14 @@ namespace Bag
         private RectTransform rect;
         private CanvasGroup canvasGroup;
         [SerializeField] private Image iconImage;
+        [SerializeField] private GameObject starPrefab; // 星星图标预制体
+        public GameObject StarPrefab { get { return starPrefab; } set { starPrefab = value; } } // 方便外部访问和调试
         private Image glowImage;
         private Canvas canvas;
         private float cellSize = 50f; // 保存初始化时的cellSize，默认50f
+        
+        private List<Image> starImages = new List<Image>();
+        private Transform starsContainer;
         
         // 拖拽相关变量
         private InventoryGrid originalGrid;
@@ -41,8 +46,8 @@ namespace Bag
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
             
             // 初始化CanvasGroup状态
-            canvasGroup.blocksRaycasts = false; // 不阻止射线检测，让底层Slot接收点击事件
-            canvasGroup.interactable = false; // 不可交互，让底层Slot处理交互
+            canvasGroup.blocksRaycasts = true; // 允许接收射线检测，以便触发鼠标事件
+            canvasGroup.interactable = true; // 可交互，以便触发鼠标事件
             canvasGroup.alpha = 1f;
             
             // 初始化ItemUI的锚点为左上角，与InventoryGrid.GetPositionFromGrid方法匹配
@@ -73,6 +78,33 @@ namespace Bag
                 
                 // 确保物品图片不接收点击事件，让底层的Slot组件处理点击
                 iconImage.raycastTarget = false;
+            }
+            
+            // 创建星星容器
+            starsContainer = transform.Find("StarsContainer");
+            if (starsContainer == null)
+            {
+                Debug.Log("[ItemUI] 创建新的StarsContainer");
+                GameObject starsObj = new GameObject("StarsContainer");
+                starsContainer = starsObj.transform;
+                
+                // 将StarsContainer作为ItemUI的直接子物体，确保它显示在最上层
+                starsContainer.SetParent(transform);
+                // 确保StarsContainer显示在最上层
+                starsContainer.SetAsLastSibling();
+                
+                // 设置星星容器的RectTransform
+                RectTransform starsRect = starsObj.AddComponent<RectTransform>();
+                CanvasGroup starsCanvasGroup = starsObj.AddComponent<CanvasGroup>();
+                
+                // 使用统一的设置方法，确保锚点和pivot都设置为中心点
+                UpdateStarsContainerSettings(starsRect, starsCanvasGroup);
+                
+                // 设置初始位置为零，因为图标已经在中心
+                starsRect.anchoredPosition = Vector2.zero;
+            } else {
+                // 如果starsContainer已经存在，确保它显示在最上层
+                starsContainer.SetAsLastSibling();
             }
             
             // 创建外发光效果
@@ -237,20 +269,21 @@ namespace Bag
             canvasGroup.alpha = 0.7f;
             originalGrid = null;
             dragOffset = Vector2.zero;
+            
+            // 拖拽开始时，将星星设为灰色
+            UpdateStarHighlight();
         }
 
         /// <summary>
         /// 初始化物品UI
         /// </summary>
-        public void Initialize(ItemInstance item, float cellSize)
-        {
+        public void Initialize(ItemInstance item, float cellSize) {
             // 1. 强制初始化基础组件引用 (手动补齐 Awake 的工作)
             if (rect == null) rect = GetComponent<RectTransform>();
             if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
             
             // 2. 确保 iconImage 的引用 (处理 Prefab 动态生成)
-            if (iconImage == null)
-            {
+            if (iconImage == null) {
                 Transform iconTransform = transform.Find("Icon");
                 if (iconTransform != null) iconImage = iconTransform.GetComponent<Image>();
                 else iconImage = GetComponentInChildren<Image>();
@@ -260,24 +293,27 @@ namespace Bag
             this.cellSize = cellSize;
 
             // 4. 数据安全性检查
-            if (item == null)
-            {
+            if (item == null) {
                 Debug.LogError($"[ItemUI] 错误: 传入的 ItemInstance 为空！物体: {gameObject.name}");
                 return;
             }
             this.itemInstance = item;
 
-            if (item.data == null)
-            {
+            if (item.data == null) {
                 Debug.LogError($"[ItemUI] 错误: 物品 {item} 的 data 属性未赋值！");
                 return;
             }
+            
+            // 确保itemInstance.data.starOffsets不为空，但不再添加默认星星偏移
+            if (itemInstance.data.starOffsets == null) {
+                itemInstance.data.starOffsets = new List<Vector2Int>();
+            }
+            // 不再自动添加默认星星偏移，避免在物品自身占用格子生成星星
 
             // 5. 执行 UI 更新 (现在访问 rect 是 100% 安全的)
             rect.sizeDelta = new Vector2(item.CurrentWidth * cellSize, item.CurrentHeight * cellSize);
             
-            if (iconImage != null)
-            {
+            if (iconImage != null) {
                 iconImage.sprite = item.data.icon;
                 
                 // 1. 设置图片类型和保持宽高比
@@ -286,8 +322,7 @@ namespace Bag
                 
                 // 2. 设置图标旋转和锚点
                 RectTransform iconRect = iconImage.rectTransform;
-                if (iconRect != null)
-                {
+                if (iconRect != null) {
                     // 支持360度旋转
                     iconRect.localEulerAngles = new Vector3(0, 0, item.rotation);
                     
@@ -299,6 +334,312 @@ namespace Bag
                     // 4. 设置图标初始大小，确保宽高不为0
                     // 使用物品原始宽高作为图标大小，避免宽高变成0
                     iconRect.sizeDelta = new Vector2(item.data.width * cellSize, item.data.height * cellSize);
+                }
+            }
+            
+            // 6. 生成星星图标
+            GenerateStarIcons();
+            
+            // 7. 更新星星高亮状态
+            UpdateStarHighlight();
+            
+            // 8. 确保CanvasGroup属性正确设置，不影响拖拽和旋转功能
+            if (canvasGroup != null) {
+                canvasGroup.blocksRaycasts = false; // 不阻止射线检测，让底层Slot接收点击事件
+                canvasGroup.interactable = false; // 不可交互，让底层Slot处理交互
+            }
+        }
+        
+        /// <summary>
+        /// 统一设置StarsContainer的RectTransform和CanvasGroup属性
+        /// </summary>
+        /// <param name="starsRect">StarsContainer的RectTransform组件</param>
+        /// <param name="canvasGroup">StarsContainer的CanvasGroup组件</param>
+        private void UpdateStarsContainerSettings(RectTransform starsRect, CanvasGroup canvasGroup) {
+            if (starsRect == null || canvasGroup == null) {
+                return;
+            }
+            
+            // 将锚点和pivot都设置为中心点，确保坐标计算准确
+            starsRect.anchorMin = new Vector2(0.5f, 0.5f);
+            starsRect.anchorMax = new Vector2(0.5f, 0.5f);
+            starsRect.pivot = new Vector2(0.5f, 0.5f);
+            starsRect.localScale = Vector3.one;
+            
+            // 只有当itemInstance不为空时才设置sizeDelta
+            if (itemInstance != null) {
+                starsRect.sizeDelta = new Vector2(cellSize * itemInstance.CurrentWidth, cellSize * itemInstance.CurrentHeight);
+            } else {
+                starsRect.sizeDelta = Vector2.zero;
+            }
+            
+            starsRect.localEulerAngles = Vector3.zero; // 确保不旋转
+            starsRect.anchoredPosition = Vector2.zero; // 居中
+            
+            // 确保星星容器可见且不影响交互
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
+        }
+        
+        /// <summary>
+        /// 生成星星图标
+        /// </summary>
+        private void GenerateStarIcons() {
+            // 基本安全检查
+            if (itemInstance == null || itemInstance.data == null || itemInstance.data.starOffsets == null) {
+                return;
+            }
+            
+            // 初始化starsContainer（仅在第一次调用时）
+            if (starsContainer == null) {
+                // 查找或创建StarsContainer
+                starsContainer = transform.Find("StarsContainer");
+                if (starsContainer == null) {
+                    GameObject starsObj = new GameObject("StarsContainer");
+                    starsContainer = starsObj.transform;
+                    starsContainer.SetParent(transform);
+                    starsContainer.SetAsLastSibling();
+                    
+                    // 添加必要的组件
+                    RectTransform starsRect = starsObj.AddComponent<RectTransform>();
+                    CanvasGroup starsCanvasGroup = starsObj.AddComponent<CanvasGroup>();
+                    
+                    // 统一设置
+                    UpdateStarsContainerSettings(starsRect, starsCanvasGroup);
+                    starsRect.anchoredPosition = Vector2.zero;
+                } else {
+                    // 确保StarsContainer的父物体是ItemUI
+                    if (starsContainer.parent != transform) {
+                        starsContainer.SetParent(transform);
+                    }
+                    // 确保现有StarsContainer显示在最上层
+                    starsContainer.SetAsLastSibling();
+                    
+                    // 更新设置
+                    RectTransform existingStarsRect = starsContainer.GetComponent<RectTransform>();
+                    CanvasGroup existingStarsCanvasGroup = starsContainer.GetComponent<CanvasGroup>();
+                    if (existingStarsRect == null) existingStarsRect = starsContainer.gameObject.AddComponent<RectTransform>();
+                    if (existingStarsCanvasGroup == null) existingStarsCanvasGroup = starsContainer.gameObject.AddComponent<CanvasGroup>();
+                    
+                    UpdateStarsContainerSettings(existingStarsRect, existingStarsCanvasGroup);
+                    existingStarsRect.anchoredPosition = Vector2.zero;
+                }
+            } else {
+                // 确保现有starsContainer显示在最上层
+                starsContainer.SetAsLastSibling();
+            }
+            
+            // 确保starPrefab不为空
+            if (starPrefab == null) {
+                return;
+            }
+            
+            // 获取星星数量
+            int starCount = itemInstance.data.starOffsets.Count;
+            if (starCount == 0) {
+                return;
+            }
+            
+            // 清理多余的星星
+            while (starImages.Count > starCount) {
+                int lastIndex = starImages.Count - 1;
+                Image starImage = starImages[lastIndex];
+                if (starImage != null && starImage.gameObject != null) {
+                    Destroy(starImage.gameObject);
+                }
+                starImages.RemoveAt(lastIndex);
+            }
+            
+            // 确保starsContainer可见
+            CanvasGroup containerCanvasGroup = null;
+            // 添加安全检查，确保starsContainer不是一个已经被销毁的对象
+            if (starsContainer != null && starsContainer.gameObject != null) {
+                containerCanvasGroup = starsContainer.GetComponent<CanvasGroup>();
+                if (containerCanvasGroup != null) {
+                    containerCanvasGroup.alpha = 1f;
+                    containerCanvasGroup.blocksRaycasts = false;
+                    containerCanvasGroup.interactable = false;
+                }
+                starsContainer.gameObject.SetActive(true);
+                starsContainer.gameObject.layer = gameObject.layer;
+            }
+            
+            // 获取旋转角度
+            int rotation = itemInstance.rotation;
+            
+            // 获取物品当前宽高
+            int currentWidth = itemInstance.CurrentWidth;
+            int currentHeight = itemInstance.CurrentHeight;
+            
+            // 生成/更新星星
+            if (starsContainer != null && starsContainer.gameObject != null) {
+                // 初始状态隐藏星星容器，但确保星星已经生成
+                starsContainer.gameObject.SetActive(false);
+                for (int i = 0; i < starCount; i++) {
+                    Vector2Int offset = itemInstance.data.starOffsets[i];
+                    Vector2Int rotatedOffset = offset;
+                    
+                    // 根据旋转角度调整偏移量，使用与物品形状一致的旋转逻辑
+                    switch (rotation) {
+                        case 90: // 90度顺时针旋转
+                            rotatedOffset = new Vector2Int(offset.y, currentHeight - 1 - offset.x);
+                            break;
+                        case 180: // 180度旋转
+                            rotatedOffset = new Vector2Int(currentWidth - 1 - offset.x, currentHeight - 1 - offset.y);
+                            break;
+                        case 270: // 270度顺时针旋转
+                            rotatedOffset = new Vector2Int(currentWidth - 1 - offset.y, offset.x);
+                            break;
+                    }
+                    
+                    GameObject starObj;
+                    Image starImage;
+                    RectTransform starRect;
+                    
+                    // 复用现有星星或创建新星星
+                    if (i < starImages.Count) {
+                        // 复用现有星星
+                        starImage = starImages[i];
+                        if (starImage == null) {
+                            // 移除已经被销毁的星星
+                            starImages.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        starObj = starImage.gameObject;
+                        if (starObj == null) {
+                            // 移除已经被销毁的星星
+                            starImages.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                        starRect = starImage.GetComponent<RectTransform>();
+                        if (starRect == null) {
+                            // 移除没有RectTransform的星星
+                            starImages.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+                    } else {
+                        // 创建新星星
+                        starObj = Instantiate(starPrefab, starsContainer);
+                        starImage = starObj.GetComponent<Image>();
+                        starRect = starObj.GetComponent<RectTransform>();
+                        
+                        if (starImage != null) {
+                            starImages.Add(starImage);
+                            starImage.raycastTarget = false;
+                            
+                            // 初始化RectTransform设置
+                            if (starRect != null) {
+                                starRect.anchorMin = new Vector2(0.5f, 0.5f);
+                                starRect.anchorMax = new Vector2(0.5f, 0.5f);
+                                starRect.pivot = new Vector2(0.5f, 0.5f);
+                                starRect.localScale = Vector3.one;
+                                starRect.localEulerAngles = Vector3.zero;
+                            }
+                        }
+                    }
+                    
+                    if (starRect != null && starImage != null && starObj != null) {
+                        // 计算物品的中心点偏移
+                        float centerOffsetX = (currentWidth - 1) * cellSize / 2;
+                        float centerOffsetY = (currentHeight - 1) * cellSize / 2;
+                        
+                        // 转换为UI位置：基于中心点原点的相对位置
+                        float xPos = rotatedOffset.x * cellSize - centerOffsetX;
+                        float yPos = -rotatedOffset.y * cellSize + centerOffsetY;
+                        
+                        // 更新星星位置和大小
+                        starRect.anchoredPosition = new Vector2(xPos, yPos);
+                        float starSize = cellSize * 0.6f;
+                        starRect.sizeDelta = new Vector2(starSize, starSize);
+                        
+                        // 设置星星默认状态
+                        starImage.enabled = true;
+                        starImage.color = Color.white; // 移除红色，使用默认颜色
+                        starObj.SetActive(false); // 初始状态隐藏
+                        starObj.layer = starsContainer.gameObject.layer;
+                        
+                        // 处理没有Sprite的情况
+                        if (starImage.sprite == null) {
+                            starImage.color = new Color(1, 1, 1, 0.5f); // 使用半透明白色
+                            starImage.fillCenter = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 旋转偏移量
+        /// </summary>
+        private Vector2Int RotateOffset(Vector2Int offset, int rotationSteps) {
+            Vector2Int rotatedOffset = offset;
+            // 使用与物品形状旋转一致的逻辑
+            for (int i = 0; i < rotationSteps; i++) {
+                // 顺时针旋转90度：(x,y) → (y, -x)
+                rotatedOffset = new Vector2Int(rotatedOffset.y, -rotatedOffset.x);
+            }
+            return rotatedOffset;
+        }
+        
+        /// <summary>
+        /// 延迟更新星星高亮，确保旋转完成后再检查
+        /// </summary>
+        private System.Collections.IEnumerator DelayUpdateStarHighlight() {
+            // 等待一帧，确保旋转和位置更新完成
+            yield return null;
+            UpdateStarHighlight();
+        }
+        
+        /// <summary>
+        /// 更新星星高亮状态
+        /// </summary>
+        public void UpdateStarHighlight() {
+            // 保护检查：确保itemInstance和CurrentGrid存在
+            if (itemInstance == null || InventoryManager.Instance == null || InventoryManager.Instance.CurrentGrid == null) {
+                return;
+            }
+            
+            // 只有当物品不在拖拽状态时，才更新星星高亮状态
+            if (isDragging) {
+                // 拖拽时，星星显示为灰色
+                for (int i = 0; i < starImages.Count; i++) {
+                    Image starImage = starImages[i];
+                    if (starImage != null && starImage.gameObject != null) {
+                        starImage.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                    }
+                }
+                return;
+            }
+            
+            // 确保星星图标已生成，但避免在旋转时形成无限循环
+            // 只有在starImages为空时才调用GenerateStarIcons，否则直接使用现有星星
+            if (starImages.Count == 0) {
+                GenerateStarIcons();
+                // 如果生成后仍然没有星星图标，直接返回
+                if (starImages.Count == 0) {
+                    return;
+                }
+            }
+            
+            // 检查星星相邻情况
+            Dictionary<Vector2Int, ItemInstance> adjacentItems = InventoryManager.Instance.CurrentGrid.CheckStarAdjacency(itemInstance);
+            List<Vector2Int> starPositions = itemInstance.GetStarPositions();
+            
+            // 更新每个星星的高亮状态
+            for (int i = 0; i < starImages.Count; i++) {
+                if (i < starPositions.Count) {
+                    Image starImage = starImages[i];
+                    if (starImage != null && starImage.gameObject != null) {
+                        Vector2Int starPos = starPositions[i];
+                        bool isAdjacent = adjacentItems.ContainsKey(starPos);
+                        // 移除红色状态，使用更自然的高亮颜色
+                        starImage.color = isAdjacent ? new Color(1, 1, 0, 0.8f) : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                        // 保持当前的显示/隐藏状态，不强制显示
+                    }
                 }
             }
         }
@@ -336,6 +677,83 @@ namespace Bag
         private void ResetAlpha()
         {
             canvasGroup.alpha = 1f;
+        }
+        
+        /// <summary>
+        /// 鼠标进入物品时的处理
+        /// </summary>
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            // 显示星星
+            ShowStars();
+        }
+        
+        /// <summary>
+        /// 鼠标离开物品时的处理
+        /// </summary>
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            // 隐藏星星
+            HideStars();
+        }
+        
+        /// <summary>
+        /// 显示星星
+        /// </summary>
+        private void ShowStars()
+        {
+            if (starsContainer != null && starsContainer.gameObject != null) {
+                // 显示星星容器
+                starsContainer.gameObject.SetActive(true);
+                
+                // 确保星星容器显示在物品的最上层
+                starsContainer.SetAsLastSibling();
+                
+                // 显示所有星星
+                for (int i = 0; i < starsContainer.childCount; i++) {
+                    Transform child = starsContainer.GetChild(i);
+                    if (child != null && child.gameObject != null) {
+                        child.gameObject.SetActive(true);
+                        // 确保每个星星都显示在最上层
+                        child.SetAsLastSibling();
+                    }
+                }
+                
+                // 显示starImages列表中的星星
+                foreach (Image starImage in starImages) {
+                    if (starImage != null && starImage.gameObject != null) {
+                        starImage.gameObject.SetActive(true);
+                        // 确保每个星星都显示在最上层
+                        starImage.transform.SetAsLastSibling();
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 隐藏星星
+        /// </summary>
+        private void HideStars()
+        {
+            if (starsContainer != null && starsContainer.gameObject != null) {
+                // 隐藏所有星星
+                for (int i = 0; i < starsContainer.childCount; i++) {
+                    Transform child = starsContainer.GetChild(i);
+                    if (child != null && child.gameObject != null) {
+                        child.gameObject.SetActive(false);
+                    }
+                }
+                
+                // 隐藏starImages列表中的星星
+                foreach (Image starImage in starImages) {
+                    if (starImage != null && starImage.gameObject != null) {
+                        starImage.gameObject.SetActive(false);
+                    }
+                }
+                
+                // 隐藏星星容器
+                starsContainer.gameObject.SetActive(false);
+            }
         }
         
         /// <summary>
@@ -503,6 +921,20 @@ namespace Bag
                     iconRect.sizeDelta = new Vector2(itemInstance.data.width * cellSize, itemInstance.data.height * cellSize);
                 }
             }
+            
+            // 更新星星图标
+            GenerateStarIcons();
+            
+            // 重置星星高亮状态，确保旋转后星星不会立即变黄
+            for (int i = 0; i < starImages.Count; i++) {
+                Image starImage = starImages[i];
+                if (starImage != null && starImage.gameObject != null) {
+                    starImage.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                }
+            }
+            
+            // 延迟更新星星高亮，确保旋转完成后再检查
+            StartCoroutine(DelayUpdateStarHighlight());
         }
         
         /// <summary>
@@ -520,6 +952,56 @@ namespace Bag
                     InventoryManager.Instance.TryRotateItem(this);
                 }
             } 
+            
+            // 自定义鼠标检测逻辑，不依赖于EventSystem
+            // 这样既可以显示星星，又不影响拖拽和旋转功能
+            if (gameObject.activeSelf && rect != null && itemInstance != null)
+            {
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    rect, 
+                    Input.mousePosition, 
+                    null, 
+                    out Vector2 localPoint);
+                
+                // 检查鼠标是否在物品范围内
+                bool isMouseOver = rect.rect.Contains(localPoint);
+                bool isOverShape = false;
+                
+                if (isMouseOver)
+                {
+                    // 进一步检查鼠标是否在物品的实际形状内（针对异形物品）
+                    float cellSize = this.cellSize;
+                    int currentWidth = itemInstance.CurrentWidth;
+                    int currentHeight = itemInstance.CurrentHeight;
+                    
+                    // 将本地坐标转换为物品内部的网格坐标
+                    // 注意：物品UI的pivot在左上角，Y轴向下为负
+                    int gridX = Mathf.FloorToInt(localPoint.x / cellSize);
+                    int gridY = Mathf.FloorToInt(-localPoint.y / cellSize);
+                    
+                    // 检查网格坐标是否在物品形状范围内
+                    if (gridX >= 0 && gridX < currentWidth && gridY >= 0 && gridY < currentHeight)
+                    {
+                        // 获取物品的实际形状
+                        bool[,] shape = itemInstance.GetActualShape();
+                        if (shape != null && shape.GetLength(0) > gridX && shape.GetLength(1) > gridY)
+                        {
+                            // 检查该网格位置是否为实心
+                            isOverShape = shape[gridX, gridY];
+                        }
+                    }
+                }
+                
+                // 更新星星显示状态
+                if (isOverShape)
+                {
+                    // 将物品移到最上层
+                    transform.SetAsLastSibling();
+                    ShowStars();
+                } else {
+                    HideStars();
+                }
+            }
         }
     }
 }

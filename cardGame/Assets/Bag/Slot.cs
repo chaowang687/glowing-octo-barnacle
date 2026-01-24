@@ -113,6 +113,9 @@ namespace Bag
                     
                     // 将物品UI移动到最上层，确保拖拽时不会被其他UI遮挡
                     itemUI.transform.SetAsLastSibling();
+                    
+                    // 拖拽开始时，更新星星高亮状态，确保星星变为灰色
+                    itemUI.UpdateStarHighlight();
                 }
                 
                 // 从网格中移除物品
@@ -267,6 +270,9 @@ namespace Bag
                 
                 draggedItem = null;
             }
+            
+            // 无论拖拽结果如何，都更新所有物品的星星高亮状态
+            InventoryManager.Instance.UpdateAllStarHighlights();
         }
         
         /// <summary>

@@ -6465,11 +6465,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1002322934564699956, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1002322934564699956, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1002322934564699956, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6914,6 +6914,10 @@ PrefabInstance:
     - target: {fileID: 4194209660580796815, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
       propertyPath: m_Name
       value: Bag
+      objectReference: {fileID: 0}
+    - target: {fileID: 4194209660580796815, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4439056441017470890, guid: a400e8a0078414e21899c123c4e7c55b, type: 3}
       propertyPath: m_AnchorMax.y

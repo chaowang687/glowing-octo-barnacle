@@ -71,6 +71,14 @@ public class ItemData : ScriptableObject {
     [Header("效果配置")]
     [Tooltip("支持实现 IItemEffect 接口的 ScriptableObject")]
     public List<ScriptableObject> effects;
+    
+    [Header("星星槽位配置")]
+    [Tooltip("星星触发槽相对偏移量，相对于物品中心或原点")]
+    public List<Vector2Int> starOffsets = new List<Vector2Int>();
+    
+    [Header("标签配置")]
+    [Tooltip("物品标签，用于星星高亮检测")]
+    public List<string> tags = new List<string> { "default" };
 
 } 
 
