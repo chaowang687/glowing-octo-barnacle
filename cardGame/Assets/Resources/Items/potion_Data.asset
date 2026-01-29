@@ -25,6 +25,10 @@ MonoBehaviour:
   worldPrefab: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 8a22ee90dd2dc44e5a7bd9d7c39a7a7c, type: 2}
-  starOffsets: []
+  starOffsets:
+  - {x: 0, y: -1}
+  - {x: -1, y: 0}
+  - {x: 0, y: 1}
+  - {x: 1, y: 0}
   tags:
-  - Fruit
+  - Food
