@@ -12,8 +12,16 @@
 /ProjectSettings/ProjectSettings.asset.bak
 /Assets/AssetStoreTools/
 /Assets/StreamingAssets/
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow.meta
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db.meta
+
+
 
 
 # Optional: Logs and other user settings
 *.log
 *.unityproj
+cardGame/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow.meta
+cardGame/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+cardGame/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db.meta
