@@ -1,0 +1,25 @@
+# A股量化选股系统依赖文件
+# Streamlit Cloud部署所需
+
+# 核心框架
+streamlit>=1.28.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# 数据可视化
+plotly>=5.18.0
+
+# 网络请求
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# PDF生成
+reportlab>=4.0.0
+
+# A股数据源
+akshare>=1.12.0
+
+# 其他工具
+Pillow>=10.0.0
+Pygments>=2.17.0
