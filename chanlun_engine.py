@@ -45,6 +45,8 @@ class ChanQuantEngine:
         df 必须包含 'high','low','open','close'，索引为datetime
         返回的DataFrame包含合并后的K线，并保留原始索引范围
         """
+        from logger import debug
+        
         data = df[['high','low','open','close']].copy()
         data = data.reset_index().rename(columns={'index':'date'})
         # 按时间排序
@@ -53,9 +55,22 @@ class ChanQuantEngine:
         merged = []
         i = 0
         n = len(data)
+        
+        # 处理空数据情况
+        if n == 0:
+            debug("输入数据为空，返回原始DataFrame")
+            return df
+        
         while i < n:
             if i == 0:
                 # 第一根K线直接加入
+                merged.append(data.iloc[i].to_dict())
+                i += 1
+                continue
+            
+            # 确保merged列表不为空
+            if not merged:
+                debug("merged列表为空，添加当前K线")
                 merged.append(data.iloc[i].to_dict())
                 i += 1
                 continue
@@ -138,45 +153,167 @@ class ChanQuantEngine:
         返回列表 (start_idx, end_idx, direction, start_price, end_price)
         direction: 1 向上笔, -1 向下笔
         """
+        from logger import info
+        
         bi = []
         if len(fractals) < 2:
             return bi
         
         # 按索引排序
         fractals_sorted = sorted(fractals, key=lambda x: x[0])
+        info(f"开始生成笔，分型数量: {len(fractals_sorted)}")
         
         i = 0
         while i < len(fractals_sorted)-1:
             cur = fractals_sorted[i]
+            found = False
+            
+            # 寻找下一个类型相反的分型
             for j in range(i+1, len(fractals_sorted)):
                 nxt = fractals_sorted[j]
+                
                 # 必须类型相反
                 if nxt[1] == cur[1]:
                     continue
+                
                 # 间隔至少1根K线（即索引差>=2）
                 if nxt[0] - cur[0] < 2:
                     continue
-                # 价格幅度要求：对于向上笔，nxt高点 > cur低点（合理）；简单使用收盘价差比例
+                
+                # 验证分型的有效性
+                if not self._validate_fractal(df_merged, cur):
+                    break
+                if not self._validate_fractal(df_merged, nxt):
+                    continue
+                
+                # 计算价格幅度
                 if cur[1] == 'bottom' and nxt[1] == 'top':
                     # 向上笔
                     start_price = cur[3]   # 低点价格（取底分型低点）
                     end_price = nxt[2]     # 高点价格（取顶分型高点）
-                    if end_price > start_price * (1 + self.bi_threshold):
-                        bi.append((cur[0], nxt[0], 1, start_price, end_price))
-                        i = j
-                        break
+                    price_change = (end_price - start_price) / start_price
+                    
+                    if price_change >= self.bi_threshold:
+                        # 验证笔的有效性：确保期间没有反向的更大波动
+                        if self._validate_bi(df_merged, cur[0], nxt[0], 1):
+                            bi.append((cur[0], nxt[0], 1, start_price, end_price))
+                            info(f"生成向上笔: {cur[0]} -> {nxt[0]}, 价格: {start_price:.2f} -> {end_price:.2f}, 涨幅: {price_change:.2%}")
+                            i = j
+                            found = True
+                            break
+                
                 elif cur[1] == 'top' and nxt[1] == 'bottom':
                     # 向下笔
                     start_price = cur[2]   # 高点价格
                     end_price = nxt[3]     # 低点价格
-                    if start_price > end_price * (1 + self.bi_threshold):
-                        bi.append((cur[0], nxt[0], -1, start_price, end_price))
-                        i = j
-                        break
-            else:
-                # 没找到合适的下一个分型，结束
-                break
+                    price_change = (start_price - end_price) / start_price
+                    
+                    if price_change >= self.bi_threshold:
+                        # 验证笔的有效性：确保期间没有反向的更大波动
+                        if self._validate_bi(df_merged, cur[0], nxt[0], -1):
+                            bi.append((cur[0], nxt[0], -1, start_price, end_price))
+                            info(f"生成向下笔: {cur[0]} -> {nxt[0]}, 价格: {start_price:.2f} -> {end_price:.2f}, 跌幅: {price_change:.2%}")
+                            i = j
+                            found = True
+                            break
+            
+            if not found:
+                i += 1
+        
+        info(f"笔生成完成，笔数量: {len(bi)}")
         return bi
+    
+    def _validate_fractal(self, df_merged: pd.DataFrame, fractal: Tuple[int, str, float, float]) -> bool:
+        """
+        验证分型的有效性
+        
+        Args:
+            df_merged: 合并后的K线数据
+            fractal: 分型 (索引, 类型, 高点, 低点)
+        
+        Returns:
+            是否为有效分型
+        """
+        idx, typ, high, low = fractal
+        
+        # 确保分型位置在有效范围内
+        if idx < 1 or idx >= len(df_merged) - 1:
+            return False
+        
+        # 验证顶分型：中间K线高点最高，低点也较高
+        if typ == 'top':
+            # 检查前后K线的高点
+            prev_high = df_merged['high'].iloc[idx-1]
+            next_high = df_merged['high'].iloc[idx+1]
+            if high <= prev_high or high <= next_high:
+                return False
+            # 检查低点
+            prev_low = df_merged['low'].iloc[idx-1]
+            next_low = df_merged['low'].iloc[idx+1]
+            current_low = df_merged['low'].iloc[idx]
+            if current_low < prev_low or current_low < next_low:
+                return False
+        
+        # 验证底分型：中间K线低点最低，高点也较低
+        elif typ == 'bottom':
+            # 检查前后K线的低点
+            prev_low = df_merged['low'].iloc[idx-1]
+            next_low = df_merged['low'].iloc[idx+1]
+            if low >= prev_low or low >= next_low:
+                return False
+            # 检查高点
+            prev_high = df_merged['high'].iloc[idx-1]
+            next_high = df_merged['high'].iloc[idx+1]
+            current_high = df_merged['high'].iloc[idx]
+            if current_high > prev_high or current_high > next_high:
+                return False
+        
+        return True
+    
+    def _validate_bi(self, df_merged: pd.DataFrame, start_idx: int, end_idx: int, direction: int) -> bool:
+        """
+        验证笔的有效性
+        
+        Args:
+            df_merged: 合并后的K线数据
+            start_idx: 开始索引
+            end_idx: 结束索引
+            direction: 笔的方向，1为向上，-1为向下
+        
+        Returns:
+            是否为有效笔
+        """
+        # 向上笔：确保期间的低点不低于起点，高点逐渐抬升
+        if direction == 1:
+            start_low = df_merged['low'].iloc[start_idx]
+            min_low = df_merged['low'].iloc[start_idx:end_idx+1].min()
+            if min_low < start_low * 0.99:  # 允许小幅回调
+                return False
+            
+            # 确保高点逐渐抬升
+            highs = df_merged['high'].iloc[start_idx:end_idx+1]
+            if highs.is_monotonic_increasing:
+                return True
+            # 允许小幅回调，但整体趋势向上
+            if highs.iloc[-1] > highs.iloc[0]:
+                return True
+        
+        # 向下笔：确保期间的高点不高于起点，低点逐渐下降
+        elif direction == -1:
+            start_high = df_merged['high'].iloc[start_idx]
+            max_high = df_merged['high'].iloc[start_idx:end_idx+1].max()
+            if max_high > start_high * 1.01:  # 允许小幅反弹
+                return False
+            
+            # 确保低点逐渐下降
+            lows = df_merged['low'].iloc[start_idx:end_idx+1]
+            if lows.is_monotonic_decreasing:
+                return True
+            # 允许小幅反弹，但整体趋势向下
+            if lows.iloc[-1] < lows.iloc[0]:
+                return True
+        
+        return False
     
     def find_zhongshu(self, bi: List[Tuple], df_merged: pd.DataFrame) -> List[Tuple[int, int, float, float]]:
         """

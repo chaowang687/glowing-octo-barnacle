@@ -10,16 +10,22 @@ import pandas as pd
 import time
 from typing import List, Dict
 
+# 使用绝对导入的方式导入config模块
+import sys
+import os
+
+# 添加主项目根目录到路径
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from config import get_proxies
+
 
 class TencentDataSource:
     """腾讯财经数据接口"""
     
     def __init__(self):
         self.base_url = "https://qt.gtimg.cn/q="
-        self.proxies = {
-            'http': 'http://127.0.0.1:7890',
-            'https': 'http://127.0.0.1:7890'
-        }
+        self.proxies = get_proxies()  # 使用配置文件中的代理设置
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         }
@@ -209,54 +215,95 @@ class TencentDataSource:
         else:
             code = f'sz{symbol}'
         
-        # 腾讯K线API
-        period_map = {'day': '', 'week': 'week', 'month': 'month'}
-        p = period_map.get(period, '')
-        
-        url = f'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get'
-        params = {
-            '_var': 'kline',
-            'param': f'{code},{p},,,,320,qfq'
-        }
+        # 使用新的API接口
+        url = f'http://data.gtimg.cn/flashdata/hushen/latest/daily/{code}.js'
         
         try:
-            resp = requests.get(url, params=params, headers=self.headers,
+            print(f"获取K线数据: {symbol} -> {code}")
+            print(f"API URL: {url}")
+            
+            resp = requests.get(url, headers=self.headers,
                               proxies=self.proxies, timeout=15)
+            
+            print(f"响应状态码: {resp.status_code}")
             
             if resp.status_code == 200:
                 text = resp.text
-                # 解析返回
-                if 'kline=' in text:
-                    data_str = text.split('kline=')[1]
-                    import json
-                    data = json.loads(data_str)
+                print(f"响应数据长度: {len(text)}")
+                
+                # 提取数据部分
+                if 'latest_daily_data="' in text:
+                    # 提取数据并清理
+                    data_part = text.split('latest_daily_data="')[1].strip('"')
+                    # 清理可能的转义字符
+                    data_part = data_part.replace('\\n', '\n')
+                    data_part = data_part.replace('\\"', '"')
+                    lines = data_part.split('\n')
                     
-                    if 'data' in data and code in data['data']:
-                        qfq = data['data'][code].get('qfqday', [])
-                        if not qfq:
-                            qfq = data['data'][code].get('day', [])
-                        
-                        klines = []
-                        for item in qfq:
-                            if len(item) >= 5:
-                                klines.append({
-                                    '日期': item[0],
-                                    '开盘': float(item[1]),
-                                    '收盘': float(item[2]),
-                                    '最高': float(item[3]),
-                                    '最低': float(item[4]),
-                                    '成交量': float(item[5]) if len(item) > 5 else 0,
-                                    '成交额': float(item[6]) if len(item) > 6 else 0,
-                                })
-                        
-                        df = pd.DataFrame(klines)
-                        if len(df) > 0:
-                            df['日期'] = pd.to_datetime(df['日期'])
-                            df.set_index('日期', inplace=True)
-                            return df
+                    print(f"数据行数: {len(lines)}")
+                    
+                    klines = []
+                    for line in lines:
+                        line = line.strip()
+                        if line and not line.startswith('num:') and not line.startswith('start:') and not line.startswith('total:'):
+                            # 清理行尾可能的特殊字符
+                            line = line.rstrip('\\')
+                            parts = line.split()
+                            if len(parts) >= 6:
+                                # 解析K线数据
+                                # 格式: 日期 收盘 开盘 最高 最低 成交量
+                                try:
+                                    date_str = parts[0]
+                                    # 验证日期格式（6位数字）
+                                    if len(date_str) != 6 or not date_str.isdigit():
+                                        continue
+                                    
+                                    # 安全转换为浮点数
+                                    close = float(parts[1])
+                                    open_price = float(parts[2])
+                                    high = float(parts[3])
+                                    low = float(parts[4])
+                                    volume = float(parts[5])
+                                    
+                                    # 转换日期格式
+                                    # 格式: 220527 → 2022-05-27
+                                    year = '20' + date_str[:2]
+                                    month = date_str[2:4]
+                                    day = date_str[4:6]
+                                    date = f'{year}-{month}-{day}'
+                                    
+                                    klines.append({
+                                        '日期': date,
+                                        '开盘': open_price,
+                                        '收盘': close,
+                                        '最高': high,
+                                        '最低': low,
+                                        '成交量': volume,
+                                        '成交额': 0  # 新API没有直接提供成交额
+                                    })
+                                except Exception as e:
+                                    # 跳过解析失败的行
+                                    print(f"解析K线数据失败: {e}, 行: {line}")
+                                    continue
+                    
+                    print(f"解析出的K线数量: {len(klines)}")
+                    
+                    df = pd.DataFrame(klines)
+                    if len(df) > 0:
+                        df['日期'] = pd.to_datetime(df['日期'])
+                        df.set_index('日期', inplace=True)
+                        print(f"返回K线数据: {len(df)} 条")
+                        return df
+                    else:
+                        print("解析出的K线数量为0")
+                else:
+                    print("响应数据中没有找到 latest_daily_data 字段")
+            else:
+                print(f"响应状态码错误: {resp.status_code}")
         except Exception as e:
             print(f"腾讯K线错误: {e}")
         
+        print("返回空DataFrame")
         return pd.DataFrame()
 
 

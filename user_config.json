@@ -1,0 +1,47 @@
+{
+  "filter_conditions": {
+    "min_change": 2,
+    "min_volume": 0.5,
+    "use_ma_filter": true,
+    "use_macd_filter": false,
+    "use_kdj_filter": false
+  },
+  "display_options": {
+    "show_all_stocks": false,
+    "page_size": 20,
+    "sort_by": "涨跌幅",
+    "sort_ascending": false
+  },
+  "analysis_settings": {
+    "bi_threshold": 0.03,
+    "use_macd": true,
+    "show_indicators": true
+  },
+  "recent_stocks": [
+    [
+      "002498",
+      "汉缆股份"
+    ],
+    [
+      "300251",
+      "光线传媒"
+    ],
+    [
+      "000001",
+      "平安银行"
+    ],
+    [
+      "688147",
+      "微导纳米"
+    ],
+    [
+      "002703",
+      "浙江世宝"
+    ]
+  ],
+  "theme": "dark",
+  "test_key": "test_value",
+  "api_keys": {
+    "deepseek": "sk-677ef664319f48fd969f5066fc74dca2"
+  }
+}

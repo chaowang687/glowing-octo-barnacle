@@ -23,13 +23,14 @@ from datetime import datetime, timedelta
 
 def get_realtime_quotes():
     """获取A股实时行情"""
-    print("📊 正在获取A股实时行情...")
+    from logger import info, error
+    info("📊 正在获取A股实时行情...")
     try:
         df = ak.stock_zh_a_spot_em()
-        print(f"✅ 成功获取 {len(df)} 只股票")
+        info(f"✅ 成功获取 {len(df)} 只股票")
         return df
     except Exception as e:
-        print(f"❌ 获取失败: {e}")
+        error(f"❌ 获取失败: {e}")
         return None
 
 
@@ -42,6 +43,8 @@ def get_stock_kline(symbol, period='daily', start_date=None, end_date=None):
         start_date: 开始日期 'YYYYMMDD'
         end_date: 结束日期 'YYYYMMDD'
     """
+    from logger import exception
+    
     if start_date is None:
         start_date = (datetime.now() - timedelta(days=365)).strftime('%Y%m%d')
     if end_date is None:
@@ -53,12 +56,13 @@ def get_stock_kline(symbol, period='daily', start_date=None, end_date=None):
                                 adjust="qfq")
         return df
     except Exception as e:
-        print(f"获取 {symbol} K线失败: {e}")
+        exception(f"获取 {symbol} K线失败: {e}")
         return None
 
 
 def get_stock_info(symbol):
     """获取股票基本信息"""
+    from logger import exception
     try:
         df = ak.stock_individual_info_em(symbol=symbol)
         info = {}
@@ -66,79 +70,13 @@ def get_stock_info(symbol):
             info[row['item']] = row['value']
         return info
     except Exception as e:
-        print(f"获取 {symbol} 基本信息失败: {e}")
+        exception(f"获取 {symbol} 基本信息失败: {e}")
         return None
 
 
 # ==================== 技术指标模块 ====================
 
-def calculate_ma(df, periods=[5, 10, 20, 60, 120, 250]):
-    """计算移动平均线"""
-    result = df.copy()
-    for period in periods:
-        result[f'MA{period}'] = result['收盘'].rolling(window=period).mean()
-    return result
-
-
-def calculate_ema(df, periods=[12, 26]):
-    """计算指数移动平均线"""
-    result = df.copy()
-    for period in periods:
-        result[f'EMA{period}'] = result['收盘'].ewm(span=period, adjust=False).mean()
-    # 计算MACD
-    result['DIF'] = result['EMA12'] - result['EMA26']
-    result['DEA'] = result['DIF'].ewm(span=9, adjust=False).mean()
-    result['MACD'] = (result['DIF'] - result['DEA']) * 2
-    return result
-
-
-def calculate_volume_indicators(df):
-    """计算成交量指标"""
-    result = df.copy()
-    
-    # OBV能量潮
-    result['OBV'] = (np.sign(result['收盘'].diff()) * result['成交量']).fillna(0).cumsum()
-    
-    # 成交量均线
-    result['VOL_MA5'] = result['成交量'].rolling(window=5).mean()
-    result['VOL_MA10'] = result['成交量'].rolling(window=10).mean()
-    
-    # 放量缩量比
-    result['VOL_RATIO'] = result['成交量'] / result['VOL_MA5']
-    
-    return result
-
-
-def calculate_cpv(df):
-    """计算CPV（成交量价格验证）指标
-    
-    CPV核心思想：
-    - 价格上涨时，成交量应该放大
-    - 价格下跌时，成交量应该萎缩
-    - 量价配合才是健康的走势
-    """
-    result = df.copy()
-    
-    # 计算价格变化
-    result['PRICE_CHANGE'] = result['收盘'].diff()
-    result['PRICE_DIRECTION'] = np.sign(result['PRICE_CHANGE'])
-    
-    # 计算成交量变化
-    result['VOLUME_CHANGE'] = result['成交量'].diff()
-    result['VOLUME_DIRECTION'] = np.sign(result['VOLUME_CHANGE'])
-    
-    # CPV评分：量价同向为正向，异向为负向
-    result['CPV_SCORE'] = np.where(
-        result['PRICE_DIRECTION'] == result['VOLUME_DIRECTION'],
-        1, -1
-    )
-    
-    # CPV连续正向计数
-    result['CPV_STREAK'] = result['CPV_SCORE'].groupby(
-        (result['CPV_SCORE'] != result['CPV_SCORE'].shift()).cumsum()
-    ).cumcount() + 1
-    
-    return result
+from indicators import calculate_all_indicators
 
 
 # ==================== 缠论基础模块 ====================
@@ -368,10 +306,7 @@ def main():
         print(f"   获取到 {sample_code} 的 {len(kline)} 条K线数据")
         
         # 计算技术指标
-        kline = calculate_ma(kline)
-        kline = calculate_ema(kline)
-        kline = calculate_volume_indicators(kline)
-        kline = calculate_cpv(kline)
+        kline = calculate_all_indicators(kline)
         
         print(f"   MA20: {kline['MA20'].iloc[-1]:.2f}")
         print(f"   MACD: {kline['MACD'].iloc[-1]:.2f}")

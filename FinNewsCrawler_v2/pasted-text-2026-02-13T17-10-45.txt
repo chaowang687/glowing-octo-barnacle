@@ -1,0 +1,360 @@
+# 虚拟盘AI做T策略验证工具 - 开发文档
+
+## 1. 引言
+### 1.1 背景
+做T（日内交易）是一种常见的股票交易策略，旨在通过低买高卖降低成本。验证做T策略的有效性需要大量历史数据和模拟交易。本工具旨在提供一个轻量级的虚拟盘环境，支持自定义策略（包括基于规则的策略和未来可接入的AI模型），自动执行模拟交易，并统计胜率、盈亏等指标，帮助交易者量化评估策略表现。
+
+### 1.2 目标
+- 搭建一个独立、轻量的虚拟盘交易系统。
+- 支持多策略并行运行，策略可通过配置文件灵活定义。
+- 自动获取实时行情和历史数据，按策略规则生成买卖信号。
+- 在虚拟账户中模拟执行交易，记录每一笔T操作的细节。
+- 提供胜率、盈亏比、最大回撤等绩效统计，并支持可视化查看（Web界面）和微信推送。
+- 预留接口，便于未来接入AI模型（如LSTM、强化学习）预测信号。
+
+### 1.3 适用人群
+- 有一定Python基础的交易者，希望量化验证自己的做T策略。
+- 量化爱好者，想搭建个人模拟交易系统。
+
+## 2. 总体架构
+系统采用模块化设计，各模块通过数据库和消息解耦。整体架构如下：
+
+```
++-------------------+     +-------------------+     +-------------------+
+|   数据源模块      | --> |   策略引擎模块    | --> |   交易执行模块    |
+| - 实时行情        |     | - 加载策略配置    |     | - 虚拟账户操作    |
+| - 历史K线         |     | - 信号生成        |     | - 数据库记录      |
++-------------------+     +-------------------+     +-------------------+
+                                   |
+                                   v
+                          +-------------------+
+                          |   统计与分析模块  |
+                          | - 胜率计算        |
+                          | - 盈亏统计        |
+                          | - 绩效报告        |
+                          +-------------------+
+                                   |
+                                   v
+                          +-------------------+
+                          |   通知与可视化    |
+                          | - Web仪表盘       |
+                          | - 企业微信推送    |
+                          +-------------------+
+```
+
+## 3. 功能模块详细设计
+
+### 3.1 行情数据模块
+**职责**：获取实时行情和必要的历史K线数据，为策略提供输入。
+
+#### 3.1.1 数据源
+- **实时行情**：采用新浪财经免费API（http://hq.sinajs.cn/list=code），支持沪深股票。
+- **历史K线**：使用 `akshare` 库获取日线或分钟线数据（如 `stock_zh_a_hist`）。
+
+#### 3.1.2 数据封装
+- 定义统一的数据结构 `MarketData`，包含：
+  - 股票代码
+  - 当前价格
+  - 时间戳
+  - 历史DataFrame（含日期、开盘、收盘、最高、最低、成交量）
+
+#### 3.1.3 缓存策略
+- 对历史数据做本地缓存（如每日更新一次），避免频繁请求。
+- 实时行情每次循环获取最新价。
+
+### 3.2 策略定义与配置
+**职责**：允许用户通过配置文件定义策略规则，支持多种条件类型。
+
+#### 3.2.1 配置文件格式（JSON）
+示例：
+```json
+{
+  "strategies": [
+    {
+      "name": "区间突破策略",
+      "stock": "sz000001",
+      "enabled": true,
+      "buy_conditions": [
+        {"type": "price_between", "low": 10.50, "high": 10.80}
+      ],
+      "sell_conditions": [
+        {"type": "price_above", "value": 11.00, "reason": "止盈"},
+        {"type": "price_below", "value": 10.30, "reason": "止损"}
+      ],
+      "quantity_per_trade": 500,
+      "max_positions": 1,
+      "cooldown_minutes": 30
+    },
+    {
+      "name": "均线金叉策略",
+      "stock": "sh600036",
+      "enabled": true,
+      "buy_conditions": [
+        {"type": "ma_cross", "short": 5, "long": 10, "direction": "golden"}
+      ],
+      "sell_conditions": [
+        {"type": "ma_cross", "short": 5, "long": 10, "direction": "dead"},
+        {"type": "profit_target", "value": 0.03}
+      ],
+      "quantity_per_trade": 200,
+      "max_positions": 2,
+      "cooldown_minutes": 60
+    }
+  ]
+}
+```
+
+#### 3.2.2 条件类型及实现
+| 类型 | 参数 | 说明 |
+|------|------|------|
+| `price_between` | low, high | 当前价格在区间内 |
+| `price_above` | value | 价格高于阈值 |
+| `price_below` | value | 价格低于阈值 |
+| `ma_cross` | short, long, direction | 短期均线与长期均线金叉(golden)/死叉(dead) |
+| `profit_target` | value | 持仓盈利达到目标百分比（基于买入成本） |
+| `stop_loss` | value | 持仓亏损达到止损百分比 |
+| ... 可根据需要扩展 |
+
+#### 3.2.3 AI模型接入预留
+- 设计一个 `AIPredictor` 接口，要求实现 `predict(symbol, market_data) -> signal (buy/sell/hold)`。
+- 在策略配置中增加 `"ai_model": "model_path"` 字段，若配置了该字段，则优先使用AI预测结果，忽略传统条件。
+
+### 3.3 自动交易引擎
+**职责**：主循环模块，定时执行以下流程：
+1. 加载所有启用的策略。
+2. 对每个策略，获取对应的市场数据（实时价+历史K线）。
+3. 根据策略条件判断买入信号和卖出信号。
+4. 执行买卖操作（调用交易执行模块）。
+5. 记录日志，避免重复执行。
+
+#### 3.3.1 信号判断逻辑
+- **买入条件**：所有 `buy_conditions` 同时满足，且该股票当前未完成买入笔数 < `max_positions`，且距离上次卖出时间 > `cooldown_minutes`，且账户现金充足。
+- **卖出条件**：遍历该股票的所有未完成买入记录（pending_trades），对每一笔，检查 `sell_conditions`，任一满足则对该笔执行卖出。
+
+#### 3.3.2 风控措施
+- 最大持仓限制（按笔数）
+- 冷却期
+- 每日最大交易次数（可选）
+- 资金余额检查
+
+#### 3.3.3 主循环频率
+- 建议根据策略类型设定：如基于分钟线的策略可每分钟运行一次；基于日线的可每小时或每天收盘后运行。为简化，默认固定间隔（如10秒），但需注意API频率限制。
+
+### 3.4 虚拟盘账户管理
+**职责**：模拟真实账户的资金和持仓变动。
+
+#### 3.4.1 数据结构（SQLite）
+- **账户表 `account`**：`id, cash, initial_cash, updated_at`
+- **持仓表 `positions`**：`stock_code, quantity, avg_cost`（用于实时计算浮动盈亏，可选）
+- **未完成交易表 `pending_trades`**：记录每笔买入，字段：`id, stock_code, buy_time, buy_price, buy_quantity`
+- **已完成交易表 `trades`**：记录完整T操作，字段：`id, stock_code, buy_time, buy_price, buy_quantity, sell_time, sell_price, profit, profit_rate`
+
+#### 3.4.2 交易执行
+- **买入**：
+  - 检查现金：`cash >= price * quantity`
+  - 扣减现金，插入 `pending_trades`。
+- **卖出**：
+  - 根据先进先出原则，找到对应股票最早的一笔 `pending_trade`。
+  - 若卖出数量等于该笔数量，则删除该记录，并将完整记录插入 `trades`；若卖出数量小于该笔数量，则更新该笔数量，并创建新的完成记录（部分卖出）——简化实现可先只支持整笔卖出。
+  - 增加现金：`cash += price * quantity`
+  - 计算盈亏：`profit = (sell_price - buy_price) * quantity`
+
+### 3.5 统计与分析模块
+**职责**：基于 `trades` 表计算绩效指标。
+
+#### 3.5.1 核心指标
+- **总交易次数**：`COUNT(*)`
+- **盈利次数**：`COUNT(*) WHERE profit > 0`
+- **胜率**：盈利次数 / 总次数
+- **总盈亏**：`SUM(profit)`
+- **平均盈亏**：`AVG(profit)`
+- **最大单笔盈利/亏损**
+- **盈亏比**：平均盈利 / 平均亏损（若亏损次数为0则无穷大）
+- **最大回撤**：根据每日净值计算（需要记录每日账户总资产）
+
+#### 3.5.2 时间维度
+- 可按日、周、月统计，支持历史区间查询。
+
+### 3.6 通知与可视化
+
+#### 3.6.1 Web仪表盘（Flask）
+提供简单的HTML页面，展示：
+- 当前持仓（股票、数量、成本、现价、浮动盈亏）
+- 最近交易记录（表格）
+- 绩效统计卡片
+- 策略状态（启用/禁用）及参数调整（可选）
+
+#### 3.6.2 企业微信推送
+- 实时推送：每次自动交易执行后，发送简要消息。
+- 日报：每日收盘后推送当日交易汇总和最新胜率。
+- 使用企业微信机器人Webhook，消息格式为文本或Markdown。
+
+## 4. 数据存储设计
+采用SQLite，文件名为 `trading.db`。表结构如下：
+
+```sql
+-- 账户
+CREATE TABLE account (
+    id INTEGER PRIMARY KEY CHECK (id=1),
+    cash REAL NOT NULL,
+    initial_cash REAL NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 未完成买入
+CREATE TABLE pending_trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stock_code TEXT NOT NULL,
+    buy_time TIMESTAMP NOT NULL,
+    buy_price REAL NOT NULL,
+    buy_quantity INTEGER NOT NULL
+);
+
+-- 已完成T交易
+CREATE TABLE trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stock_code TEXT NOT NULL,
+    buy_time TIMESTAMP NOT NULL,
+    buy_price REAL NOT NULL,
+    buy_quantity INTEGER NOT NULL,
+    sell_time TIMESTAMP NOT NULL,
+    sell_price REAL NOT NULL,
+    profit REAL NOT NULL,
+    profit_rate REAL NOT NULL
+);
+
+-- 可选：每日资产快照（用于计算回撤）
+CREATE TABLE daily_snapshot (
+    date DATE PRIMARY KEY,
+    total_asset REAL NOT NULL,
+    cash REAL NOT NULL,
+    market_value REAL NOT NULL
+);
+```
+
+## 5. 策略验证方法
+### 5.1 回测模式
+- 除了实时模拟，工具应支持回测模式：使用历史K线数据，逐日（或逐分钟）模拟交易，统计绩效。
+- 回测时需注意未来数据，确保信号仅基于截止到当前时刻的数据。
+
+### 5.2 实盘模拟（Paper Trading）
+- 连接实时行情，在虚拟盘中运行策略，观察策略在真实市场环境下的表现。
+- 可与手动交易并行，验证策略信号的有效性。
+
+### 5.3 绩效评估报告
+- 定期生成报告，包括胜率、盈亏曲线、最大回撤、夏普比率等。
+- 支持将多个策略的绩效对比，选择最优策略。
+
+### 5.4 AI模型验证
+- 若接入AI模型，需将模型预测结果与规则策略结果对比，或使用交叉验证评估模型泛化能力。
+- 注意：AI模型需用历史数据训练，再用后续数据测试，避免数据泄露。
+
+## 6. 开发环境与依赖
+- Python 3.8+
+- 依赖库：
+  - `requests`：HTTP请求
+  - `pandas`：数据处理
+  - `numpy`：数学计算
+  - `flask`：Web服务
+  - `akshare`：获取历史数据
+  - `sqlite3`（内置）
+  - `apscheduler`：可选，用于定时任务
+  - `ta` 或 `ta-lib`：技术指标计算（可选）
+
+## 7. 部署与运行
+### 7.1 本地运行
+1. 克隆代码仓库。
+2. 安装依赖：`pip install -r requirements.txt`
+3. 初始化数据库：`python init_db.py`
+4. 配置策略文件 `strategies.json`。
+5. 启动主程序：`python main.py`（同时启动Flask服务）
+6. 访问 `http://localhost:5000` 查看仪表盘。
+
+### 7.2 长期运行
+- 可使用 `nohup` 或 `systemd` 保证后台运行。
+- 若需要远程访问Web界面，配置内网穿透（如ngrok）。
+
+### 7.3 企业微信配置
+1. 创建企业微信机器人，获取Webhook URL。
+2. 在配置文件 `config.py` 中填入URL。
+
+## 8. 扩展与注意事项
+### 8.1 扩展性
+- **新策略类型**：在 `conditions.py` 中添加新的条件类即可。
+- **新数据源**：通过适配器模式替换行情模块。
+- **AI模型**：实现 `AIPredictor` 接口，在策略引擎中调用。
+
+### 8.2 注意事项
+- **API限流**：免费接口可能有访问频率限制，需适当增加间隔，或准备备用接口。
+- **数据准确性**：免费接口有时会返回错误数据，需加入异常处理和重试机制。
+- **交易时间**：只在交易时段运行，可加入时间判断，避免非交易时间误操作。
+- **资金管理**：初始资金可配置，注意买入时现金不足的处理（记录日志，跳过）。
+- **滑点与手续费**：为更真实，可在买卖价格上加入滑点，并扣除手续费（如万分之一）。
+
+## 9. 附录
+### 9.1 目录结构示例
+```
+project/
+│
+├── main.py                 # 主入口，启动引擎和Flask
+├── config.py               # 配置文件（含企业微信URL、数据库路径等）
+├── strategies.json         # 策略配置
+├── requirements.txt        # 依赖列表
+├── init_db.py              # 初始化数据库
+│
+├── data/                   # 数据模块
+│   ├── __init__.py
+│   ├── market.py           # 获取行情
+│   └── history.py          # 获取历史K线
+│
+├── engine/                  # 策略引擎
+│   ├── __init__.py
+│   ├── strategy.py         # 策略加载与解析
+│   ├── conditions.py       # 条件判断函数
+│   └── executor.py         # 交易执行
+│
+├── db/                      # 数据库操作
+│   ├── __init__.py
+│   └── models.py           # 数据库CRUD
+│
+├── web/                     # Web仪表盘
+│   ├── __init__.py
+│   ├── app.py              # Flask应用
+│   └── templates/           # HTML模板
+│
+├── notify/                  # 通知模块
+│   ├── __init__.py
+│   └── wechat.py           # 企业微信推送
+│
+└── stats/                   # 统计模块
+    ├── __init__.py
+    └── analyzer.py         # 绩效计算
+```
+
+### 9.2 核心代码片段示例
+**主循环伪代码**：
+```python
+while True:
+    now = datetime.now()
+    if is_trading_time(now):
+        for strategy in load_strategies():
+            data = get_market_data(strategy.stock)
+            # 处理卖出
+            for pending in get_pending_trades(strategy.stock):
+                if check_sell_conditions(strategy, pending, data):
+                    execute_sell(pending, data.current_price)
+                    send_alert(f"卖出 {strategy.stock} ...")
+            # 处理买入
+            if check_buy_conditions(strategy, data):
+                if can_buy(strategy):
+                    execute_buy(strategy, data.current_price)
+                    send_alert(f"买入 {strategy.stock} ...")
+        # 收盘后生成日报
+        if is_closing_time(now):
+            send_daily_report()
+    time.sleep(CHECK_INTERVAL)
+```
+
+---
+
+本开发文档旨在提供一个清晰的蓝图，帮助你构建一个虚拟盘AI做T策略验证工具。你可以根据自身需求调整细节，逐步实现各个模块。如果在开发过程中遇到问题，欢迎进一步交流！

@@ -407,6 +407,210 @@ class ComprehensiveSelector:
             '技术信号股': tech_stocks,
             '基本面股': fund_stocks,
         }
+    
+    def select_stocks(self, params: Dict) -> pd.DataFrame:
+        """
+        综合选股方法
+        
+        Args:
+            params: 选股参数字典
+        
+        Returns:
+            选股结果DataFrame
+        """
+        print("=" * 60)
+        print("综合智能选股")
+        print("=" * 60)
+        
+        # 获取候选股票
+        candidates = self.em.get_realtime_quotes(500)
+        
+        # 检查是否获取到数据
+        if candidates is None or len(candidates) == 0:
+            print("未获取到候选股票数据")
+            return pd.DataFrame()
+        
+        # 基础筛选
+        filtered = candidates[
+            (candidates['涨跌幅'] > 0) &              # 涨幅 > 0%
+            (candidates['成交额'] > 5e7)              # 成交额 > 5000万
+        ].copy()
+        
+        print(f"基础筛选后: {len(filtered)} 只")
+        
+        # 检查筛选结果
+        if len(filtered) == 0:
+            print("基础筛选后无股票")
+            return pd.DataFrame()
+        
+        # 合并基本面数据
+        fund_data = self.fs.get_stock_list_with_fundamental(500)
+        
+        # 检查基本面数据
+        if fund_data is None or len(fund_data) == 0:
+            print("未获取到基本面数据")
+            return filtered.head(50)
+        
+        # 合并
+        merged = filtered.merge(
+            fund_data[['代码', '市盈率', '市净率', '净资产收益率', '净利润同比增长', '营收同比增长']],
+            on='代码',
+            how='left',
+            suffixes=('', '_fund')
+        )
+        
+        # 应用基本面筛选
+        if params.get('max_pe'):
+            # 只筛选有市盈率数据的股票
+            merged = merged[merged['市盈率'] <= params['max_pe']]
+        if params.get('min_roe'):
+            # 只筛选有ROE数据的股票
+            merged = merged[merged['净资产收益率'] >= params['min_roe']]
+        
+        # 检查基本面筛选后是否还有股票
+        if len(merged) == 0:
+            print("基本面筛选后无股票，返回基础筛选结果")
+            return filtered.head(50)
+        
+        print(f"基本面筛选后: {len(merged)} 只")
+        
+        # 检查筛选结果
+        if len(merged) == 0:
+            print("基本面筛选后无股票")
+            return filtered.head(50)
+        
+        # 计算综合得分
+        scored = self.fs.calculate_score(merged)
+        
+        # 检查得分结果
+        if scored is None or len(scored) == 0:
+            print("计算得分失败")
+            return merged.head(50)
+        
+        # 按得分排序
+        try:
+            scored = scored.sort_values('综合得分', ascending=False)
+        except:
+            print("排序失败，返回原始数据")
+            return merged.head(50)
+        
+        return scored.head(50)
+    
+    def select_by_buy_signals(self, params: Dict) -> pd.DataFrame:
+        """
+        基于买入信号选股
+        
+        Args:
+            params: 选股参数字典
+        
+        Returns:
+            选股结果DataFrame
+        """
+        print("=" * 60)
+        print("买入信号选股")
+        print("=" * 60)
+        
+        # 获取候选股票
+        candidates = self.em.get_realtime_quotes(300)
+        
+        # 检查是否获取到数据
+        if candidates is None or len(candidates) == 0:
+            print("未获取到候选股票数据")
+            return pd.DataFrame()
+        
+        signals = []
+        
+        # 预加载基本面数据
+        fund_data = self.fs.get_stock_list_with_fundamental(500)
+        
+        for _, row in candidates.iterrows():
+            symbol = row['代码']
+            
+            try:
+                # 技术分析
+                tech = self.analyze_stock_technical(symbol)
+                
+                # 基本面分析
+                fund_score = 0
+                if fund_data is not None and len(fund_data) > 0:
+                    fund_stock = fund_data[fund_data['代码'] == symbol]
+                    if len(fund_stock) > 0:
+                        scored = self.fs.calculate_score(fund_stock)
+                        if scored is not None and len(scored) > 0:
+                            fund_score = scored.iloc[0]['综合得分']
+                
+                # 判断买入信号
+                is_buy = False
+                reasons = []
+                
+                if tech['趋势'] == '多头↑':
+                    is_buy = True
+                    reasons.append('多头排列')
+                
+                if tech['MACD'] == '金叉↑':
+                    is_buy = True
+                    reasons.append('MACD金叉')
+                
+                if fund_score > params.get('min_ma_score', 60):
+                    is_buy = True
+                    reasons.append(f'基本面优({fund_score:.0f})')
+                
+                if is_buy:
+                    signals.append({
+                        '代码': symbol,
+                        '名称': row['名称'],
+                        '最新价': row['最新价'],
+                        '涨跌幅': row['涨跌幅'],
+                        '趋势': tech['趋势'],
+                        'MACD': tech['MACD'],
+                        'KDJ': tech['KDJ'],
+                        '基本面得分': fund_score,
+                        '信号': ','.join(reasons) if reasons else '综合信号'
+                    })
+            except Exception as e:
+                print(f"分析股票 {symbol} 时出错: {e}")
+                continue
+        
+        result = pd.DataFrame(signals)
+        
+        # 按涨跌幅排序
+        if not result.empty:
+            result = result.sort_values('涨跌幅', ascending=False)
+        
+        return result
+    
+    def select_by_sector_effect(self, params: Dict) -> pd.DataFrame:
+        """
+        基于板块效应选股
+        
+        Args:
+            params: 选股参数字典
+        
+        Returns:
+            选股结果DataFrame
+        """
+        print("=" * 60)
+        print("板块效应选股")
+        print("=" * 60)
+        
+        try:
+            # 使用板块效应选股器
+            result = self.get_sector_effect_stocks(
+                min_sector_rps=70,
+                min_stock_change=3.0
+            )
+            
+            # 检查结果
+            if result is None or len(result) == 0:
+                print("板块效应选股无结果")
+                return pd.DataFrame()
+            
+            print(f"板块效应选股结果: {len(result)} 只")
+            
+            return result
+        except Exception as e:
+            print(f"板块效应选股出错: {e}")
+            return pd.DataFrame()
 
 
 # ================= 便捷函数 =================

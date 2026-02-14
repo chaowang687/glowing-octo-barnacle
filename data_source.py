@@ -16,20 +16,25 @@ class EastMoneyData:
     """东方财富数据接口"""
     
     def __init__(self):
+        from config import get_proxies, get_data_config
+        
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
         # 使用HTTPS接口
         self.base_url = "https://push2.eastmoney.com"
         
-        # 配置代理
-        self.proxies = {
-            'http': 'http://127.0.0.1:7890',
-            'https': 'http://127.0.0.1:7890'
-        }
+        # 从配置获取代理
+        self.proxies = get_proxies()
+        
+        # 获取数据配置
+        data_config = get_data_config()
+        self.timeout = data_config['timeout']
+        self.retry_times = data_config['retry_times']
         
         self.session = requests.Session()
-        self.session.proxies = self.proxies
+        if self.proxies:
+            self.session.proxies = self.proxies
     
     def get_realtime_quotes(self, count=100) -> pd.DataFrame:
         """
@@ -41,6 +46,18 @@ class EastMoneyData:
         Returns:
             DataFrame: 包含代码、名称、价、涨跌幅等
         """
+        from logger import info, warning, error, exception
+        from cache import cache_get, cache_set
+        from config import get_data_config
+        
+        # 检查缓存
+        data_config = get_data_config()
+        if data_config['cache_enabled']:
+            cached_data = cache_get('realtime_quotes', count, ttl=60)  # 实时行情缓存1分钟
+            if cached_data is not None:
+                info(f"从缓存获取A股实时行情，数量: {len(cached_data)}")
+                return cached_data
+        
         url = f"{self.base_url}/api/qt/clist/get"
         params = {
             'pn': 1,
@@ -56,28 +73,30 @@ class EastMoneyData:
             '_': str(int(time.time() * 1000))
         }
         
+        info(f"开始获取A股实时行情，数量: {count}")
+        
         # 重试机制
-        for attempt in range(3):
+        for attempt in range(self.retry_times):
             try:
-                resp = self.session.get(url, params=params, headers=self.headers, timeout=30)
+                resp = self.session.get(url, params=params, headers=self.headers, timeout=self.timeout)
                 
                 # 检查响应状态
                 if resp.status_code != 200:
-                    print(f"API返回状态码: {resp.status_code}, 重试 {attempt+1}/3")
+                    warning(f"API返回状态码: {resp.status_code}, 重试 {attempt+1}/{self.retry_times}")
                     time.sleep(2)
                     continue
                 
                 # 尝试解析JSON
                 try:
                     data = resp.json()
-                except:
-                    print(f"JSON解析失败, 重试 {attempt+1}/3")
+                except Exception as e:
+                    warning(f"JSON解析失败: {e}, 重试 {attempt+1}/{self.retry_times}")
                     time.sleep(2)
                     continue
                 
                 # 检查数据结构
                 if 'data' not in data or 'diff' not in data.get('data', {}):
-                    print(f"数据结构异常, 重试 {attempt+1}/3")
+                    warning(f"数据结构异常, 重试 {attempt+1}/{self.retry_times}")
                     time.sleep(2)
                     continue
                 
@@ -105,17 +124,24 @@ class EastMoneyData:
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors='coerce')
                 
+                info(f"成功获取 {len(df)} 只股票数据")
+                
+                # 保存缓存
+                data_config = get_data_config()
+                if data_config['cache_enabled']:
+                    cache_set('realtime_quotes', df, count)
+                
                 return df
                 
             except requests.exceptions.Timeout:
-                print(f"请求超时, 重试 {attempt+1}/3")
+                warning(f"请求超时, 重试 {attempt+1}/{self.retry_times}")
                 time.sleep(2)
             except Exception as e:
-                print(f"请求异常: {e}, 重试 {attempt+1}/3")
+                exception(f"请求异常: {e}, 重试 {attempt+1}/{self.retry_times}")
                 time.sleep(2)
         
         # 所有重试都失败，返回空DataFrame
-        print("数据获取失败，已尝试3次")
+        error(f"数据获取失败，已尝试 {self.retry_times} 次")
         return pd.DataFrame()
     
     def get_stock_kline(self, symbol: str, start_date: str = None, end_date: str = None, 
@@ -132,6 +158,18 @@ class EastMoneyData:
         Returns:
             DataFrame: K线数据
         """
+        from logger import info, error, exception
+        from cache import cache_get, cache_set
+        from config import get_data_config
+        
+        # 检查缓存
+        data_config = get_data_config()
+        if data_config['cache_enabled']:
+            cached_data = cache_get('stock_kline', symbol, start_date, end_date, period, ttl=3600)  # K线数据缓存1小时
+            if cached_data is not None:
+                info(f"从缓存获取 {symbol} K线数据，数量: {len(cached_data)}")
+                return cached_data
+        
         # 判断市场
         if symbol.startswith('6') or symbol.startswith('9'):
             secid = f"1.{symbol}"  # 沪市
@@ -155,33 +193,46 @@ class EastMoneyData:
             'end': end_date,
         }
         
-        resp = requests.get(url, params=params, headers=self.headers, timeout=30)
-        data = resp.json()
-        
-        klines = []
-        if 'data' in data and data['data'] and 'klines' in data['data']:
-            for kline in data['data']['klines']:
-                fields = kline.split(',')
-                klines.append({
-                    '日期': fields[0],
-                    '开盘': float(fields[1]),
-                    '收盘': float(fields[2]),
-                    '最高': float(fields[3]),
-                    '最低': float(fields[4]),
-                    '成交量': float(fields[5]),
-                    '成交额': float(fields[6]) if len(fields) > 6 else 0,
-                    '振幅': float(fields[7]) if len(fields) > 7 else 0,
-                    '涨跌幅': float(fields[8]) if len(fields) > 8 else 0,
-                    '涨跌额': float(fields[9]) if len(fields) > 9 else 0,
-                    '换手率': float(fields[10]) if len(fields) > 10 else 0,
-                })
-        
-        df = pd.DataFrame(klines)
-        if len(df) > 0:
-            df['日期'] = pd.to_datetime(df['日期'])
-            df.set_index('日期', inplace=True)
-        
-        return df
+        try:
+            info(f"获取 {symbol} K线数据，周期: {period}")
+            resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
+            data = resp.json()
+            
+            klines = []
+            if 'data' in data and data['data'] and 'klines' in data['data']:
+                for kline in data['data']['klines']:
+                    fields = kline.split(',')
+                    klines.append({
+                        '日期': fields[0],
+                        '开盘': float(fields[1]),
+                        '收盘': float(fields[2]),
+                        '最高': float(fields[3]),
+                        '最低': float(fields[4]),
+                        '成交量': float(fields[5]),
+                        '成交额': float(fields[6]) if len(fields) > 6 else 0,
+                        '振幅': float(fields[7]) if len(fields) > 7 else 0,
+                        '涨跌幅': float(fields[8]) if len(fields) > 8 else 0,
+                        '涨跌额': float(fields[9]) if len(fields) > 9 else 0,
+                        '换手率': float(fields[10]) if len(fields) > 10 else 0,
+                    })
+            
+            df = pd.DataFrame(klines)
+            if len(df) > 0:
+                df['日期'] = pd.to_datetime(df['日期'])
+                df.set_index('日期', inplace=True)
+                info(f"成功获取 {symbol} 的 {len(df)} 条K线数据")
+            else:
+                info(f"未获取到 {symbol} 的K线数据")
+            
+            # 保存缓存
+            data_config = get_data_config()
+            if data_config['cache_enabled']:
+                cache_set('stock_kline', df, symbol, start_date, end_date, period)
+            
+            return df
+        except Exception as e:
+            exception(f"获取 {symbol} K线失败: {e}")
+            return pd.DataFrame()
     
     def get_realtime_quote(self, symbol: str) -> Dict:
         """获取单只股票实时行情"""
@@ -199,7 +250,7 @@ class EastMoneyData:
             '_': str(int(time.time() * 1000))
         }
         
-        resp = requests.get(url, params=params, headers=self.headers, timeout=10)
+        resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
         data = resp.json()
         
         if 'data' in data and data['data']:
@@ -236,7 +287,7 @@ class EastMoneyData:
             '_': str(int(time.time() * 1000))
         }
         
-        resp = requests.get(url, params=params, headers=self.headers, timeout=30)
+        resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
         data = resp.json()
         
         sectors = []
@@ -267,7 +318,7 @@ class EastMoneyData:
             '_': str(int(time.time() * 1000))
         }
         
-        resp = requests.get(url, params=params, headers=self.headers, timeout=30)
+        resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
         data = resp.json()
         
         stocks = []
@@ -305,7 +356,7 @@ class EastMoneyData:
             '_': str(int(time.time() * 1000))
         }
         
-        resp = requests.get(url, params=params, headers=self.headers, timeout=10)
+        resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
         data = resp.json()
         
         index_list = []
