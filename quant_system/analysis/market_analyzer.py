@@ -8,6 +8,11 @@
 
 import sys
 import os
+import asyncio
+import nest_asyncio
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
 
 import requests
 import pandas as pd
@@ -16,77 +21,20 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
-# 尝试导入FinNewsCrawler_v2
-print("尝试导入FinNewsCrawler_v2...")
-
-# 初始化变量
-crawl_stock_full_data = None
-NewsCrawler = None
-FundCrawler = None
-logger = None
-FINNEWS_AVAILABLE = False
-
+# 导入量化系统模块
 try:
-    # 使用importlib模块动态导入FinNewsCrawler_v2的模块
-    import sys
-    import os
-    import importlib
-    
-    # 添加FinNewsCrawler_v2目录到路径
-    finnews_path = os.path.join(os.path.dirname(__file__), 'FinNewsCrawler_v2')
-    print(f"FinNewsCrawler_v2路径: {finnews_path}")
-    print(f"路径是否存在: {os.path.exists(finnews_path)}")
-    
-    # 临时修改sys.path，确保能正确导入
-    original_path = sys.path.copy()
-    sys.path.insert(0, finnews_path)
-    
-    try:
-        # 首先尝试直接导入
-        print("尝试直接导入modules模块...")
-        from modules import NewsCrawler, FundCrawler, crawl_stock_full_data
-        from utils import logger
-        
-        # 检查是否导入成功
-        if all([NewsCrawler, FundCrawler, crawl_stock_full_data, logger]):
-            FINNEWS_AVAILABLE = True
-            print("FinNewsCrawler_v2导入成功，应用程序将使用增强版实现运行")
-        else:
-            raise Exception("导入对象不完整")
-            
-    except ImportError as e:
-        print(f"直接导入失败: {e}")
-        print("尝试使用importlib动态导入...")
-        
-        # 动态导入modules模块
-        modules_module = importlib.import_module('modules')
-        NewsCrawler = getattr(modules_module, 'NewsCrawler', None)
-        FundCrawler = getattr(modules_module, 'FundCrawler', None)
-        crawl_stock_full_data = getattr(modules_module, 'crawl_stock_full_data', None)
-        
-        # 动态导入utils模块
-        utils_module = importlib.import_module('utils')
-        logger = getattr(utils_module, 'logger', None)
-        
-        # 检查是否导入成功
-        if all([NewsCrawler, FundCrawler, crawl_stock_full_data, logger]):
-            FINNEWS_AVAILABLE = True
-            print("FinNewsCrawler_v2动态导入成功，应用程序将使用增强版实现运行")
-        else:
-            raise Exception("动态导入对象不完整")
-    finally:
-        # 恢复原始sys.path
-        sys.path = original_path
-        
-except Exception as e:
-    # 导入失败，使用原始实现
-    print(f"FinNewsCrawler_v2导入失败: {e}")
-    import traceback
-    traceback.print_exc()
-    print("使用原始实现...")
+    from quant_system.crawler.crawler import NewsCrawler, FundCrawler, crawl_stock_full_data
+    from quant_system.crawler.async_crawler import AsyncNewsCrawler, AsyncFundCrawler, batch_crawl_stocks
+    from quant_system.utils import logger
+    FINNEWS_AVAILABLE = True
+    print("QuantSystem Crawler导入成功")
+except ImportError as e:
+    print(f"QuantSystem Crawler导入失败: {e}")
     crawl_stock_full_data = None
     NewsCrawler = None
     FundCrawler = None
+    AsyncNewsCrawler = None
+    AsyncFundCrawler = None
     logger = None
     FINNEWS_AVAILABLE = False
 
@@ -101,10 +49,32 @@ class MarketAnalyzer:
         }
         self.proxies = None  # 可以从配置文件获取代理
     
+    async def _fetch_news_from_crawler_async(self, symbol: str, days: int, name: str) -> List[Dict]:
+        """异步从爬虫获取新闻"""
+        if AsyncNewsCrawler is None:
+            return []
+            
+        news_list = []
+        crawler = AsyncNewsCrawler()
+        
+        tasks = [crawler.search_news(symbol, days=days, max_results=50)]
+        if name:
+            tasks.append(crawler.search_news(name, days=days, max_results=50))
+            
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for res in results:
+            if isinstance(res, list):
+                news_list.extend(res)
+            else:
+                print(f"异步爬取错误: {res}")
+                
+        return news_list
+
     def get_stock_news(self, symbol: str, days: int = 7, name: str = "") -> List[Dict]:
         """
         获取股票相关新闻
-        使用FinNewsCrawler增强新闻获取能力
+        使用AsyncNewsCrawler增强新闻获取能力 (异步并发版)
         
         Args:
             symbol: 股票代码
@@ -116,93 +86,47 @@ class MarketAnalyzer:
         """
         news_list = []
         
-        try:
-            # 检查FinNewsCrawler是否成功导入
-            if NewsCrawler is not None:
-                # 优先使用FinNewsCrawler获取新闻
-                print(f"使用FinNewsCrawler获取新闻...")
-                news_crawler = NewsCrawler()
+        # 1. 尝试使用异步爬虫获取 (速度最快)
+        if AsyncNewsCrawler is not None:
+            try:
+                print(f"使用AsyncNewsCrawler获取新闻...")
+                # 使用 nest_asyncio 允许嵌套循环
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
                 
-                # 尝试使用股票代码搜索
-                code_news = news_crawler.search_news(symbol, days=days, max_results=50)
-                if code_news:
-                    print(f"使用股票代码获取到{len(code_news)}条新闻")
-                    news_list.extend(code_news)
+                crawler_news = loop.run_until_complete(self._fetch_news_from_crawler_async(symbol, days, name))
                 
-                # 如果有股票名称，也尝试使用股票名称搜索
-                if name:
-                    name_news = news_crawler.search_news(name, days=days, max_results=50)
-                    if name_news:
-                        print(f"使用股票名称获取到{len(name_news)}条新闻")
-                        news_list.extend(name_news)
-                
-                # 去重，避免重复新闻
-                unique_news = self._deduplicate_news(news_list)
-                if unique_news:
-                    print(f"FinNewsCrawler共获取到{len(unique_news)}条新闻")
+                if crawler_news:
+                    print(f"AsyncNewsCrawler共获取到{len(crawler_news)}条新闻")
                     # 转换为标准格式
                     standard_news = []
-                    for news in unique_news:
+                    seen_urls = set()
+                    
+                    for news in crawler_news:
+                        url = news.get('url', '')
+                        if url in seen_urls:
+                            continue
+                        seen_urls.add(url)
+                        
                         news_item = {
                             'title': news.get('title', ''),
                             'time': news.get('pub_date', ''),
                             'source': news.get('source', 'FinNewsCrawler'),
-                            'url': news.get('url', '')
+                            'url': url
                         }
                         standard_news.append(news_item)
-                    news_list = standard_news
-                else:
-                    # 如果没有获取到新闻，尝试使用原始方法
-                    print("FinNewsCrawler未获取到新闻，尝试使用原始方法...")
-                    # 尝试多个信息源
-                    sources = [
-                        ('sina', self._get_sina_news),
-                        ('eastmoney', self._get_eastmoney_news),
-                        ('tencent', self._get_tencent_news),
-                        ('hexun', self._get_hexun_news),
-                        ('sohu', self._get_sohu_news)
-                    ]
-                    
-                    for source_name, source_func in sources:
-                        try:
-                            print(f"尝试从{source_name}获取新闻...")
-                            source_news = source_func(symbol, days)
-                            if source_news:
-                                news_list.extend(source_news)
-                                print(f"从{source_name}获取到{len(source_news)}条新闻")
-                                if len(news_list) >= 20:
-                                    break  # 足够的新闻，停止尝试其他源
-                        except Exception as e:
-                            print(f"{source_name}获取新闻失败: {e}")
-                
-                # 关闭爬虫
-                news_crawler.close()
-            else:
-                # FinNewsCrawler导入失败，使用原始方法
-                print("FinNewsCrawler导入失败，使用原始方法获取新闻...")
-                # 尝试多个信息源
-                sources = [
-                    ('sina', self._get_sina_news),
-                    ('eastmoney', self._get_eastmoney_news),
-                    ('tencent', self._get_tencent_news),
-                    ('hexun', self._get_hexun_news),
-                    ('sohu', self._get_sohu_news)
-                ]
-                
-                for source_name, source_func in sources:
-                    try:
-                        print(f"尝试从{source_name}获取新闻...")
-                        source_news = source_func(symbol, days)
-                        if source_news:
-                            news_list.extend(source_news)
-                            print(f"从{source_name}获取到{len(source_news)}条新闻")
-                            if len(news_list) >= 20:
-                                break  # 足够的新闻，停止尝试其他源
-                    except Exception as e:
-                        print(f"{source_name}获取新闻失败: {e}")
-        except Exception as e:
-            print(f"使用FinNewsCrawler失败: {e}")
-            # 失败时回退到原始方法
+                    news_list.extend(standard_news)
+            except Exception as e:
+                print(f"AsyncNewsCrawler执行失败: {e}")
+                import traceback
+                traceback.print_exc()
+
+        # 2. 如果异步爬虫没有获取到足够的数据，尝试使用原始方法 (备用)
+        if len(news_list) < 5:
+            print("新闻数据不足，尝试使用原始方法补充...")
             sources = [
                 ('sina', self._get_sina_news),
                 ('eastmoney', self._get_eastmoney_news),
@@ -213,13 +137,15 @@ class MarketAnalyzer:
             
             for source_name, source_func in sources:
                 try:
+                    # 如果已有足够新闻，跳过
+                    if len(news_list) >= 20:
+                        break
+                        
                     print(f"尝试从{source_name}获取新闻...")
                     source_news = source_func(symbol, days)
                     if source_news:
                         news_list.extend(source_news)
                         print(f"从{source_name}获取到{len(source_news)}条新闻")
-                        if len(news_list) >= 20:
-                            break  # 足够的新闻，停止尝试其他源
                 except Exception as e:
                     print(f"{source_name}获取新闻失败: {e}")
         
@@ -964,6 +890,22 @@ class MarketAnalyzer:
         
         return context
     
+    async def _fetch_ratings_async(self, keywords: List[str], days: int) -> List[Dict]:
+        """异步获取评级相关新闻"""
+        if AsyncNewsCrawler is None:
+            return []
+            
+        crawler = AsyncNewsCrawler()
+        tasks = [crawler.search_news(kw, days=days, max_results=50) for kw in keywords]
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        all_news = []
+        for res in results:
+            if isinstance(res, list):
+                all_news.extend(res)
+        return all_news
+
     def get_research_ratings(self, symbol: str, name: str = "") -> Dict:
         """
         获取国内外投研公司对股票的评级
@@ -993,57 +935,58 @@ class MarketAnalyzer:
             # 定义爬取时间范围为180天
             crawl_days = 180
             
-            # 1. 优先使用FinNewsCrawler（如果可用）
-            if FINNEWS_AVAILABLE:
-                print(f"尝试使用FinNewsCrawler获取近{int(crawl_days/30)}个月的评级...")
+            # 1. 优先使用AsyncNewsCrawler（如果可用）
+            if FINNEWS_AVAILABLE and AsyncNewsCrawler is not None:
+                print(f"尝试使用AsyncNewsCrawler获取近{int(crawl_days/30)}个月的评级...")
                 try:
-                    if NewsCrawler is not None:
-                        news_crawler = NewsCrawler()
+                    # 扩展搜索关键词，增加研报相关词汇
+                    search_keywords = [
+                        f"{name} 评级",
+                        f"{name} 研报",
+                        f"{name} 买入",
+                        f"{name} 中性",
+                        f"{name} 卖出",
+                        f"{symbol} 评级",
+                        f"{symbol} 研报"
+                    ]
+                    
+                    try:
+                        loop = asyncio.get_event_loop()
+                    except RuntimeError:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
                         
-                        # 扩展搜索关键词，增加研报相关词汇
-                        search_keywords = [
-                            f"{name} 评级",
-                            f"{name} 研报",
-                            f"{name} 买入",
-                            f"{name} 中性",
-                            f"{name} 卖出",
-                            f"{symbol} 评级",
-                            f"{symbol} 研报"
-                        ]
-                        
-                        # 遍历搜索关键词
-                        for keyword in search_keywords:
-                            print(f"搜索关键词: {keyword}")
-                            rating_news = news_crawler.search_news(keyword, days=crawl_days, max_results=50)
-                            if rating_news:
-                                print(f"获取到{len(rating_news)}条包含评级信息的新闻")
-                                # 从新闻中提取评级信息
-                                for news in rating_news:
-                                    title = news.get('title', '')
-                                    if any(keyword in title for keyword in ['评级', '买入', '中性', '卖出', '持有', '强烈推荐', '推荐', '减持', '增持']):
-                                        # 从新闻标题中提取机构名称和评级
-                                        firm = news.get('source', '国内投研机构')
-                                        
-                                        # 更详细的评级分类
-                                        rating = '中性'  # 默认中性
-                                        if any(word in title for word in ['买入', '强烈推荐', '推荐', '增持']):
-                                            rating = '买入'
-                                        elif any(word in title for word in ['卖出', '减持']):
-                                            rating = '卖出'
-                                        elif any(word in title for word in ['中性', '持有', '观望']):
-                                            rating = '中性'
-                                        
-                                        ratings['ratings'].append({
-                                            'firm': firm,
-                                            'rating': rating,
-                                            'date': news.get('pub_date', ''),
-                                            'source': news.get('source', ''),
-                                            'title': title
-                                        })
-                        
-                        news_crawler.close()
+                    rating_news = loop.run_until_complete(self._fetch_ratings_async(search_keywords, crawl_days))
+                    
+                    if rating_news:
+                        print(f"获取到{len(rating_news)}条包含评级信息的新闻")
+                        # 从新闻中提取评级信息
+                        for news in rating_news:
+                            title = news.get('title', '')
+                            if any(keyword in title for keyword in ['评级', '买入', '中性', '卖出', '持有', '强烈推荐', '推荐', '减持', '增持']):
+                                # 从新闻标题中提取机构名称和评级
+                                firm = news.get('source', '国内投研机构')
+                                
+                                # 更详细的评级分类
+                                rating = '中性'  # 默认中性
+                                if any(word in title for word in ['买入', '强烈推荐', '推荐', '增持']):
+                                    rating = '买入'
+                                elif any(word in title for word in ['卖出', '减持']):
+                                    rating = '卖出'
+                                elif any(word in title for word in ['中性', '持有', '观望']):
+                                    rating = '中性'
+                                
+                                ratings['ratings'].append({
+                                    'firm': firm,
+                                    'rating': rating,
+                                    'date': news.get('pub_date', ''),
+                                    'source': news.get('source', ''),
+                                    'title': title
+                                })
                 except Exception as e:
-                    print(f"FinNewsCrawler获取评级失败: {e}")
+                    print(f"AsyncNewsCrawler获取评级失败: {e}")
+                    import traceback
+                    traceback.print_exc()
             
             # 2. 尝试从东方财富研报中心获取评级
             if len(ratings['ratings']) < 5:  # 如果获取的评级少于5条，继续从其他数据源获取

@@ -17,6 +17,8 @@ import pandas as pd
 from datetime import datetime
 import os
 
+WATERMARK_TEXT = "glowing-octo-barnacle"
+
 class PDFGenerator:
     """
     PDF文档生成器
@@ -37,22 +39,35 @@ class PDFGenerator:
         注册中文字体
         """
         try:
-            # 方案1: 尝试使用系统中可用的中文字体
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            bundled_fonts = [
+                ('SourceHanSansSC', os.path.join(base_dir, 'cardGame', 'Assets', 'TextMesh Pro', 'Fonts', 'SourceHanSansSC-Regular.ttf')),
+                ('SourceHanSansCN', os.path.join(base_dir, 'cardGame', 'Assets', 'TextMesh Pro', 'Fonts', 'SourceHanSansCN-Normal.ttf')),
+            ]
+
+            for font_name, font_path in bundled_fonts:
+                if os.path.exists(font_path):
+                    pdfmetrics.registerFont(TTFont(font_name, font_path))
+                    self.chinese_font = font_name
+                    print(f"成功注册中文字体: {font_name} ({font_path})")
+                    return
+
             font_configs = [
-                # macOS系统中的Arial Unicode字体
+                ('PingFang', '/System/Library/Fonts/PingFang.ttc'),
                 ('Arial Unicode MS', '/System/Library/Fonts/Supplemental/Arial Unicode.ttf'),
-                # Windows系统中的SimHei字体
+                ('Heiti TC', '/Library/Fonts/Heiti TC.ttc'),
                 ('SimHei', 'c:/windows/fonts/simhei.ttf'),
-                # 其他常见路径
                 ('SimHei', '/usr/share/fonts/truetype/SimHei.ttf'),
                 ('WenQuanYi Micro Hei', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'),
-                ('Heiti TC', '/Library/Fonts/Heiti TC.ttc')
             ]
             
             for font_name, font_path in font_configs:
                 try:
                     if os.path.exists(font_path):
-                        pdfmetrics.registerFont(TTFont(font_name, font_path))
+                        if font_path.lower().endswith(('.ttc', '.otc')):
+                            pdfmetrics.registerFont(TTFont(font_name, font_path, subfontIndex=0))
+                        else:
+                            pdfmetrics.registerFont(TTFont(font_name, font_path))
                         self.chinese_font = font_name
                         print(f"成功注册中文字体: {font_name} ({font_path})")
                         return
@@ -60,17 +75,6 @@ class PDFGenerator:
                         print(f"字体文件不存在: {font_path}")
                 except Exception as e:
                     print(f"注册字体 {font_name} 失败: {e}")
-            
-            # 方案2: 尝试直接使用字体名称（系统已安装的字体）
-            system_fonts = ['SimHei', 'WenQuanYi Micro Hei', 'Heiti TC', 'Arial Unicode MS']
-            for font_name in system_fonts:
-                try:
-                    pdfmetrics.registerFont(TTFont(font_name, font_name))
-                    self.chinese_font = font_name
-                    print(f"成功注册系统字体: {font_name}")
-                    return
-                except Exception as e:
-                    print(f"注册系统字体 {font_name} 失败: {e}")
             
             # 方案3: 使用ReportLab内置的支持Unicode的字体
             try:
@@ -221,8 +225,14 @@ class PDFGenerator:
                 
                 # 准备表格数据（使用中文表头）
                 table_data = [['序号', '日期', '开盘', '收盘', '最高', '最低', '成交量']]
-                for i, (_, row) in enumerate(recent_kline.iterrows(), 1):
-                    date = str(row.get('日期', '')).split(' ')[0]
+                for i, (idx, row) in enumerate(recent_kline.iterrows(), 1):
+                    raw_date = row.get('日期', None)
+                    if raw_date is None or (isinstance(raw_date, float) and pd.isna(raw_date)) or str(raw_date) in ('', 'NaT', 'None'):
+                        raw_date = idx
+                    if isinstance(raw_date, (pd.Timestamp, datetime)):
+                        date = raw_date.strftime('%Y-%m-%d')
+                    else:
+                        date = str(raw_date).split(' ')[0]
                     open_price = f"{row.get('开盘', 0):.2f}"
                     close = f"{row.get('收盘', 0):.2f}"
                     high = f"{row.get('最高', 0):.2f}"
@@ -387,7 +397,21 @@ class PDFGenerator:
             story.append(Paragraph("© A股量化选股系统 2026", footer_style))
             
             # 生成PDF
-            doc.build(story)
+            def on_page(canvas, doc):
+                canvas.saveState()
+                try:
+                    canvas.setFillAlpha(0.12)
+                except Exception:
+                    pass
+                canvas.setFillColor(colors.HexColor('#94A3B8'))
+                canvas.setFont(self.chinese_font, 48)
+                width, height = A4
+                canvas.translate(width / 2, height / 2)
+                canvas.rotate(30)
+                canvas.drawCentredString(0, 0, WATERMARK_TEXT)
+                canvas.restoreState()
+
+            doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
             
             return True
             
@@ -576,7 +600,21 @@ def generate_selection_pdf_report(report_data, output_dir='./reports'):
     
     # 生成PDF
     try:
-        doc.build(story)
+        def on_page(canvas, doc):
+            canvas.saveState()
+            try:
+                canvas.setFillAlpha(0.12)
+            except Exception:
+                pass
+            canvas.setFillColor(colors.HexColor('#94A3B8'))
+            canvas.setFont(generator.chinese_font, 48)
+            width, height = A4
+            canvas.translate(width / 2, height / 2)
+            canvas.rotate(30)
+            canvas.drawCentredString(0, 0, WATERMARK_TEXT)
+            canvas.restoreState()
+
+        doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
         return output_path
     except Exception as e:
         print(f"生成选股PDF失败: {e}")

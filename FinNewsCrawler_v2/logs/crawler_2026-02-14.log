@@ -462,3 +462,293 @@
 2026-02-14 09:41:10 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
 2026-02-14 09:41:10 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
 2026-02-14 09:41:10 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:05 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:22:05 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=贵州茅台 评级, days=180
+2026-02-14 14:22:08 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:08 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:08 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:08 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=贵州茅台 研报, days=180
+2026-02-14 14:22:10 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:10 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:10 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:10 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=贵州茅台 买入, days=180
+2026-02-14 14:22:12 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:12 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:12 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:12 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=贵州茅台 中性, days=180
+2026-02-14 14:22:15 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:15 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:15 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:15 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=贵州茅台 卖出, days=180
+2026-02-14 14:22:16 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:16 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:16 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:16 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600519 评级, days=180
+2026-02-14 14:22:18 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:18 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:18 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:18 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600519 研报, days=180
+2026-02-14 14:22:20 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:20 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:20 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 7 条新闻
+2026-02-14 14:22:20 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:22:20 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=五粮液 评级, days=180
+2026-02-14 14:22:22 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:22 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:22 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:22 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=五粮液 研报, days=180
+2026-02-14 14:22:25 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:25 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:25 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:25 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=五粮液 买入, days=180
+2026-02-14 14:22:27 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:27 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:27 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:27 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=五粮液 中性, days=180
+2026-02-14 14:22:29 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:29 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:29 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:29 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=五粮液 卖出, days=180
+2026-02-14 14:22:31 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:31 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:31 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:31 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000858 评级, days=180
+2026-02-14 14:22:33 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 7 条新闻
+2026-02-14 14:22:33 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 7 条新闻
+2026-02-14 14:22:33 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 7 条新闻
+2026-02-14 14:22:33 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000858 研报, days=180
+2026-02-14 14:22:34 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 3 条新闻
+2026-02-14 14:22:34 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 3 条新闻
+2026-02-14 14:22:34 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 3 条新闻
+2026-02-14 14:22:34 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:22:34 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国平安 评级, days=180
+2026-02-14 14:22:37 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:37 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:37 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:37 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国平安 研报, days=180
+2026-02-14 14:22:39 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:39 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:39 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:39 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国平安 买入, days=180
+2026-02-14 14:22:41 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:41 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:41 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:41 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国平安 中性, days=180
+2026-02-14 14:22:44 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:44 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:44 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:44 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国平安 卖出, days=180
+2026-02-14 14:22:46 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:46 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:46 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:46 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=601318 评级, days=180
+2026-02-14 14:22:48 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 6 条新闻
+2026-02-14 14:22:48 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 6 条新闻
+2026-02-14 14:22:48 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 6 条新闻
+2026-02-14 14:22:48 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=601318 研报, days=180
+2026-02-14 14:22:50 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:50 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:50 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:50 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:22:50 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行 评级, days=180
+2026-02-14 14:22:52 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:52 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:52 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:52 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行 研报, days=180
+2026-02-14 14:22:54 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:54 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:54 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:54 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行 买入, days=180
+2026-02-14 14:22:55 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:55 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:55 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:55 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行 中性, days=180
+2026-02-14 14:22:57 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:57 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:57 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:57 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行 卖出, days=180
+2026-02-14 14:22:58 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:22:58 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:22:58 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:22:58 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001 评级, days=180
+2026-02-14 14:22:59 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 0 条新闻
+2026-02-14 14:22:59 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 0 条新闻
+2026-02-14 14:22:59 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 0 条新闻
+2026-02-14 14:22:59 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001 研报, days=180
+2026-02-14 14:23:00 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 0 条新闻
+2026-02-14 14:23:00 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 0 条新闻
+2026-02-14 14:23:00 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 0 条新闻
+2026-02-14 14:23:00 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:23:00 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=比亚迪 评级, days=180
+2026-02-14 14:23:03 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:03 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:03 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:03 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=比亚迪 研报, days=180
+2026-02-14 14:23:04 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:04 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:04 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:04 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=比亚迪 买入, days=180
+2026-02-14 14:23:06 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:06 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:06 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:06 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=比亚迪 中性, days=180
+2026-02-14 14:23:08 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:08 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:08 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:08 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=比亚迪 卖出, days=180
+2026-02-14 14:23:10 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:10 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:10 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:10 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002594 评级, days=180
+2026-02-14 14:23:12 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 9 条新闻
+2026-02-14 14:23:12 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 9 条新闻
+2026-02-14 14:23:12 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 9 条新闻
+2026-02-14 14:23:12 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002594 研报, days=180
+2026-02-14 14:23:14 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 3 条新闻
+2026-02-14 14:23:14 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 3 条新闻
+2026-02-14 14:23:14 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 2 条新闻
+2026-02-14 14:23:14 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:23:14 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=宁德时代 评级, days=180
+2026-02-14 14:23:17 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:17 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:17 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:17 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=宁德时代 研报, days=180
+2026-02-14 14:23:19 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:19 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:19 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:19 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=宁德时代 买入, days=180
+2026-02-14 14:23:21 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:21 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:21 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:21 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=宁德时代 中性, days=180
+2026-02-14 14:23:23 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:23 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:23 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:23 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=宁德时代 卖出, days=180
+2026-02-14 14:23:25 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:25 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:25 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:25 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300750 评级, days=180
+2026-02-14 14:23:27 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:27 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:27 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:27 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300750 研报, days=180
+2026-02-14 14:23:29 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 9 条新闻
+2026-02-14 14:23:29 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 9 条新闻
+2026-02-14 14:23:29 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 8 条新闻
+2026-02-14 14:23:29 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:23:29 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=招商银行 评级, days=180
+2026-02-14 14:23:31 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:31 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:31 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:31 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=招商银行 研报, days=180
+2026-02-14 14:23:33 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:33 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:33 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:33 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=招商银行 买入, days=180
+2026-02-14 14:23:34 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:34 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:34 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:34 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=招商银行 中性, days=180
+2026-02-14 14:23:37 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:37 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:37 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:37 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=招商银行 卖出, days=180
+2026-02-14 14:23:39 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:39 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:39 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:39 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600036 评级, days=180
+2026-02-14 14:23:41 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 5 条新闻
+2026-02-14 14:23:41 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 5 条新闻
+2026-02-14 14:23:41 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 5 条新闻
+2026-02-14 14:23:41 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600036 研报, days=180
+2026-02-14 14:23:44 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 7 条新闻
+2026-02-14 14:23:44 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 7 条新闻
+2026-02-14 14:23:44 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 7 条新闻
+2026-02-14 14:23:44 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:23:44 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国中免 评级, days=180
+2026-02-14 14:23:46 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:46 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:46 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:46 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国中免 研报, days=180
+2026-02-14 14:23:48 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:48 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:48 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:48 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国中免 买入, days=180
+2026-02-14 14:23:50 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:50 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:50 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:50 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国中免 中性, days=180
+2026-02-14 14:23:52 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:52 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:52 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:52 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=中国中免 卖出, days=180
+2026-02-14 14:23:54 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:23:54 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:23:54 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:23:54 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=601888 评级, days=180
+2026-02-14 14:23:56 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 3 条新闻
+2026-02-14 14:23:56 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 3 条新闻
+2026-02-14 14:23:56 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 3 条新闻
+2026-02-14 14:23:56 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=601888 研报, days=180
+2026-02-14 14:23:58 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 4 条新闻
+2026-02-14 14:23:58 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 4 条新闻
+2026-02-14 14:23:58 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 4 条新闻
+2026-02-14 14:23:58 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:23:58 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=恒瑞医药 评级, days=180
+2026-02-14 14:24:01 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:01 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:01 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:01 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=恒瑞医药 研报, days=180
+2026-02-14 14:24:02 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:02 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:02 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:02 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=恒瑞医药 买入, days=180
+2026-02-14 14:24:04 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:04 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:04 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:04 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=恒瑞医药 中性, days=180
+2026-02-14 14:24:07 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:07 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:07 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:07 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=恒瑞医药 卖出, days=180
+2026-02-14 14:24:08 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:08 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:08 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:08 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600276 评级, days=180
+2026-02-14 14:24:11 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 4 条新闻
+2026-02-14 14:24:11 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 4 条新闻
+2026-02-14 14:24:11 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 4 条新闻
+2026-02-14 14:24:11 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=600276 研报, days=180
+2026-02-14 14:24:12 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 5 条新闻
+2026-02-14 14:24:12 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 5 条新闻
+2026-02-14 14:24:12 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 5 条新闻
+2026-02-14 14:24:12 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 14:24:12 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=东方财富 评级, days=180
+2026-02-14 14:24:14 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:14 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:14 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:14 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=东方财富 研报, days=180
+2026-02-14 14:24:17 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:17 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:17 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:17 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=东方财富 买入, days=180
+2026-02-14 14:24:18 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:18 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:18 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:18 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=东方财富 中性, days=180
+2026-02-14 14:24:20 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:20 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:20 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:20 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=东方财富 卖出, days=180
+2026-02-14 14:24:22 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 14:24:22 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 14:24:22 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 14:24:22 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300059 评级, days=180
+2026-02-14 14:24:23 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 6 条新闻
+2026-02-14 14:24:23 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 6 条新闻
+2026-02-14 14:24:23 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 5 条新闻
+2026-02-14 14:24:23 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300059 研报, days=180
+2026-02-14 14:24:25 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 1 条新闻
+2026-02-14 14:24:25 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 1 条新闻
+2026-02-14 14:24:25 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 0 条新闻

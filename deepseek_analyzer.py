@@ -191,6 +191,7 @@ class DeepSeekAnalyzer:
         name = stock_data.get('name', '')
         kline_data = stock_data.get('kline_data', None)
         market_analysis = stock_data.get('market_analysis', {})
+        research_ratings = stock_data.get('research_ratings', {})
         
         # 提取最近K线数据（完整版）
         recent_data = ""
@@ -231,6 +232,21 @@ class DeepSeekAnalyzer:
                 status = main_funds.get('status', 'unknown')
                 market_info += f"资金流向: 主力资金净流入={net_inflow/10000:.2f}万, 状态={status}\n\n"
         
+        # 提取投研公司评级数据
+        ratings_info = ""
+        if research_ratings:
+            ratings_info = "投研公司评级:\n"
+            for rating in research_ratings.get('ratings', []):
+                firm = rating.get('firm', '')
+                rating_value = rating.get('rating', '')
+                date = rating.get('date', '')
+                if firm and rating_value:
+                    ratings_info += f"- {firm}: {rating_value}"
+                    if date:
+                        ratings_info += f" ({date})"
+                    ratings_info += "\n"
+            ratings_info += "\n"
+        
         prompt = f"""# {name}({symbol}) 个股分析
 
 ## 📈 近期走势
@@ -238,6 +254,9 @@ class DeepSeekAnalyzer:
 
 ## 📊 市场环境
 {market_info}
+
+## 📋 投研公司评级
+{ratings_info}
 
 ---
 
@@ -252,13 +271,18 @@ class DeepSeekAnalyzer:
 - 主力资金流向
 - 主力/游资/散户情况
 
-### 3. 操作建议
+### 3. 投研公司评级分析（2-3句话）
+- 国内外投研公司评级分布
+- 评级变化趋势
+- 评级对投资决策的参考价值
+
+### 4. 操作建议
 - **评级**：买入/持有/卖出/观望
 - **目标价**：XXX元
 - **止损价**：XXX元
 - **理由**：简述核心逻辑
 
-### 4. 风险提示（1-2句话）
+### 5. 风险提示（1-2句话）
 
 ---
 
