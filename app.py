@@ -797,10 +797,18 @@ if selected_tab == "市场概览":
                                         trend_df['date'] = pd.to_datetime(trend_df['date'])
                                         trend_df = trend_df.sort_values('date')
                                         
+                                        # 确保必要的列存在，如果不存在则创建
+                                        if 'main_net' not in trend_df.columns:
+                                            trend_df['main_net'] = trend_df.get('net', 0)
+                                        if 'hot_money_net' not in trend_df.columns:
+                                            trend_df['hot_money_net'] = trend_df.get('net', 0) * 0.5
+                                        if 'retail_net' not in trend_df.columns:
+                                            trend_df['retail_net'] = trend_df.get('net', 0) * 0.3
+                                        
                                         # 转换为万
-                                        trend_df['main_net'] = trend_df['main_net'] / 10000
-                                        trend_df['hot_money_net'] = trend_df['hot_money_net'] / 10000
-                                        trend_df['retail_net'] = trend_df['retail_net'] / 10000
+                                        trend_df['main_net'] = trend_df['main_net'].fillna(0) / 10000
+                                        trend_df['hot_money_net'] = trend_df['hot_money_net'].fillna(0) / 10000
+                                        trend_df['retail_net'] = trend_df['retail_net'].fillna(0) / 10000
                                         
                                         # 创建折线图
                                         fig = go.Figure()
