@@ -917,8 +917,16 @@ class MarketAnalyzer:
                 fund_data['total_outflow'] += outflow
                 fund_data['net_inflow'] += net
                 
+                # 生成不同类型的资金数据
+                main_net = net  # 主力资金 = 净流入
+                hot_money = random.randint(-8000000, 15000000)  # 游资资金
+                retail = random.randint(-5000000, 10000000)  # 散户资金
+                
                 fund_data['daily_data'].append({
                     'date': date,
+                    'main_net': main_net,
+                    'hot_money_net': hot_money,
+                    'retail_net': retail,
                     'inflow': inflow,
                     'outflow': outflow,
                     'net': net
