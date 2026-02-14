@@ -1077,3 +1077,79 @@
 2026-02-14 07:50:05,203 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
 2026-02-14 07:50:05,205 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
 2026-02-14 07:50:05,208 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用成功，分析完成！
+2026-02-14 08:08:39,153 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-14 08:08:39,153 - a_quant - INFO - logger - info - 获取 002498 K线数据，周期: 101
+2026-02-14 08:08:39,231 - a_quant - INFO - logger - info - 成功获取 002498 的 248 条K线数据
+2026-02-14 08:08:39,235 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-14 08:08:51,037 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 1/5)
+2026-02-14 08:08:54,577 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 08:08:54,577 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 08:08:54,577 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 08:08:54,577 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 08:09:23,191 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-14 08:09:23,194 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-14 08:09:23,197 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用成功，分析完成！
+2026-02-14 08:27:40,303 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-14 08:27:40,303 - a_quant - INFO - logger - info - 获取 300251 K线数据，周期: 101
+2026-02-14 08:27:40,381 - a_quant - INFO - logger - info - 成功获取 300251 的 248 条K线数据
+2026-02-14 08:27:40,383 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-14 08:27:51,142 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 1/5)
+2026-02-14 08:27:53,635 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 08:27:53,636 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 08:27:53,636 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 08:27:53,636 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 08:28:21,277 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-14 08:28:21,279 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-14 08:28:21,282 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用成功，分析完成！
+2026-02-14 09:13:49,809 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-14 09:13:49,809 - a_quant - INFO - logger - info - 获取 002498 K线数据，周期: 101
+2026-02-14 09:13:49,881 - a_quant - INFO - logger - info - 成功获取 002498 的 248 条K线数据
+2026-02-14 09:13:49,882 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-14 09:14:03,927 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 1/5)
+2026-02-14 09:14:06,230 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 09:14:06,230 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 09:14:06,230 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 09:14:06,230 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 09:14:36,538 - a_quant - ERROR - deepseek_analyzer - _call_deepseek_api - 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+2026-02-14 09:14:36,544 - a_quant - WARNING - deepseek_analyzer - analyze_stock - API返回错误信息: ⚠️ 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+
+建议使用DeepSeek网页版进行分析: [点击跳转](https://chat.deepseek.com/)...
+2026-02-14 09:14:36,544 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用失败，1秒后重试...
+2026-02-14 09:14:37,550 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 2/5)
+2026-02-14 09:14:38,950 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 09:14:38,951 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 09:14:38,951 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 09:14:38,951 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 09:15:09,055 - a_quant - ERROR - deepseek_analyzer - _call_deepseek_api - 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+2026-02-14 09:15:09,060 - a_quant - WARNING - deepseek_analyzer - analyze_stock - API返回错误信息: ⚠️ 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+
+建议使用DeepSeek网页版进行分析: [点击跳转](https://chat.deepseek.com/)...
+2026-02-14 09:15:09,060 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用失败，2秒后重试...
+2026-02-14 09:15:11,064 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 3/5)
+2026-02-14 09:15:12,640 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 09:15:12,640 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 09:15:12,640 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 09:15:12,640 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 09:15:42,748 - a_quant - ERROR - deepseek_analyzer - _call_deepseek_api - 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+2026-02-14 09:15:42,753 - a_quant - WARNING - deepseek_analyzer - analyze_stock - API返回错误信息: ⚠️ 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+
+建议使用DeepSeek网页版进行分析: [点击跳转](https://chat.deepseek.com/)...
+2026-02-14 09:15:42,753 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用失败，4秒后重试...
+2026-02-14 09:15:46,758 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 4/5)
+2026-02-14 09:15:48,122 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 09:15:48,123 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 09:15:48,124 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 09:15:48,124 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 09:16:18,289 - a_quant - ERROR - deepseek_analyzer - _call_deepseek_api - 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+2026-02-14 09:16:18,293 - a_quant - WARNING - deepseek_analyzer - analyze_stock - API返回错误信息: ⚠️ 网络连接错误: 无法连接到DeepSeek API服务器，请检查网络连接。
+
+建议使用DeepSeek网页版进行分析: [点击跳转](https://chat.deepseek.com/)...
+2026-02-14 09:16:18,294 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用失败，8秒后重试...
+2026-02-14 09:16:26,299 - a_quant - INFO - deepseek_analyzer - analyze_stock - 尝试调用DeepSeek API (尝试 5/5)
+2026-02-14 09:16:27,563 - a_quant - INFO - deepseek_analyzer - analyze_stock - API连接正常，开始分析...
+2026-02-14 09:16:27,563 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-14 09:16:27,563 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-14 09:16:27,563 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-14 09:16:53,334 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-14 09:16:53,335 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-14 09:16:53,337 - a_quant - INFO - deepseek_analyzer - analyze_stock - API调用成功，分析完成！

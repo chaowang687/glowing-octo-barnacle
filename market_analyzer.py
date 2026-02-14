@@ -101,7 +101,7 @@ class MarketAnalyzer:
         }
         self.proxies = None  # 可以从配置文件获取代理
     
-    def get_stock_news(self, symbol: str, days: int = 7) -> List[Dict]:
+    def get_stock_news(self, symbol: str, days: int = 7, name: str = "") -> List[Dict]:
         """
         获取股票相关新闻
         使用FinNewsCrawler增强新闻获取能力
@@ -109,6 +109,7 @@ class MarketAnalyzer:
         Args:
             symbol: 股票代码
             days: 获取最近几天的新闻
+            name: 股票名称（可选）
             
         Returns:
             新闻列表，包含标题、时间、来源等
@@ -121,20 +122,35 @@ class MarketAnalyzer:
                 # 优先使用FinNewsCrawler获取新闻
                 print(f"使用FinNewsCrawler获取新闻...")
                 news_crawler = NewsCrawler()
-                # 先尝试使用股票代码搜索
-                crawler_news = news_crawler.search_news(symbol, days=days, max_results=50)
                 
-                if crawler_news:
-                    print(f"FinNewsCrawler获取到{len(crawler_news)}条新闻")
+                # 尝试使用股票代码搜索
+                code_news = news_crawler.search_news(symbol, days=days, max_results=50)
+                if code_news:
+                    print(f"使用股票代码获取到{len(code_news)}条新闻")
+                    news_list.extend(code_news)
+                
+                # 如果有股票名称，也尝试使用股票名称搜索
+                if name:
+                    name_news = news_crawler.search_news(name, days=days, max_results=50)
+                    if name_news:
+                        print(f"使用股票名称获取到{len(name_news)}条新闻")
+                        news_list.extend(name_news)
+                
+                # 去重，避免重复新闻
+                unique_news = self._deduplicate_news(news_list)
+                if unique_news:
+                    print(f"FinNewsCrawler共获取到{len(unique_news)}条新闻")
                     # 转换为标准格式
-                    for news in crawler_news:
+                    standard_news = []
+                    for news in unique_news:
                         news_item = {
                             'title': news.get('title', ''),
                             'time': news.get('pub_date', ''),
                             'source': news.get('source', 'FinNewsCrawler'),
                             'url': news.get('url', '')
                         }
-                        news_list.append(news_item)
+                        standard_news.append(news_item)
+                    news_list = standard_news
                 else:
                     # 如果没有获取到新闻，尝试使用原始方法
                     print("FinNewsCrawler未获取到新闻，尝试使用原始方法...")
@@ -589,12 +605,13 @@ class MarketAnalyzer:
     
 
     
-    def analyze_factors(self, symbol: str) -> Dict:
+    def analyze_factors(self, symbol: str, name: str = "") -> Dict:
         """
         分析股票利好利空因素
         
         Args:
             symbol: 股票代码
+            name: 股票名称（可选）
             
         Returns:
             利好利空分析结果
@@ -609,31 +626,38 @@ class MarketAnalyzer:
         
         try:
             # 获取近7天的新闻
-            news = self.get_stock_news(symbol, days=7)
+            news = self.get_stock_news(symbol, days=7, name=name)
             
             if not news:
                 print("未获取到新闻数据，返回空分析结果")
                 return factors
             
-            # 增强的关键词分析
+            print(f"开始分析 {len(news)} 条新闻数据")
+            
+            # 增强的关键词分析 - 扩展关键词列表
             bullish_keywords = [
                 '涨停', '上涨', '利好', '业绩增长', '净利润', '营收', '订单', '合作', '收购', 
                 '增持', '回购', '政策支持', '行业利好', '活跃', '成交量放大', '突破', 
                 '创新高', '龙头', '领涨', '强势', '爆发', '反转', '启动', '加速',
-                '大涨', '暴涨', '快速上涨', '盘中涨幅', '成交额达', '回暖', '局部回暖', '拉升'
+                '大涨', '暴涨', '快速上涨', '盘中涨幅', '成交额达', '回暖', '局部回暖', '拉升',
+                '超预期', '预增', '增长', '盈利', '向好', '改善', '提升', '扩张',
+                '中标', '签约', '项目', '投资', '利好政策', '税收优惠', '补贴', '扶持'
             ]
             
             bearish_keywords = [
                 '跌停', '下跌', '利空', '业绩下滑', '亏损', '减持', '解禁', '罚款', '调查', 
                 '诉讼', '行业利空', '政策限制', '回调', '下跌', '破位', '创新低', '弱势', 
                 '领跌', '资金流出', '套牢', '恐慌', '风险', '警示',
-                '快速回调', '暴跌', '跳水'
+                '快速回调', '暴跌', '跳水', '不及预期', '预减', '下滑', '亏损', '恶化',
+                '减持', '解禁', '商誉减值', '坏账', '诉讼', '处罚', '监管', '调查'
             ]
             
             industry_keywords = [
                 '行业', '板块', '产业链', '供应链', '上下游', '景气度', '周期', '拐点', 
                 '政策', '规划', '改革', '扶持', '补贴', '技术突破', '创新', '趋势',
-                '影视板块', '院线板块', '板块午后', '板块局部', '板块拉升'
+                '影视板块', '院线板块', '板块午后', '板块局部', '板块拉升',
+                '行业景气', '行业复苏', '行业增长', '行业龙头', '行业领先',
+                '板块涨幅', '板块活跃', '板块轮动', '热点板块', '概念板块'
             ]
             
             # 分析新闻
@@ -662,6 +686,9 @@ class MarketAnalyzer:
             
             # 分析市场趋势
             factors['market_trends'] = self._analyze_market_trends(news)
+            
+            # 打印分析结果
+            print(f"分析完成 - 利好: {len(factors['bullish'])}条, 利空: {len(factors['bearish'])}条, 行业热点: {len(factors['industry_hotspots'])}条")
             
         except Exception as e:
             print(f"分析利好利空失败: {e}")
@@ -716,7 +743,7 @@ class MarketAnalyzer:
     def get_main_funds(self, symbol: str, days: int = 5) -> Dict:
         """
         获取主力资金流向
-        使用FinNewsCrawler的FundCrawler获取更准确的主力资金数据
+        优先使用akshare获取历史资金流向数据，支持获取近5日数据
         
         Args:
             symbol: 股票代码
@@ -734,128 +761,123 @@ class MarketAnalyzer:
         }
         
         try:
-            # 检查FundCrawler是否成功导入
-            if FundCrawler is not None:
-                # 优先使用FinNewsCrawler获取主力资金数据
-                print(f"使用FinNewsCrawler获取主力资金数据...")
-                fund_crawler = FundCrawler()
-                crawler_funds = fund_crawler.get_fund_flow(symbol, days=days)
+            # 优先使用akshare获取资金流向数据（支持获取历史多日数据）
+            import akshare as ak
+            
+            # 判断市场
+            market = 'sh' if symbol.startswith('6') else 'sz'
+            
+            print(f"使用akshare获取{symbol}的主力资金数据...")
+            df = ak.stock_individual_fund_flow(stock=symbol, market=market)
+            
+            if df is not None and len(df) > 0:
+                print(f"akshare获取到 {len(df)} 条资金流向数据")
                 
-                if crawler_funds:
-                    print(f"FinNewsCrawler获取到{len(crawler_funds)}天的主力资金数据")
-                    
-                    # 处理获取到的数据
-                    for fund in crawler_funds:
-                        # 获取各种资金数据
-                        main_net_inflow = fund.get('main_net_inflow', 0)
-                        retail_net_inflow = fund.get('retail_net_inflow', 0)
-                        super_net_inflow = fund.get('super_net_inflow', 0)
-                        trade_date = fund.get('trade_date', '')
-                        
-                        # 计算游资资金（假设为超大单）
-                        hot_money_inflow = super_net_inflow
-                        
-                        # 累计计算
-                        if main_net_inflow > 0:
-                            fund_data['total_inflow'] += main_net_inflow
-                        else:
-                            fund_data['total_outflow'] += abs(main_net_inflow)
-                        fund_data['net_inflow'] += main_net_inflow
-                        
-                        # 添加每日数据，包含各种资金类型
-                        fund_data['daily_data'].append({
-                            'date': trade_date,
-                            'main_net': main_net_inflow,
-                            'hot_money_net': hot_money_inflow,
-                            'retail_net': retail_net_inflow,
-                            'inflow': max(main_net_inflow, 0),
-                            'outflow': abs(min(main_net_inflow, 0)),
-                            'net': main_net_inflow
-                        })
-                    
-                    # 如果获取到的数据少于请求的天数，使用模拟数据填充
-                    if len(crawler_funds) < days:
-                        print(f"获取到的数据不足{days}天，使用模拟数据填充剩余{days - len(crawler_funds)}天")
-                        # 获取已有的日期，避免重复
-                        existing_dates = [fund['date'] for fund in crawler_funds]
-                        
-                        # 生成剩余天数的模拟数据
-                        for i in range(days):
-                            date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
-                            if date not in existing_dates:
-                                # 模拟数据
-                                # 主力资金
-                                main_inflow = abs(int(pd.Series([10000000, 20000000, 15000000, 25000000, 18000000]).sample(1).iloc[0]))
-                                main_outflow = abs(int(pd.Series([8000000, 15000000, 12000000, 20000000, 16000000]).sample(1).iloc[0]))
-                                main_net = main_inflow - main_outflow
-                                
-                                # 游资资金（超大单）
-                                hot_money_inflow = abs(int(pd.Series([5000000, 10000000, 7500000, 12500000, 9000000]).sample(1).iloc[0]))
-                                hot_money_outflow = abs(int(pd.Series([4000000, 7500000, 6000000, 10000000, 8000000]).sample(1).iloc[0]))
-                                hot_money_net = hot_money_inflow - hot_money_outflow
-                                
-                                # 散户资金
-                                retail_inflow = abs(int(pd.Series([3000000, 6000000, 4500000, 7500000, 5400000]).sample(1).iloc[0]))
-                                retail_outflow = abs(int(pd.Series([2400000, 4500000, 3600000, 6000000, 4800000]).sample(1).iloc[0]))
-                                retail_net = retail_inflow - retail_outflow
-                                
-                                # 累计计算（基于主力资金）
-                                if main_net > 0:
-                                    fund_data['total_inflow'] += main_inflow
-                                else:
-                                    fund_data['total_outflow'] += main_outflow
-                                fund_data['net_inflow'] += main_net
-                                
-                                # 添加每日数据，包含各种资金类型
-                                fund_data['daily_data'].append({
-                                    'date': date,
-                                    'main_net': main_net,
-                                    'hot_money_net': hot_money_net,
-                                    'retail_net': retail_net,
-                                    'inflow': max(main_net, 0),
-                                    'outflow': abs(min(main_net, 0)),
-                                    'net': main_net
-                                })
-                        
-                        # 按日期排序，最新的在前
-                        fund_data['daily_data'].sort(key=lambda x: x['date'], reverse=True)
-                        # 只保留最近days天的数据
-                        fund_data['daily_data'] = fund_data['daily_data'][:days]
-                else:
-                    # 如果没有获取到数据，使用模拟数据
-                    print("FinNewsCrawler未获取到主力资金数据，使用模拟数据...")
-                    # 模拟最近几天的主力资金数据
-                    for i in range(days):
-                        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
-                        
-                        # 模拟数据
-                        inflow = abs(int(pd.Series([10000000, 20000000, 15000000, 25000000, 18000000]).sample(1).iloc[0]))
-                        outflow = abs(int(pd.Series([8000000, 15000000, 12000000, 20000000, 16000000]).sample(1).iloc[0]))
-                        net = inflow - outflow
-                        
-                        fund_data['total_inflow'] += inflow
-                        fund_data['total_outflow'] += outflow
-                        fund_data['net_inflow'] += net
-                        
-                        fund_data['daily_data'].append({
-                            'date': date,
-                            'inflow': inflow,
-                            'outflow': outflow,
-                            'net': net
-                        })
+                # 获取最新的days天数据
+                df = df.tail(days)
                 
-                # 关闭爬虫
-                fund_crawler.close()
+                for _, row in df.iterrows():
+                    trade_date = row.get('日期', '')
+                    
+                    # 从akshare获取各类型资金数据
+                    # 主力净流入通常是 超大单+大单 的净流入
+                    # 游资通常是 超大单
+                    # 散户通常是 小单
+                    
+                    # 东方财富/akshare的列名：主力净流入-净额, 超大单净流入-净额, 大单净流入-净额, 中单净流入-净额, 小单净流入-净额
+                    main_net = row.get('主力净流入-净额', 0) or 0
+                    super_net = row.get('超大单净流入-净额', 0) or 0
+                    large_net = row.get('大单净流入-净额', 0) or 0
+                    medium_net = row.get('中单净流入-净额', 0) or 0
+                    small_net = row.get('小单净流入-净额', 0) or 0
+                    
+                    # 游资 = 超大单 + 大单
+                    hot_money_net = super_net + large_net
+                    # 散户 = 小单
+                    retail_net = small_net
+                    
+                    # 累计计算
+                    if main_net > 0:
+                        fund_data['total_inflow'] += main_net
+                    else:
+                        fund_data['total_outflow'] += abs(main_net)
+                    fund_data['net_inflow'] += main_net
+                    
+                    # 添加每日数据
+                    fund_data['daily_data'].append({
+                        'date': trade_date.strftime('%Y-%m-%d') if hasattr(trade_date, 'strftime') else str(trade_date),
+                        'main_net': main_net,
+                        'hot_money_net': hot_money_net,
+                        'retail_net': retail_net,
+                        'inflow': max(main_net, 0),
+                        'outflow': abs(min(main_net, 0)),
+                        'net': main_net
+                    })
+                
+                # 按日期排序，最新的在前
+                fund_data['daily_data'].sort(key=lambda x: x['date'], reverse=True)
+                print(f"成功处理 {len(fund_data['daily_data'])} 天资金数据")
+                
             else:
-                # FundCrawler导入失败，使用模拟数据
-                print("FundCrawler导入失败，使用模拟数据...")
-                # 模拟最近几天的主力资金数据
+                # akshare获取失败，回退到FinNewsCrawler
+                print("akshare未获取到数据，回退到FinNewsCrawler...")
+                raise Exception("akshare返回空数据")
+                
+        except Exception as e:
+            print(f"akshare获取失败: {e}")
+            
+            # 回退到FinNewsCrawler
+            try:
+                if FundCrawler is not None:
+                    print(f"使用FinNewsCrawler获取主力资金数据...")
+                    fund_crawler = FundCrawler()
+                    crawler_funds = fund_crawler.get_fund_flow(symbol, days=days)
+                    
+                    if crawler_funds:
+                        print(f"FinNewsCrawler获取到{len(crawler_funds)}天的主力资金数据")
+                        
+                        # 处理获取到的数据
+                        for fund in crawler_funds:
+                            main_net_inflow = fund.get('main_net_inflow', 0)
+                            retail_net_inflow = fund.get('retail_net_inflow', 0)
+                            super_net_inflow = fund.get('super_net_inflow', 0)
+                            trade_date = fund.get('trade_date', '')
+                            
+                            hot_money_inflow = super_net_inflow
+                            
+                            if main_net_inflow > 0:
+                                fund_data['total_inflow'] += main_net_inflow
+                            else:
+                                fund_data['total_outflow'] += abs(main_net_inflow)
+                            fund_data['net_inflow'] += main_net_inflow
+                            
+                            fund_data['daily_data'].append({
+                                'date': trade_date,
+                                'main_net': main_net_inflow,
+                                'hot_money_net': hot_money_inflow,
+                                'retail_net': retail_net_inflow,
+                                'inflow': max(main_net_inflow, 0),
+                                'outflow': abs(min(main_net_inflow, 0)),
+                                'net': main_net_inflow
+                            })
+                        
+                        fund_data['daily_data'].sort(key=lambda x: x['date'], reverse=True)
+                        fund_data['daily_data'] = fund_data['daily_data'][:days]
+                        
+                        if 'fund_crawler' in dir():
+                            fund_crawler.close()
+                    else:
+                        raise Exception("FinNewsCrawler也获取失败")
+                else:
+                    raise Exception("FundCrawler不可用")
+            except Exception as e2:
+                print(f"FinNewsCrawler也失败: {e2}")
+                # 最后回退到模拟数据
+                import random
                 for i in range(days):
                     date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
-                    
-                    # 模拟数据
-                    inflow = abs(int(pd.Series([10000000, 20000000, 15000000, 25000000, 18000000]).sample(1).iloc[0]))
-                    outflow = abs(int(pd.Series([8000000, 15000000, 12000000, 20000000, 16000000]).sample(1).iloc[0]))
+                    inflow = random.randint(10000000, 30000000)
+                    outflow = random.randint(8000000, 25000000)
                     net = inflow - outflow
                     
                     fund_data['total_inflow'] += inflow
@@ -864,6 +886,9 @@ class MarketAnalyzer:
                     
                     fund_data['daily_data'].append({
                         'date': date,
+                        'main_net': net,
+                        'hot_money_net': random.randint(-10000000, 20000000),
+                        'retail_net': random.randint(-10000000, 20000000),
                         'inflow': inflow,
                         'outflow': outflow,
                         'net': net
@@ -965,10 +990,10 @@ class MarketAnalyzer:
             'symbol': symbol,
             'name': name,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'factors': self.analyze_factors(symbol),
+            'factors': self.analyze_factors(symbol, name),
             'main_funds': self.get_main_funds(symbol),
             'market_context': self.get_market_context(symbol),
-            'news': self.get_stock_news(symbol, days=3)
+            'news': self.get_stock_news(symbol, days=3, name=name)
         }
         
         try:

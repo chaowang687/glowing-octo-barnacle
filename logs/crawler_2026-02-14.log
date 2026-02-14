@@ -623,3 +623,85 @@
 2026-02-14 07:49:40 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
 2026-02-14 07:49:40 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
 2026-02-14 07:49:40 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 08:08:40 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:08:40 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002498, days=7
+2026-02-14 08:08:43 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:08:43 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:08:43 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 6 条新闻
+2026-02-14 08:08:43 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:08:43 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 002498, days=5
+2026-02-14 08:08:45 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 08:08:45 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 08:08:45 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:08:45 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002498, days=3
+2026-02-14 08:08:47 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:08:47 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:08:47 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 6 条新闻
+2026-02-14 08:08:47 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 002498 的完整数据
+2026-02-14 08:08:47 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:08:47 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:08:47 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=汉缆股份, days=7
+2026-02-14 08:08:49 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:08:49 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:08:49 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 08:08:49 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 08:08:49 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 002498, days=7
+2026-02-14 08:08:51 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 08:08:51 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 08:08:51 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 08:27:41 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:27:41 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=7
+2026-02-14 08:27:44 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:27:44 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:27:44 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 08:27:44 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:27:44 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=5
+2026-02-14 08:27:45 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 08:27:45 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 08:27:45 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:27:45 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=3
+2026-02-14 08:27:47 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:27:47 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:27:47 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 08:27:47 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 300251 的完整数据
+2026-02-14 08:27:47 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:27:47 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 08:27:47 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 08:27:48 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 08:27:48 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 08:27:48 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 08:27:48 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 08:27:48 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=7
+2026-02-14 08:27:51 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 08:27:51 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 08:27:51 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 09:13:50 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:13:50 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002498, days=7
+2026-02-14 09:13:52 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:13:52 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:13:52 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 6 条新闻
+2026-02-14 09:13:52 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=汉缆股份, days=7
+2026-02-14 09:13:54 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:13:54 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:13:54 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:13:54 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:13:54 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=002498, days=3
+2026-02-14 09:13:56 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:13:56 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:13:56 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 6 条新闻
+2026-02-14 09:13:56 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=汉缆股份, days=3
+2026-02-14 09:13:59 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:13:59 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:13:59 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:13:59 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 002498 的完整数据
+2026-02-14 09:13:59 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:13:59 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:13:59 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=汉缆股份, days=7
+2026-02-14 09:14:01 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:14:01 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:14:01 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:14:01 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 09:14:01 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 002498, days=7
+2026-02-14 09:14:03 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 09:14:03 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 09:14:03 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
