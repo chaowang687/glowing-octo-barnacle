@@ -1,0 +1,46 @@
+# 
+--------------------------------------------------------------------------------------
+# Unity Project Files Exclusion (Recommended by Unity)
+# 
+--------------------------------------------------------------------------------------
+
+# Folders to completely ignore
+# This is the crucial step to prevent large build/cache files from 
+being committed again
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Ss]napshotTesting/
+[Rr]esults/
+[Dd]erivedData/
+
+# Specific Unity files and extensions to ignore
+*.pid
+*.unityhost
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.DS_Store
+*.gz
+*.orig
+*.meta.orig
+
+# Visual Studio files
+.vs/
+
+# macOS files
+.DS_Store
+
+# UnitOptions.db and related Visual Scripting artifacts
+# The specific file you had trouble with
+cardGame/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+
+# Other common Unity cache files
+Assets/AssetStoreTools/
+UserSettings/

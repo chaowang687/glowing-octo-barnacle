@@ -1,0 +1,12 @@
+CardID,CardName,EnergyCost,Type,RequiredClass,Rarity,Effect1_Type,Effect1_Target,Effect1_Value,Effect1_Scales,Effect1_Status,Effect1_Duration,Effect2_Type,Effect2_Target,Effect2_Value,Effect2_Scales,Effect2_Status,Effect2_Duration
+W_SHIELD,坚守,2,Block,Warrior,Rare,,Self,12,,,,,,,,,
+M_FIRE,火球术,1,Attack,Mage,Rare,,SelectedEnemy,10,,,,,,,,,
+R_SHANK,割喉,1,Attack,Rogue,Common,Attack,SelectedEnemy,8,TRUE,None,0,ApplyDebuff,SelectedEnemy,2,FALSE,Weak,2
+W_STRIKE,重击,1,Attack,Warrior,Common,,SelectedEnemy,8,,,,,,,,,
+W_RAGE,狂暴,0,ApplyBuff,Warrior,Common,,Self,2,,,,,,,,,
+M_HEAL,治疗,1,Heal,Mage,Common,,SelectedAlly,5,,,,,,,,,
+M_BLIND,致盲,1,ApplyBuff,Mage,Common,,SelectedEnemy,2,,,,,,,,,
+R_DAGGER,飞刀,0,Attack,Rogue,Common,,SelectedEnemy,3,,,,,,,,,
+R_EVADE,闪避,1,Block,Rogue,Common,,Self,8,,,,,,,,,
+A_VITAL,生命之泉,1,Heal,Any,Common,,SelectedAlly,3,,,,,,,,,
+A_DRAW,战术部署,0,DrawCard,Any,Common,,Self,2,,,,,,,,,

@@ -1,0 +1,40 @@
+
+Key,zh-CN,en-US
+card_A_VITAL_name,生命精华,Vital Essence
+card_A_VITAL_description,恢复3点生命值,Restore 3 health points
+card_M_BLIND_name,致盲,Blind
+card_M_BLIND_description,使目标下回合命中率降低,Reduce target's hit chance next turn
+card_M_FIRE_name,火球术,Fireball
+card_M_FIRE_description,每回合减少3点生命值,Reduce 3 health points per round
+card_R_DAGGER_name,匕首,Dagger
+card_R_DAGGER_description,造成4点伤害，可重复2次,Deal 4 damage, repeat 2 times
+card_R_EVADE_name,闪避,Evasion
+card_R_EVADE_description,获得4点格挡并抽1张牌,Gain 4 block and draw 1 card
+card_R_SHANK_name,刺杀,Shank
+card_R_SHANK_description,造成5点伤害并抽1张牌,Deal 5 damage and draw 1 card
+card_W_RAGE_name,愤怒,Rage
+card_W_RAGE_description,获得2点力量和1点格挡,Gain 2 strength and 1 block
+card_W_SHIELD_name,盾牌,Shield
+card_W_SHIELD_description,获得3点防御,Gain 3 defense
+card_W_STRIKE_name,猛击,Smash
+card_W_STRIKE_description,造成7点伤害,Deal 7 damage
+card_NewCard_name,新卡牌,New Card
+card_NewCard_description,卡牌描述,Card description
+card_A_DRAW_name,抽牌,Draw Card
+card_A_DRAW_description,造成4点伤害，抽2张牌,Deal 4 damage, draw 2 cards
+card_A_STRIKE_name,打击,Strike
+card_A_STRIKE_description,造成6点伤害,Deal 6 damage
+card_B_Block_name,格挡,Block
+card_B_Block_description,格挡5点伤害,Block 5 damage
+card_B_EXECUTE_name,处决,Execute
+card_B_EXECUTE_description,造成15点伤害。如果目标脆弱，伤害将大幅增加,Deal 15 damage. If target is vulnerable, damage is greatly increased
+card_B_FRENZY_name,狂暴,Frenzy
+card_B_FRENZY_description,造成3点伤害，连续3次,Deal 3 damage, 3 consecutive times
+card_B_MARK_name,标记,Mark
+card_B_MARK_description,造成8点伤害并施加2层脆弱,Deal 8 damage and apply 2 vulnerability
+card_B_PREP_name,准备,Prep
+card_B_PREP_description,当你获得6点格挡时，下回合开始获得1点能量,When you gain 6 block, gain 1 energy at start of next turn
+card_B_STRENG_name,力量,Strength
+card_B_STRENG_description,获得2级力量,Gain Level 2 strength
+card_M_HEAL_name,治疗,Heal
+card_M_HEAL_description,恢复10点生命值,Restore 10 health points

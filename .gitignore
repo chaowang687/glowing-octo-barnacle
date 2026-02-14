@@ -24,3 +24,18 @@ __pycache__/
 *.swp
 *.swo
 *~
+
+# Unity generated files
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/Assets/AssetStoreTools/
+
+# Visual Scripting database
+/Assets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/Assets/Unity.VisualScripting.Generated/
+/ProjectSettings/ProjectSettings.asset.bak
+/Assets/StreamingAssets/
+*.unityproj

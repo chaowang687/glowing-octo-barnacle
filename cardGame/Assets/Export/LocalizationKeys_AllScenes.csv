@@ -1,0 +1,18 @@
+Key,1,2,Scene 
+Battle_Btn_Continue,继续,Continue,BattleScene
+Battle_Text_PlayerRound,玩家回合,Player round,BattleScene
+Battle_Btn_End,回合结束,End,BattleScene
+Battle_Text_GameOver,游戏结束,Game Over,BattleScene
+Battle_Btn_Restart,重新开始,Restart,BattleScene
+Battle_Text_Victory,战斗胜利,Victory,BattleScene
+Ceshi_Btn_Bag,背包,Bag,ceshiScene
+Ceshi_Btn_Weapon,武器,Weapon,ceshiScene
+Ceshi_Text_New,新文本,New Text,ceshiScene
+Dig_Btn_Action,挖掘,Button,DigScene
+Loading_Btn_Action,加载中,Button,loading
+Main_Btn_Start,开始游戏,Start Game,Main
+Main_Btn_Quit,退出游戏,Quit,Main
+Main_Btn_Archive,存档管理,Archive,Main
+Main_Btn_NewGame,新游戏,New Game,Main
+Map_Btn_Action,查看地图,Button,MapScene
+Sea_Btn_Action,出海,Button,Sea

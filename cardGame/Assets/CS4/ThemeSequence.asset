@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d147d889ab514e75a9578555032df95, type: 3}
+  m_Name: ThemeSequence
+  m_EditorClassIdentifier: 
+  themes:
+  - themeName: 
+    themeID: 0
+    nodeMarkerPrefab: {fileID: 3608154345759386408, guid: c861e3fe8b40d4901a22c20a575fefc4, type: 3}
+    groundLayer:
+      layerName: Ground
+      groundSprite: {fileID: 21300000, guid: e279cde58bed049d7a4ef61176958bef, type: 3}
+      layerPrefab: {fileID: 2755394280941956021, guid: e4ed7c5ab9ec0447a913ab7bab7e63ce, type: 3}
+      decorations: []
+      material: {fileID: 2100000, guid: 0be11c7a789404fa2a8596d9dbe3668e, type: 2}
+      tintColor: {r: 1, g: 1, b: 1, a: 1}
+    waveLayer:
+      layerName: Waves
+      groundSprite: {fileID: 21300000, guid: e279cde58bed049d7a4ef61176958bef, type: 3}
+      layerPrefab: {fileID: 2755394280941956021, guid: 139d50784397145969e8db8cd3792ceb, type: 3}
+      decorations: []
+      material: {fileID: 2100000, guid: 06c6a4017b63147baaf9bf1e2bbb43a7, type: 2}
+      tintColor: {r: 1, g: 1, b: 1, a: 1}
+    backgroundLayer:
+      layerName: Background
+      groundSprite: {fileID: 21300000, guid: e279cde58bed049d7a4ef61176958bef, type: 3}
+      layerPrefab: {fileID: 2755394280941956021, guid: 529cf1686bcc747b080f723992b17456, type: 3}
+      decorations: []
+      material: {fileID: 2100000, guid: 1b0688f6488df436f9c2d227a8a8d6c8, type: 2}
+      tintColor: {r: 1, g: 1, b: 1, a: 1}

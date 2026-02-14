@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffac41024c39642b8a6832b45048c9ca, type: 3}
+  m_Name: NewEnemyEncounter
+  m_EditorClassIdentifier: 
+  encounterName: "\u666E\u901A\u906D\u9047"
+  enemyUnits: []
+  guaranteedRewards:
+  - {fileID: 11400000, guid: def0ab2f6cbdc46849fc48a0948e2015, type: 2}
+  randomRewardCount: 2
+  randomRewardPool:
+  - {fileID: 11400000, guid: def0ab2f6cbdc46849fc48a0948e2015, type: 2}
+  difficultyLevel: 1
+  isBossEncounter: 0

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 047a30359c9674d06b74d43292ab4efb, type: 3}
+  m_Name: IronMan
+  m_EditorClassIdentifier: 
+  characterName: "\u94C1\u7532\u536B\u58EB"
+  maxHealth: 80
+  startingGold: 99
+  startingCards:
+  - {fileID: 11400000, guid: d3616793541dc4bf7833045ae7b7a1af, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: 0d24cff69195540ebb911268dcfd8634, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: b15af2e3b0cd04e60850354de56f8748, type: 2}
+  - {fileID: 11400000, guid: bf03f38e91f50457aac7a92f40ccddf2, type: 2}
+  startingRelicIds: []
