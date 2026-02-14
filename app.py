@@ -106,7 +106,7 @@ def get_realtime_quotes():
         return get_demo_data()
 
 
-@st.cache_data(ttl=300, show_spinner=False)  # 缩短缓存时间为5分钟
+@st.cache_data(ttl=60, show_spinner=False)  # 缓存1分钟，确保数据更新
 def get_stock_kline(symbol, adjust="qfq"):
     """获取K线数据"""
     if DEMO_MODE:
@@ -169,7 +169,7 @@ def get_stock_kline(symbol, adjust="qfq"):
         return None
 
 
-@st.cache_data(ttl=300, show_spinner=False)  # 缩短缓存时间为5分钟
+@st.cache_data(ttl=60, show_spinner=False)  # 缓存1分钟
 def get_stock_info(symbol):
     """获取股票基本信息"""
     if DEMO_MODE:
