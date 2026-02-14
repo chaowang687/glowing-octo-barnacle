@@ -183,7 +183,7 @@ class DeepSeekAnalyzer:
         
         Args:
             stock_data: 股票数据
-        
+            
         Returns:
             str: 提示词
         """
@@ -212,38 +212,58 @@ class DeepSeekAnalyzer:
             if factors:
                 bullish = factors.get('bullish', [])[:3]  # 只取前3条
                 bearish = factors.get('bearish', [])[:3]  # 只取前3条
+                industry_hotspots = factors.get('industry_hotspots', [])[:2]  # 只取前2条
+                market_trends = factors.get('market_trends', [])[:2]  # 只取前2条
+                
                 if bullish:
                     market_info += "利好因素:\n" + "\n".join([f"- {item}" for item in bullish]) + "\n\n"
                 if bearish:
                     market_info += "利空因素:\n" + "\n".join([f"- {item}" for item in bearish]) + "\n\n"
+                if industry_hotspots:
+                    market_info += "行业热点:\n" + "\n".join([f"- {item}" for item in industry_hotspots]) + "\n\n"
+                if market_trends:
+                    market_info += "市场趋势:\n" + "\n".join([f"- {item}" for item in market_trends]) + "\n\n"
+            
+            # 提取资金流向数据
+            main_funds = market_analysis.get('main_funds', {})
+            if main_funds:
+                net_inflow = main_funds.get('net_inflow', 0)
+                status = main_funds.get('status', 'unknown')
+                market_info += f"资金流向: 主力资金净流入={net_inflow/10000:.2f}万, 状态={status}\n\n"
         
-        prompt = f"""# A股市场分析任务
+        prompt = f"""# {name}({symbol}) 个股分析
 
-## 股票信息
-- 代码：{symbol}
-- 名称：{name}
-
-## K线数据
+## 📈 近期走势
 {recent_data}
 
-## 市场信息
+## 📊 市场环境
 {market_info}
 
-## 分析要求
-请作为资深A股分析师，提供以下分析：
+---
 
-1. **技术面分析**：K线形态、趋势方向、关键指标状态
-2. **短期走势**：未来3-5天预测、支撑阻力位
-3. **操作建议**：明确操作建议、仓位控制、止损止盈
-4. **风险评估**：主要风险因素
-5. **投资逻辑**：核心投资逻辑
+## 分析要求
+请用简洁的Markdown格式分析，包含以下内容：
+
+### 1. 技术面（3-4句话）
+- K线形态和趋势
+- 关键支撑/阻力位
+
+### 2. 资金面（2-3句话）
+- 主力资金流向
+- 主力/游资/散户情况
+
+### 3. 操作建议
+- **评级**：买入/持有/卖出/观望
+- **目标价**：XXX元
+- **止损价**：XXX元
+- **理由**：简述核心逻辑
+
+### 4. 风险提示（1-2句话）
+
+---
 
 ## 输出格式
-- 使用中文回答
-- 直接进入分析，无需引言
-- 保持简洁专业
-- 使用Markdown格式
-- 重点突出，条理清晰"""
+使用Markdown，层级标题加粗，关键数据用**加粗**，保持简洁。"
         
         return prompt
     
