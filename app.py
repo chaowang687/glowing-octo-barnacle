@@ -336,10 +336,30 @@ if demo_mode != DEMO_MODE:
     st.rerun()
 
 st.sidebar.header("🤖 AI分析设置")
-deepseek_api_key = st.sidebar.text_input("DeepSeek API密钥", type="password", value=user_config.get_deepseek_api_key())
-if st.sidebar.button("💾 保存API密钥"):
-    user_config.set_deepseek_api_key(deepseek_api_key)
-    st.sidebar.success("API密钥保存成功！")
+
+# API密钥查看密码保护
+api_key_visible = False
+password_input = st.sidebar.text_input("输入密码查看API密钥", type="password")
+
+if st.sidebar.button("🔓 解锁API密钥"):
+    # 简单的密码验证（实际应用中应该使用更安全的验证方式）
+    if password_input == "admin123":  # 这里可以修改为更安全的密码
+        api_key_visible = True
+        st.sidebar.success("✅ 密码正确，API密钥已解锁")
+    else:
+        st.sidebar.error("❌ 密码错误，请重试")
+
+# 根据解锁状态显示API密钥输入框
+if api_key_visible:
+    deepseek_api_key = st.sidebar.text_input("DeepSeek API密钥", value=user_config.get_deepseek_api_key())
+    
+    if st.sidebar.button("💾 保存API密钥"):
+        user_config.set_deepseek_api_key(deepseek_api_key)
+        st.sidebar.success("API密钥保存成功！")
+else:
+    st.sidebar.info("� API密钥已锁定，请输入密码解锁")
+    # 未解锁时不显示API密钥输入框
+    deepseek_api_key = None
 
 # AI状态指示器
 st.sidebar.header("🤖 AI状态")
@@ -660,10 +680,12 @@ if selected_tab == "市场概览":
                                 
                                 # 阶段4: 分析资金流向
                                 loading_placeholder.info(loading_texts[3])
+                                print(f"开始获取市场信息分析: {st.session_state['symbol']} - {st.session_state['name']}")
                                 market_analysis = market_analyzer.comprehensive_analysis(
                                     st.session_state['symbol'], 
                                     st.session_state['name']
                                 )
+                                print(f"获取到市场信息分析: {market_analysis}")
                                 stock_data['market_analysis'] = market_analysis
                                 
                                 # 计算实际分析时间

@@ -77,6 +77,20 @@ class TencentDataSource:
                     except:
                         change_amt = 0
                 
+                # 解析市盈率和市净率
+                pe = 0
+                pb = 0
+                if len(data) > 39 and data[39]:
+                    try:
+                        pe = float(data[39])
+                    except:
+                        pe = 0
+                if len(data) > 41 and data[41]:
+                    try:
+                        pb = float(data[41])
+                    except:
+                        pb = 0
+                
                 stocks.append({
                     '代码': code,
                     '名称': data[1] if len(data) > 1 else '',
@@ -90,6 +104,8 @@ class TencentDataSource:
                     '今开': float(data[10]) if len(data) > 10 and data[10] else 0,
                     '昨收': float(data[11]) if len(data) > 11 and data[11] else 0,
                     '涨跌幅': change_pct,
+                    '市盈率': pe,
+                    '市净率': pb,
                     'Market': market,
                 })
             except Exception as e:

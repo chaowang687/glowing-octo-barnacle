@@ -765,3 +765,213 @@
 2026-02-14 09:23:57 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
 2026-02-14 09:23:57 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
 2026-02-14 09:23:57 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 09:48:12 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:48:12 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=7
+2026-02-14 09:48:14 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:48:14 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:48:14 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:48:14 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:48:15 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:48:15 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:48:15 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:48:15 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:48:15 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=3
+2026-02-14 09:48:17 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:48:17 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:48:17 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:48:17 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=3
+2026-02-14 09:48:19 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:48:19 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:48:19 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:48:19 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 300251 的完整数据
+2026-02-14 09:48:19 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:48:19 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:48:19 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:48:21 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:48:21 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:48:21 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:48:21 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 09:48:21 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=7
+2026-02-14 09:48:23 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 09:48:23 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 09:48:23 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 09:53:27 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:53:27 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=7
+2026-02-14 09:53:29 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:53:29 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:53:29 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:53:29 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:53:31 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:53:31 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:53:31 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:53:31 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:53:31 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=3
+2026-02-14 09:53:33 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:53:33 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:53:33 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:53:33 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=3
+2026-02-14 09:53:34 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:53:34 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:53:34 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:53:34 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 300251 的完整数据
+2026-02-14 09:53:34 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:53:34 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:53:34 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:53:36 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:53:36 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:53:36 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:53:36 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 09:53:36 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=7
+2026-02-14 09:53:38 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 09:53:38 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 09:53:38 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 09:57:14 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:14 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=7
+2026-02-14 09:57:16 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:16 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:16 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:16 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:57:17 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:17 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:17 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:17 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:17 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=3
+2026-02-14 09:57:19 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:19 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:19 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:19 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=3
+2026-02-14 09:57:22 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:22 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:22 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:22 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 300251 的完整数据
+2026-02-14 09:57:22 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:22 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:22 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:57:24 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:24 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:24 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:24 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 09:57:24 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=7
+2026-02-14 09:57:26 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 09:57:26 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 09:57:26 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 09:57:33 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:33 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=7
+2026-02-14 09:57:35 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:35 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:35 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:35 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:57:36 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:36 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:36 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:37 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:37 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=300251, days=3
+2026-02-14 09:57:39 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:39 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:39 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:39 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=3
+2026-02-14 09:57:41 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:41 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:41 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:41 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 300251 的完整数据
+2026-02-14 09:57:41 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:41 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 09:57:41 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=光线传媒, days=7
+2026-02-14 09:57:43 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 09:57:43 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 09:57:43 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 09:57:43 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 09:57:43 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 300251, days=7
+2026-02-14 09:57:45 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 09:57:45 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 09:57:45 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 10:01:56 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:01:56 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=688147, days=7
+2026-02-14 10:01:57 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:01:57 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:01:57 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 3 条新闻
+2026-02-14 10:01:57 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=微导纳米, days=7
+2026-02-14 10:01:59 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:01:59 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:01:59 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:01:59 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:01:59 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=688147, days=3
+2026-02-14 10:02:02 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:02:02 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:02:02 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 3 条新闻
+2026-02-14 10:02:02 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=微导纳米, days=3
+2026-02-14 10:02:04 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:02:04 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:02:04 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:02:04 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 688147 的完整数据
+2026-02-14 10:02:04 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:02:04 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:02:04 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=微导纳米, days=7
+2026-02-14 10:02:07 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:02:07 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:02:07 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:02:07 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 10:02:07 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 688147, days=7
+2026-02-14 10:02:09 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 10:02:09 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 10:02:09 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 10:12:56 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:12:56 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001, days=7
+2026-02-14 10:12:59 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:12:59 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:12:59 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 1 条新闻
+2026-02-14 10:12:59 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=7
+2026-02-14 10:13:00 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:13:00 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:13:00 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:13:00 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:13:00 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001, days=3
+2026-02-14 10:13:02 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:13:02 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:13:02 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 1 条新闻
+2026-02-14 10:13:02 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=3
+2026-02-14 10:13:04 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:13:04 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:13:04 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:13:04 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 000001 的完整数据
+2026-02-14 10:13:04 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:13:04 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:13:04 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=7
+2026-02-14 10:13:06 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:13:06 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:13:06 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:13:06 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 10:13:06 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 000001, days=7
+2026-02-14 10:13:07 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 10:13:07 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 10:13:07 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
+2026-02-14 10:14:13 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:14:13 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001, days=7
+2026-02-14 10:14:15 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:14:15 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:14:15 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 1 条新闻
+2026-02-14 10:14:15 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=7
+2026-02-14 10:14:16 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:14:16 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:14:16 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:14:16 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:14:16 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=000001, days=3
+2026-02-14 10:14:18 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:14:18 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:14:18 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 1 条新闻
+2026-02-14 10:14:18 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=3
+2026-02-14 10:14:20 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:14:20 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:14:20 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:14:20 | INFO     | modules.crawler:crawl_stock_full_data:432 - 开始爬取 000001 的完整数据
+2026-02-14 10:14:20 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:14:20 | INFO     | modules.crawler:__init__:72 - 爬虫初始化完成
+2026-02-14 10:14:20 | INFO     | modules.crawler:search_news:168 - 开始搜索新闻: keyword=平安银行, days=7
+2026-02-14 10:14:22 | INFO     | modules.parser:parse_eastmoney_news:137 - 尝试解析新闻数据，找到 10 条新闻
+2026-02-14 10:14:22 | INFO     | modules.parser:parse_eastmoney_news:169 - 成功解析 10 条新闻
+2026-02-14 10:14:22 | INFO     | modules.crawler:search_news:214 - 搜索完成，获取到 10 条新闻
+2026-02-14 10:14:22 | INFO     | modules.parser:parse_events:399 - 从 10 条新闻中提取 0 条事件
+2026-02-14 10:14:22 | INFO     | modules.crawler:get_fund_flow:266 - 获取资金流向: 000001, days=7
+2026-02-14 10:14:24 | INFO     | modules.parser:parse_eastmoney_funds:251 - 成功解析 1 条资金流向数据
+2026-02-14 10:14:24 | INFO     | modules.crawler:get_fund_flow:286 - 获取资金流向完成: 1 条
+2026-02-14 10:14:24 | INFO     | modules.crawler:crawl_stock_full_data:462 - 数据爬取完成: 新闻10条, 资金1条, 事件0条
