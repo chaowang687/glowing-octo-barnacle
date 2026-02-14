@@ -717,25 +717,23 @@ if selected_tab == "市场概览":
                                 st.markdown("#### 📊 利好利空分析")
                                 factors = market_analysis.get('factors', {})
                                 
-                                col1, col2 = st.columns(2)
+                                # 简化布局，避免复杂的列嵌套
+                                bullish = factors.get('bullish', [])
+                                bearish = factors.get('bearish', [])
                                 
-                                with col1:
-                                    bullish = factors.get('bullish', [])
-                                    if bullish:
-                                        st.success("### 🟢 利好因素")
-                                        for factor in bullish[:5]:  # 显示前5条
-                                            st.markdown(f"- {factor}")
-                                    else:
-                                        st.info("暂无明显利好因素")
+                                if bullish:
+                                    st.success("### 🟢 利好因素")
+                                    for factor in bullish[:5]:  # 显示前5条
+                                        st.markdown(f"- {factor}")
+                                else:
+                                    st.info("暂无明显利好因素")
                                 
-                                with col2:
-                                    bearish = factors.get('bearish', [])
-                                    if bearish:
-                                        st.error("### 🔴 利空因素")
-                                        for factor in bearish[:5]:  # 显示前5条
-                                            st.markdown(f"- {factor}")
-                                    else:
-                                        st.info("暂无明显利空因素")
+                                if bearish:
+                                    st.error("### 🔴 利空因素")
+                                    for factor in bearish[:5]:  # 显示前5条
+                                        st.markdown(f"- {factor}")
+                                else:
+                                    st.info("暂无明显利空因素")
                                 
                                 # 显示行业热点
                                 st.markdown("#### 🔥 行业热点")
@@ -765,18 +763,15 @@ if selected_tab == "市场概览":
                                     net_inflow = main_funds.get('net_inflow', 0)
                                     status = main_funds.get('status', 'unknown')
                                     
-                                    col_a, col_b = st.columns(2)
+                                    # 直接显示指标，避免列布局
+                                    st.metric("主力资金净流入", f"{net_inflow/10000:.2f}万")
                                     
-                                    with col_a:
-                                        st.metric("主力资金净流入", f"{net_inflow/10000:.2f}万")
-                                    
-                                    with col_b:
-                                        status_text = {
-                                            'inflow': '📈 流入',
-                                            'outflow': '📉 流出',
-                                            'balanced': '⚖️ 平衡'
-                                        }.get(status, '未知')
-                                        st.metric("资金状态", status_text)
+                                    status_text = {
+                                        'inflow': '📈 流入',
+                                        'outflow': '📉 流出',
+                                        'balanced': '⚖️ 平衡'
+                                    }.get(status, '未知')
+                                    st.metric("资金状态", status_text)
                                     
                                     # 显示每日资金流向
                                     daily_data = main_funds.get('daily_data', [])
