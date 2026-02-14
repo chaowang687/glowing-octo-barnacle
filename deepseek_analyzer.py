@@ -263,8 +263,8 @@ class DeepSeekAnalyzer:
 ---
 
 ## 输出格式
-使用Markdown，层级标题加粗，关键数据用**加粗**，保持简洁。"
-        
+使用Markdown，层级标题加粗，关键数据用**加粗**，保持简洁。"""
+
         return prompt
     
     def _call_deepseek_api(self, prompt: str) -> Optional[str]:
