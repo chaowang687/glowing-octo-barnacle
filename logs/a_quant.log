@@ -9011,3 +9011,229 @@
 2026-02-14 23:05:29,728 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
 2026-02-14 23:05:47,771 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
 2026-02-14 23:05:47,773 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 00:39:18,215 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 00:39:18,216 - a_quant - INFO - logger - info - 获取 600519 K线数据，周期: 101
+2026-02-15 00:39:18,311 - a_quant - INFO - logger - info - 成功获取 600519 的 121 条K线数据
+2026-02-15 00:39:18,312 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 00:39:37,225 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 00:39:37,227 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 00:39:37,227 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 00:39:57,126 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 00:39:57,127 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 00:39:57,132 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 00:39:57,132 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 01:46:38,954 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 01:46:38,955 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 01:46:38,956 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 01:47:02,888 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 01:47:02,889 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 01:47:02,897 - a_quant - DEBUG - logger - debug - 缓存已过期: stock_kline
+2026-02-15 01:47:02,898 - a_quant - INFO - logger - info - 获取 600519 K线数据，周期: 101
+2026-02-15 01:47:03,004 - a_quant - INFO - logger - info - 成功获取 600519 的 121 条K线数据
+2026-02-15 01:47:03,005 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 01:47:16,518 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 01:47:16,519 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 01:47:16,520 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 01:47:16,520 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 01:47:16,530 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 01:47:16,530 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 01:47:16,530 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 01:47:19,544 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 01:47:19,544 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 01:47:20,115 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 01:47:20,115 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 01:47:20,115 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 01:47:27,495 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 01:47:27,495 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 01:47:27,731 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 01:47:27,731 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 01:47:27,731 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 01:47:34,067 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 01:47:34,068 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 01:47:34,283 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - 开始调用DeepSeek API
+2026-02-15 01:47:34,283 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API URL: https://api.deepseek.com/v1/chat/completions
+2026-02-15 01:47:34,283 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API密钥长度: 35
+2026-02-15 01:47:44,683 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API响应状态码: 200
+2026-02-15 01:47:44,684 - a_quant - INFO - deepseek_analyzer - _call_deepseek_api - API调用成功
+2026-02-15 01:48:40,547 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 01:48:40,547 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 01:48:46,145 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 01:48:46,145 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 01:48:53,335 - a_quant - DEBUG - logger - debug - 缓存命中: stock_kline
+2026-02-15 01:48:53,335 - a_quant - INFO - logger - info - 从缓存获取 600519 K线数据，数量: 121
+2026-02-15 08:17:53,510 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:53,511 - a_quant - INFO - logger - info - 获取 002498 K线数据，周期: 101
+2026-02-15 08:17:53,622 - a_quant - INFO - logger - info - 成功获取 002498 的 515 条K线数据
+2026-02-15 08:17:53,623 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:53,878 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:53,878 - a_quant - INFO - logger - info - 获取 002498 K线数据，周期: 101
+2026-02-15 08:17:53,953 - a_quant - INFO - logger - info - 成功获取 002498 的 247 条K线数据
+2026-02-15 08:17:53,954 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:54,073 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:54,073 - a_quant - INFO - logger - info - 获取 002703 K线数据，周期: 101
+2026-02-15 08:17:54,171 - a_quant - INFO - logger - info - 成功获取 002703 的 515 条K线数据
+2026-02-15 08:17:54,172 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:54,378 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:54,378 - a_quant - INFO - logger - info - 获取 002703 K线数据，周期: 101
+2026-02-15 08:17:54,451 - a_quant - INFO - logger - info - 成功获取 002703 的 247 条K线数据
+2026-02-15 08:17:54,452 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:54,580 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:54,582 - a_quant - INFO - logger - info - 获取 002355 K线数据，周期: 101
+2026-02-15 08:17:54,691 - a_quant - INFO - logger - info - 成功获取 002355 的 515 条K线数据
+2026-02-15 08:17:54,692 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:54,913 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:54,913 - a_quant - INFO - logger - info - 获取 002355 K线数据，周期: 101
+2026-02-15 08:17:54,985 - a_quant - INFO - logger - info - 成功获取 002355 的 247 条K线数据
+2026-02-15 08:17:54,986 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:55,100 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:55,100 - a_quant - INFO - logger - info - 获取 002009 K线数据，周期: 101
+2026-02-15 08:17:55,241 - a_quant - INFO - logger - info - 成功获取 002009 的 515 条K线数据
+2026-02-15 08:17:55,241 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:55,431 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:55,431 - a_quant - INFO - logger - info - 获取 002009 K线数据，周期: 101
+2026-02-15 08:17:55,498 - a_quant - INFO - logger - info - 成功获取 002009 的 247 条K线数据
+2026-02-15 08:17:55,499 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:55,630 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:55,630 - a_quant - INFO - logger - info - 获取 002169 K线数据，周期: 101
+2026-02-15 08:17:55,730 - a_quant - INFO - logger - info - 成功获取 002169 的 507 条K线数据
+2026-02-15 08:17:55,731 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:55,914 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:55,915 - a_quant - INFO - logger - info - 获取 002169 K线数据，周期: 101
+2026-02-15 08:17:55,992 - a_quant - INFO - logger - info - 成功获取 002169 的 239 条K线数据
+2026-02-15 08:17:55,992 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:56,096 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:56,096 - a_quant - INFO - logger - info - 获取 002510 K线数据，周期: 101
+2026-02-15 08:17:56,205 - a_quant - INFO - logger - info - 成功获取 002510 的 509 条K线数据
+2026-02-15 08:17:56,205 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:56,381 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:56,381 - a_quant - INFO - logger - info - 获取 002510 K线数据，周期: 101
+2026-02-15 08:17:56,453 - a_quant - INFO - logger - info - 成功获取 002510 的 243 条K线数据
+2026-02-15 08:17:56,453 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:56,546 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:56,546 - a_quant - INFO - logger - info - 获取 002655 K线数据，周期: 101
+2026-02-15 08:17:56,647 - a_quant - INFO - logger - info - 成功获取 002655 的 515 条K线数据
+2026-02-15 08:17:56,647 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:56,855 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:56,855 - a_quant - INFO - logger - info - 获取 002655 K线数据，周期: 101
+2026-02-15 08:17:56,923 - a_quant - INFO - logger - info - 成功获取 002655 的 247 条K线数据
+2026-02-15 08:17:56,923 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:57,025 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:57,026 - a_quant - INFO - logger - info - 获取 002467 K线数据，周期: 101
+2026-02-15 08:17:57,135 - a_quant - INFO - logger - info - 成功获取 002467 的 515 条K线数据
+2026-02-15 08:17:57,136 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:57,342 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:57,342 - a_quant - INFO - logger - info - 获取 002467 K线数据，周期: 101
+2026-02-15 08:17:57,417 - a_quant - INFO - logger - info - 成功获取 002467 的 247 条K线数据
+2026-02-15 08:17:57,418 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:57,526 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:57,526 - a_quant - INFO - logger - info - 获取 002374 K线数据，周期: 101
+2026-02-15 08:17:57,619 - a_quant - INFO - logger - info - 成功获取 002374 的 515 条K线数据
+2026-02-15 08:17:57,620 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:57,772 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:57,772 - a_quant - INFO - logger - info - 获取 002374 K线数据，周期: 101
+2026-02-15 08:17:57,849 - a_quant - INFO - logger - info - 成功获取 002374 的 247 条K线数据
+2026-02-15 08:17:57,850 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:57,963 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:57,963 - a_quant - INFO - logger - info - 获取 002196 K线数据，周期: 101
+2026-02-15 08:17:58,068 - a_quant - INFO - logger - info - 成功获取 002196 的 515 条K线数据
+2026-02-15 08:17:58,068 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:58,255 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:58,255 - a_quant - INFO - logger - info - 获取 002196 K线数据，周期: 101
+2026-02-15 08:17:58,325 - a_quant - INFO - logger - info - 成功获取 002196 的 247 条K线数据
+2026-02-15 08:17:58,326 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:58,451 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:58,451 - a_quant - INFO - logger - info - 获取 002297 K线数据，周期: 101
+2026-02-15 08:17:58,553 - a_quant - INFO - logger - info - 成功获取 002297 的 515 条K线数据
+2026-02-15 08:17:58,554 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:58,755 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:58,755 - a_quant - INFO - logger - info - 获取 002297 K线数据，周期: 101
+2026-02-15 08:17:58,826 - a_quant - INFO - logger - info - 成功获取 002297 的 247 条K线数据
+2026-02-15 08:17:58,827 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:58,949 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:58,949 - a_quant - INFO - logger - info - 获取 002519 K线数据，周期: 101
+2026-02-15 08:17:59,055 - a_quant - INFO - logger - info - 成功获取 002519 的 515 条K线数据
+2026-02-15 08:17:59,056 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:59,224 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:59,224 - a_quant - INFO - logger - info - 获取 002519 K线数据，周期: 101
+2026-02-15 08:17:59,295 - a_quant - INFO - logger - info - 成功获取 002519 的 247 条K线数据
+2026-02-15 08:17:59,296 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:59,412 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:59,412 - a_quant - INFO - logger - info - 获取 002163 K线数据，周期: 101
+2026-02-15 08:17:59,529 - a_quant - INFO - logger - info - 成功获取 002163 的 515 条K线数据
+2026-02-15 08:17:59,529 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:59,715 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:59,715 - a_quant - INFO - logger - info - 获取 002163 K线数据，周期: 101
+2026-02-15 08:17:59,791 - a_quant - INFO - logger - info - 成功获取 002163 的 247 条K线数据
+2026-02-15 08:17:59,791 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:17:59,889 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:17:59,889 - a_quant - INFO - logger - info - 获取 002638 K线数据，周期: 101
+2026-02-15 08:18:00,000 - a_quant - INFO - logger - info - 成功获取 002638 的 515 条K线数据
+2026-02-15 08:18:00,000 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:00,213 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:00,213 - a_quant - INFO - logger - info - 获取 002638 K线数据，周期: 101
+2026-02-15 08:18:00,282 - a_quant - INFO - logger - info - 成功获取 002638 的 247 条K线数据
+2026-02-15 08:18:00,284 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:00,387 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:00,387 - a_quant - INFO - logger - info - 获取 002283 K线数据，周期: 101
+2026-02-15 08:18:00,511 - a_quant - INFO - logger - info - 成功获取 002283 的 515 条K线数据
+2026-02-15 08:18:00,512 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:00,665 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:00,665 - a_quant - INFO - logger - info - 获取 002283 K线数据，周期: 101
+2026-02-15 08:18:00,732 - a_quant - INFO - logger - info - 成功获取 002283 的 247 条K线数据
+2026-02-15 08:18:00,733 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:00,829 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:00,830 - a_quant - INFO - logger - info - 获取 002837 K线数据，周期: 101
+2026-02-15 08:18:00,933 - a_quant - INFO - logger - info - 成功获取 002837 的 515 条K线数据
+2026-02-15 08:18:00,933 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:01,128 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:01,128 - a_quant - INFO - logger - info - 获取 002837 K线数据，周期: 101
+2026-02-15 08:18:01,199 - a_quant - INFO - logger - info - 成功获取 002837 的 247 条K线数据
+2026-02-15 08:18:01,200 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:01,313 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:01,313 - a_quant - INFO - logger - info - 获取 002709 K线数据，周期: 101
+2026-02-15 08:18:01,415 - a_quant - INFO - logger - info - 成功获取 002709 的 515 条K线数据
+2026-02-15 08:18:01,416 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:01,570 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:01,570 - a_quant - INFO - logger - info - 获取 002709 K线数据，周期: 101
+2026-02-15 08:18:01,651 - a_quant - INFO - logger - info - 成功获取 002709 的 247 条K线数据
+2026-02-15 08:18:01,652 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:01,759 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:01,759 - a_quant - INFO - logger - info - 获取 002654 K线数据，周期: 101
+2026-02-15 08:18:01,857 - a_quant - INFO - logger - info - 成功获取 002654 的 515 条K线数据
+2026-02-15 08:18:01,857 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:02,059 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:02,059 - a_quant - INFO - logger - info - 获取 002654 K线数据，周期: 101
+2026-02-15 08:18:02,133 - a_quant - INFO - logger - info - 成功获取 002654 的 247 条K线数据
+2026-02-15 08:18:02,134 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:02,257 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:02,258 - a_quant - INFO - logger - info - 获取 002008 K线数据，周期: 101
+2026-02-15 08:18:02,365 - a_quant - INFO - logger - info - 成功获取 002008 的 515 条K线数据
+2026-02-15 08:18:02,366 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:02,634 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:02,634 - a_quant - INFO - logger - info - 获取 002008 K线数据，周期: 101
+2026-02-15 08:18:02,704 - a_quant - INFO - logger - info - 成功获取 002008 的 247 条K线数据
+2026-02-15 08:18:02,705 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:02,812 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:02,812 - a_quant - INFO - logger - info - 获取 002739 K线数据，周期: 101
+2026-02-15 08:18:02,909 - a_quant - INFO - logger - info - 成功获取 002739 的 515 条K线数据
+2026-02-15 08:18:02,910 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:03,078 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:03,078 - a_quant - INFO - logger - info - 获取 002739 K线数据，周期: 101
+2026-02-15 08:18:03,148 - a_quant - INFO - logger - info - 成功获取 002739 的 247 条K线数据
+2026-02-15 08:18:03,148 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:03,253 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:03,253 - a_quant - INFO - logger - info - 获取 002405 K线数据，周期: 101
+2026-02-15 08:18:03,362 - a_quant - INFO - logger - info - 成功获取 002405 的 515 条K线数据
+2026-02-15 08:18:03,363 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:03,565 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:03,565 - a_quant - INFO - logger - info - 获取 002405 K线数据，周期: 101
+2026-02-15 08:18:03,646 - a_quant - INFO - logger - info - 成功获取 002405 的 247 条K线数据
+2026-02-15 08:18:03,647 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:03,758 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:03,759 - a_quant - INFO - logger - info - 获取 002235 K线数据，周期: 101
+2026-02-15 08:18:03,868 - a_quant - INFO - logger - info - 成功获取 002235 的 510 条K线数据
+2026-02-15 08:18:03,869 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline
+2026-02-15 08:18:04,059 - a_quant - DEBUG - logger - debug - 缓存不存在: stock_kline
+2026-02-15 08:18:04,059 - a_quant - INFO - logger - info - 获取 002235 K线数据，周期: 101
+2026-02-15 08:18:04,123 - a_quant - INFO - logger - info - 成功获取 002235 的 242 条K线数据
+2026-02-15 08:18:04,123 - a_quant - DEBUG - logger - debug - 缓存设置成功: stock_kline

@@ -291,6 +291,52 @@ class DeepSeekAnalyzer:
 
         return prompt
     
+    def chat(self, messages: list, temperature: float = 0.7) -> Optional[str]:
+        """
+        通用对话接口
+        
+        Args:
+            messages: 消息列表，如 [{"role": "user", "content": "..."}]
+            temperature: 温度参数
+            
+        Returns:
+            str: AI响应
+        """
+        payload = {
+            "model": "deepseek-chat",
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": 2000
+        }
+        
+        try:
+            logger.info(f"开始调用DeepSeek Chat API")
+            
+            response = requests.post(
+                self.base_url,
+                headers=self.headers,
+                json=payload,
+                timeout=60
+            )
+            
+            logger.info(f"Chat API响应状态码: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'choices' in data and data['choices']:
+                    return data['choices'][0]['message']['content']
+                else:
+                    logger.error(f"API返回数据格式错误: {data}")
+                    return f"API返回数据格式错误: {data}"
+            else:
+                error_message = f"DeepSeek API错误: {response.status_code} - {response.text}"
+                logger.error(error_message)
+                return f"API调用失败: {response.status_code}"
+                    
+        except Exception as e:
+            logger.error(f"Chat API调用异常: {e}")
+            return f"调用异常: {str(e)}"
+
     def _call_deepseek_api(self, prompt: str) -> Optional[str]:
         """
         调用DeepSeek API
